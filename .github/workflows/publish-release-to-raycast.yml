@@ -100,6 +100,5 @@ jobs:
 
       - name: Publish to Raycast Store
         env:
-          GITHUB_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
+          GITHUB_ACCESS_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
         run: npm run publish

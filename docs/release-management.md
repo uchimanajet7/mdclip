@@ -216,7 +216,11 @@ Raycast Store publish を GitHub Actions から実行する場合、Repository s
 
 この token は、`npm run publish` が `raycast/extensions` へ公開 Pull Request を作成するための GitHub 認証に使う。
 
+Repository secret 名は `RAYCAST_PUBLISH_GITHUB_TOKEN` とする。`Publish Release to Raycast` workflow は、この secret を `npm run publish` の実行時に Raycast CLI が参照する `GITHUB_ACCESS_TOKEN` 環境変数へ渡す。
+
 GitHub Actions 標準の `GITHUB_TOKEN` は、このリポジトリ内の workflow 実行用 token であり、権限は workflow を含むリポジトリに限定される。そのため、`raycast/extensions` へ公開 Pull Request を作成する `npm run publish` には使用しない。
+
+`GH_TOKEN` は GitHub CLI 用の認証変数である。`Publish Release to Raycast` workflow では GitHub Release の存在確認にのみ使用し、Raycast CLI の publish 認証には使用しない。
 
 `RAYCAST_PUBLISH_GITHUB_TOKEN` には、Public Store へ公開 Pull Request を作成する GitHub アカウントで作成した Personal Access Token を設定する。
 
@@ -279,6 +283,8 @@ Repository Secret の設定手順は以下とする。
 5. `Add secret` で保存する
 
 この secret が必要になる段階は、`.github/workflows/publish-release-to-raycast.yml` の `npm run publish` step に到達した時である。
+
+`npm run publish` で token が認識されない場合、Raycast CLI は GitHub の device flow に入り、GitHub Actions の非対話環境では入力待ちにできないため失敗する。workflow では `RAYCAST_PUBLISH_GITHUB_TOKEN` の空チェックと、`GITHUB_ACCESS_TOKEN` への受け渡しを両方行う。
 
 この secret が未設定、空、または権限不足の場合、Raycast Store publish は失敗する。
 

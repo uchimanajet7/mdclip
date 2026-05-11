@@ -163,6 +163,12 @@ async function verifyReleaseManifest() {
   assert.match(releaseBody, /blob\/v0\.1\.0\/CHANGELOG\.md#initial-release---pr_merge_date/);
   assert.match(releaseBody, /Add Prompt Set 1, Prompt Set 2, Prompt Set 3, and All Prompt Sets commands\./);
 
+  const publishWorkflow = await readText(".github/workflows/publish-release-to-raycast.yml");
+  assert.match(publishWorkflow, /^ {10}RAYCAST_PUBLISH_GITHUB_TOKEN: \$\{\{ secrets\.RAYCAST_PUBLISH_GITHUB_TOKEN \}\}$/m);
+  assert.match(publishWorkflow, /^ {10}GITHUB_ACCESS_TOKEN: \$\{\{ secrets\.RAYCAST_PUBLISH_GITHUB_TOKEN \}\}$/m);
+  assert.doesNotMatch(publishWorkflow, /^ {10}GITHUB_TOKEN: \$\{\{ secrets\.RAYCAST_PUBLISH_GITHUB_TOKEN \}\}$/m);
+  assert.doesNotMatch(publishWorkflow, /^ {10}GH_TOKEN: \$\{\{ secrets\.RAYCAST_PUBLISH_GITHUB_TOKEN \}\}$/m);
+
   await execFileAsync(
     process.execPath,
     [path.join(repoRoot, "scripts", "release-manifest.mjs"), "validate", "--publish-to-raycast", "true"],

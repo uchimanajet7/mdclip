@@ -716,6 +716,10 @@ GitHub Actions から Raycast Store publish を実行する場合は、Repositor
 
 `RAYCAST_PUBLISH_GITHUB_TOKEN` は Raycast の token ではなく、Public Store へ公開 Pull Request を作成する GitHub アカウントで発行した GitHub Personal Access Token とする。
 
+`.github/workflows/publish-release-to-raycast.yml` は、Repository secret `RAYCAST_PUBLISH_GITHUB_TOKEN` を `npm run publish` 実行時の `GITHUB_ACCESS_TOKEN` 環境変数へ渡す。`GITHUB_ACCESS_TOKEN` は Raycast CLI publish が GitHub 認証に使用する環境変数である。
+
+GitHub Actions 標準の `GITHUB_TOKEN` は、`raycast/extensions` へ公開 Pull Request を作成する publish 認証には使用しない。`GH_TOKEN` は GitHub Release の存在確認など GitHub CLI 用に限定して使用する。
+
 GitHub は可能な場合に fine-grained personal access token を推奨しているため、初回の Raycast Store publish 前に fine-grained personal access token で publish workflow を検証する。
 
 fine-grained personal access token で publish workflow が成功した場合は、`RAYCAST_PUBLISH_GITHUB_TOKEN` の標準 token 種別を fine-grained personal access token として文書を再整理する。fine-grained personal access token で失敗し、原因が repository access または contribution 制限である場合は、Personal Access Token classic に切り替え、scope は `public_repo` とする。
