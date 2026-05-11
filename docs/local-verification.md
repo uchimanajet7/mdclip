@@ -6,7 +6,9 @@
 
 ローカル確認では、実装修正、静的確認、Raycast 上での手動動作確認、公開前の build 確認までを扱う。
 
-`publish` はローカル確認に含めない。リリースタグ作成、GitHub Release 作成、Raycast Store への公開実行は、GitHub Actions の手動 workflow だけで扱う。
+`publish` はローカル確認に含めない。リリースタグ作成、GitHub Release 作成、Raycast Store への公開実行は GitHub Actions で扱う。
+
+GitHub Actions の `Build` workflow は、リモート repository に branch が push された時点、Pull Request の作成または更新時、GitHub Actions 画面からの手動実行時に `npm run check`、`npm run build`、`npm run lint` を実行する。
 
 ## 2. 実行場所
 
@@ -33,7 +35,7 @@ npm ci
 | `npm run check:local` | `node scripts/local-verification.mjs` | Raycast アプリに依存しない単体確認 |
 | `npm run update:dependencies` | `node scripts/update-dependencies.mjs` | 依存 package と Raycast API を一括更新 |
 | `npm run lint:local` | `npm run check:lint && npm run check:format` | author 検証を行わないローカル開発用 lint |
-| `npm run lint` | `ray lint` | GitHub Actions で実行する公開前 lint |
+| `npm run lint` | `ray lint` | GitHub Actions の `Build`、`Release`、`Publish Release to Raycast` で実行する公開前 lint |
 | `npm run demo:setup` | `node scripts/demo-prompts.mjs setup` | Raycast 手動動作確認用 Prompt Set を生成 |
 | `npm run demo:clean` | `node scripts/demo-prompts.mjs clean` | Raycast 手動動作確認用 Prompt Set を削除 |
 | `npm run icon:generate` | `node scripts/generate-icon.mjs` | 確認用アイコンを `assets/icon.generated.png` に生成し、確認後または `--yes` 指定時に `assets/icon.png` へ反映 |
@@ -85,7 +87,7 @@ npm run icon:generate -- --no
 
 `assets/icon.generated.png` は Git 管理対象外とする。生成されたアイコンは `docs/specification.md` のアイコンセット定義に照らして確認する。
 
-Raycast 公開 Extension としての icon criteria は、GitHub Actions の最終確認で実行する `npm run lint`、つまり `ray lint` で確認する。ローカル通常確認の `npm run check` には含めない。
+Raycast 公開 Extension としての icon criteria は、GitHub Actions の `Build` workflow で実行する `npm run lint`、つまり `ray lint` で確認する。ローカル通常確認の `npm run check` には含めない。
 
 `npm run dev` は `ray develop` を実行する。Raycast アプリ上で Command を開き、一覧表示、コピー、Dynamic Placeholders、プレビュー、エディタ起動を人間が操作して確認する。
 
@@ -172,7 +174,7 @@ npm run check
 npm run build
 ```
 
-`npm run lint` はローカル公開前確認では実行しない。`npm run lint` は `ray lint` を実行し、package manifest、icon、metadata、author を含む厳密検証を行う。この検証は GitHub Actions の最終確認で実行する。`package.json` の `author` は Raycast account username と一致している必要がある。
+`npm run lint` はローカル公開前確認では実行しない。`npm run lint` は `ray lint` を実行し、package manifest、icon、metadata、author を含む厳密検証を行う。この検証は GitHub Actions の `Build`、`Release`、`Publish Release to Raycast` で実行する。`package.json` の `author` は Raycast account username と一致している必要がある。
 
 `npm run build` は `ray build -e dist` を実行する。Raycast 公式 CLI の説明では、`ray build` は配布用の optimized production build を作成し、`ray build -e dist` は Extension が正しく build できるかの検証に使える。
 
@@ -300,9 +302,9 @@ ray publish
 npm run lint
 ```
 
-`npm run lint` は GitHub Actions の最終確認で実行する。ローカル開発では `npm run check` または `npm run lint:local` を使用する。
+`npm run lint` は GitHub Actions の `Build`、`Release`、`Publish Release to Raycast` で実行する。ローカル開発では `npm run check` または `npm run lint:local` を使用する。
 
-`publish` は Raycast Store 公開処理に関わるため、ローカルでは実行しない。GitHub Actions の手動 workflow だけで扱う。
+`publish` は Raycast Store 公開処理に関わるため、ローカルでは実行しない。GitHub Actions の `Release` または `Publish Release to Raycast` で扱う。
 
 `package.json` には公式手順に合わせて `publish` script を定義する。ただし、実行する場所は GitHub Actions に限定する。
 
@@ -326,7 +328,7 @@ GitHub Release 作成もローカルでは実行しない。GitHub Release と R
 
 - Raycast Store への公開実行
 - Raycast Store 用 Pull Request 作成
-- GitHub Actions 上の最終確認
+- GitHub Actions 上の `Build`
 - GitHub Actions 上の `ray lint`
 - GitHub Actions 上の publish 実行
 - GitHub Actions 上の release tag 作成

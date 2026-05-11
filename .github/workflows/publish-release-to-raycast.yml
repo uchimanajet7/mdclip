@@ -1,0 +1,105 @@
+name: Publish Release to Raycast
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing GitHub Release tag to publish to the Raycast Store"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      release_tag:
+        description: "Existing GitHub Release tag to publish to the Raycast Store"
+        required: true
+        type: string
+    secrets:
+      RAYCAST_PUBLISH_GITHUB_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish Release to Raycast
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate release tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "release_tag must use vX.Y.Z format: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          git fetch --force --tags origin
+
+          if ! git rev-parse --verify --quiet "refs/tags/${RELEASE_TAG}^{commit}" >/dev/null; then
+            echo "Git tag does not exist: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null; then
+            echo "GitHub Release does not exist: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          git checkout --detach "$RELEASE_TAG"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify release manifest tag
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          MANIFEST_TAG="$(node -p "require('./.github/release-manifest.json').tag")"
+          if [ "$MANIFEST_TAG" != "$RELEASE_TAG" ]; then
+            echo "release_tag must match .github/release-manifest.json tag." >&2
+            echo "release_tag: ${RELEASE_TAG}" >&2
+            echo "manifest tag: ${MANIFEST_TAG}" >&2
+            exit 1
+          fi
+
+      - name: Validate release manifest
+        run: node scripts/release-manifest.mjs validate --publish-to-raycast true
+
+      - name: Run local checks
+        run: npm run check
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Run Raycast lint
+        run: npm run lint
+
+      - name: Verify Raycast publish GitHub token
+        env:
+          RAYCAST_PUBLISH_GITHUB_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
+        run: |
+          if [ -z "$RAYCAST_PUBLISH_GITHUB_TOKEN" ]; then
+            echo "RAYCAST_PUBLISH_GITHUB_TOKEN is required for Raycast Store publish." >&2
+            echo "Set a GitHub Personal Access Token that can create the Raycast publish pull request as the repository secret named RAYCAST_PUBLISH_GITHUB_TOKEN." >&2
+            exit 1
+          fi
+
+      - name: Publish to Raycast Store
+        env:
+          GITHUB_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
+        run: npm run publish

@@ -140,8 +140,9 @@ async function verifyIconGenerationScript() {
 
 async function verifyReleaseManifest() {
   await assertFileExists(path.join(repoRoot, ".github", "release-manifest.json"));
+  await assertFileExists(path.join(repoRoot, ".github", "workflows", "build.yml"));
+  await assertFileExists(path.join(repoRoot, ".github", "workflows", "publish-release-to-raycast.yml"));
   await assertFileExists(path.join(repoRoot, ".github", "workflows", "release.yml"));
-  await assertFileExists(path.join(repoRoot, ".github", "workflows", "raycast-publish.yml"));
   await assertFileExists(path.join(repoRoot, "CHANGELOG.md"));
   await assertFileExists(path.join(repoRoot, "docs", "release-management.md"));
 
