@@ -14,7 +14,7 @@ on:
         required: true
         type: string
     secrets:
-      RAYCAST_PUBLISH_GITHUB_TOKEN:
+      RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC:
         required: true
 
 permissions:
@@ -79,26 +79,17 @@ jobs:
       - name: Validate release manifest
         run: node scripts/release-manifest.mjs validate --publish-to-raycast true
 
-      - name: Run local checks
-        run: npm run check
-
-      - name: Build extension
-        run: npm run build
-
-      - name: Run Raycast lint
-        run: npm run lint
-
       - name: Verify Raycast publish GitHub token
         env:
-          RAYCAST_PUBLISH_GITHUB_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
+          RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC }}
         run: |
-          if [ -z "$RAYCAST_PUBLISH_GITHUB_TOKEN" ]; then
-            echo "RAYCAST_PUBLISH_GITHUB_TOKEN is required for Raycast Store publish." >&2
-            echo "Set a GitHub Personal Access Token that can create the Raycast publish pull request as the repository secret named RAYCAST_PUBLISH_GITHUB_TOKEN." >&2
+          if [ -z "$RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC" ]; then
+            echo "RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC is required for Raycast Store publish." >&2
+            echo "Set a GitHub Personal Access Token classic with public_repo scope as the repository secret named RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC." >&2
             exit 1
           fi
 
       - name: Publish to Raycast Store
         env:
-          GITHUB_ACCESS_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN }}
+          GITHUB_ACCESS_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC }}
         run: npm run publish

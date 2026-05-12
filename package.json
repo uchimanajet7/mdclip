@@ -145,7 +145,7 @@
     "check": "npm run check:type && npm run lint:local && npm run check:local",
     "check:type": "tsc -p tsconfig.json --noEmit",
     "check:lint": "eslint src/**",
-    "check:format": "prettier --check src",
+    "check:format": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/*.mjs\" \"README.md\" \"README.ja.md\" \"CHANGELOG.md\" \"docs/**/*.md\" \"package.json\" \"tsconfig.json\" \"eslint.config.js\" \".prettierrc\" \".github/dependabot.yml\" \".github/workflows/*.yml\" \".github/release-manifest.json\" \".github/release-changelog/*.md\"",
     "check:local": "node scripts/local-verification.mjs",
     "update:dependencies": "node scripts/update-dependencies.mjs",
     "dev": "ray develop",
@@ -156,10 +156,10 @@
     "build": "ray build -e dist",
     "lint:local": "npm run check:lint && npm run check:format",
     "lint": "ray lint",
-    "fix-lint": "eslint src/** --fix && prettier --write src",
+    "fix-lint": "eslint src/** --fix && prettier --write \"src/**/*.{ts,tsx}\" \"scripts/*.mjs\" \"README.md\" \"README.ja.md\" \"CHANGELOG.md\" \"docs/**/*.md\" \"package.json\" \"tsconfig.json\" \"eslint.config.js\" \".prettierrc\" \".github/dependabot.yml\" \".github/workflows/*.yml\" \".github/release-manifest.json\" \".github/release-changelog/*.md\"",
     "migrate": "npx --yes @raycast/migration@latest .",
     "publish": "npx @raycast/api@latest publish",
-    "format": "prettier --write src"
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"scripts/*.mjs\" \"README.md\" \"README.ja.md\" \"CHANGELOG.md\" \"docs/**/*.md\" \"package.json\" \"tsconfig.json\" \"eslint.config.js\" \".prettierrc\" \".github/dependabot.yml\" \".github/workflows/*.yml\" \".github/release-manifest.json\" \".github/release-changelog/*.md\""
   },
   "dependencies": {
     "@raycast/api": "^1.104.16",
@@ -167,7 +167,7 @@
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.1.1",
-    "@types/node": "^25.6.2",
+    "@types/node": "^25.7.0",
     "@types/react": "^19.2.14",
     "esbuild": "^0.28.0",
     "eslint": "^10.3.0",

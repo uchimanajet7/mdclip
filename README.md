@@ -76,25 +76,25 @@ Prompt Launcher Preferences
     └── Preview Max Characters
 ```
 
-| Prompt Set Section | Preference | Requirement | Description |
-| --- | --- | --- | --- |
-| Prompt Set 1 | Enable Prompt Set 1 | Optional, on by default | Includes `Prompt Set 1` in its command and `All Prompt Sets` |
-| Prompt Set 1 | Prompt Set 1 Folder | Required to use `Prompt Set 1` | Markdown folder used by `Prompt Set 1` |
-| Prompt Set 1 | Prompt Set 1 Name | Optional | Display name shown in Raycast |
-| Prompt Set 2 | Enable Prompt Set 2 | Optional, on by default | Includes `Prompt Set 2` in its command and `All Prompt Sets` |
-| Prompt Set 2 | Prompt Set 2 Folder | Required to use `Prompt Set 2` | Markdown folder used by `Prompt Set 2` |
-| Prompt Set 2 | Prompt Set 2 Name | Optional | Display name shown in Raycast |
-| Prompt Set 3 | Enable Prompt Set 3 | Optional, on by default | Includes `Prompt Set 3` in its command and `All Prompt Sets` |
-| Prompt Set 3 | Prompt Set 3 Folder | Required to use `Prompt Set 3` | Markdown folder used by `Prompt Set 3` |
-| Prompt Set 3 | Prompt Set 3 Name | Optional | Display name shown in Raycast |
+| Prompt Set Section | Preference          | Requirement                    | Description                                                  |
+| ------------------ | ------------------- | ------------------------------ | ------------------------------------------------------------ |
+| Prompt Set 1       | Enable Prompt Set 1 | Optional, on by default        | Includes `Prompt Set 1` in its command and `All Prompt Sets` |
+| Prompt Set 1       | Prompt Set 1 Folder | Required to use `Prompt Set 1` | Markdown folder used by `Prompt Set 1`                       |
+| Prompt Set 1       | Prompt Set 1 Name   | Optional                       | Display name shown in Raycast                                |
+| Prompt Set 2       | Enable Prompt Set 2 | Optional, on by default        | Includes `Prompt Set 2` in its command and `All Prompt Sets` |
+| Prompt Set 2       | Prompt Set 2 Folder | Required to use `Prompt Set 2` | Markdown folder used by `Prompt Set 2`                       |
+| Prompt Set 2       | Prompt Set 2 Name   | Optional                       | Display name shown in Raycast                                |
+| Prompt Set 3       | Enable Prompt Set 3 | Optional, on by default        | Includes `Prompt Set 3` in its command and `All Prompt Sets` |
+| Prompt Set 3       | Prompt Set 3 Folder | Required to use `Prompt Set 3` | Markdown folder used by `Prompt Set 3`                       |
+| Prompt Set 3       | Prompt Set 3 Name   | Optional                       | Display name shown in Raycast                                |
 
 Other preferences apply to all Prompt Sets.
 
-| Preference | Requirement | Description |
-| --- | --- | --- |
-| Editor | Optional | App used by `Open in Editor`. When unset, `Open` uses the default app |
-| Preview Line Count | Optional | Number of leading lines shown in the preview. Default is `10` |
-| Preview Max Characters | Optional | Maximum number of characters shown in the preview. Default is `4000` |
+| Preference             | Requirement | Description                                                           |
+| ---------------------- | ----------- | --------------------------------------------------------------------- |
+| Editor                 | Optional    | App used by `Open in Editor`. When unset, `Open` uses the default app |
+| Preview Line Count     | Optional    | Number of leading lines shown in the preview. Default is `10`         |
+| Preview Max Characters | Optional    | Maximum number of characters shown in the preview. Default is `4000`  |
 
 If you turn off `Enable Prompt Set N`, that Prompt Set is excluded from its command and from `All Prompt Sets` until you turn it on again.
 
@@ -116,11 +116,11 @@ Open `All Prompt Sets` when you want to search across multiple enabled folders.
 
 ## Commands
 
-| Command | Description |
-| --- | --- |
-| Prompt Set 1 | Shows Markdown prompts from `Prompt Set 1 Folder` |
-| Prompt Set 2 | Shows Markdown prompts from `Prompt Set 2 Folder` |
-| Prompt Set 3 | Shows Markdown prompts from `Prompt Set 3 Folder` |
+| Command         | Description                                                             |
+| --------------- | ----------------------------------------------------------------------- |
+| Prompt Set 1    | Shows Markdown prompts from `Prompt Set 1 Folder`                       |
+| Prompt Set 2    | Shows Markdown prompts from `Prompt Set 2 Folder`                       |
+| Prompt Set 3    | Shows Markdown prompts from `Prompt Set 3 Folder`                       |
 | All Prompt Sets | Searches Markdown prompts across all enabled and configured Prompt Sets |
 
 Raycast hotkeys can be assigned per command. Assign hotkeys to the Prompt Sets you use most often, and use `All Prompt Sets` when you want to search across enabled folders.
@@ -129,15 +129,15 @@ Raycast hotkeys can be assigned per command. Assign hotkeys to the Prompt Sets y
 
 The following actions are available when a Markdown file is selected.
 
-| Action | Description |
-| --- | --- |
-| Copy Raw Content | Copies the full Markdown file content to the clipboard without changes |
-| Copy Expanded Content | Replaces supported Dynamic Placeholders in the full Markdown file content, then copies the result |
-| Show Preview / Hide Preview | Toggles the preview pane |
-| Open in Editor | Shown when `Editor` is configured. Opens the Markdown file in the configured editor |
-| Open | Shown when `Editor` is not configured. Opens the Markdown file in the default app |
-| Open with… | Opens the Markdown file with another compatible app |
-| Show in Finder | Shows the Markdown file in Finder |
+| Action                      | Description                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| Copy Raw Content            | Copies the full Markdown file content to the clipboard without changes                            |
+| Copy Expanded Content       | Replaces supported Dynamic Placeholders in the full Markdown file content, then copies the result |
+| Show Preview / Hide Preview | Toggles the preview pane                                                                          |
+| Open in Editor              | Shown when `Editor` is configured. Opens the Markdown file in the configured editor               |
+| Open                        | Shown when `Editor` is not configured. Opens the Markdown file in the default app                 |
+| Open with…                  | Opens the Markdown file with another compatible app                                               |
+| Show in Finder              | Shows the Markdown file in Finder                                                                 |
 
 `Copy Raw Content` is the default action. Pressing Enter copies the full content of the selected Markdown file.
 
@@ -172,16 +172,16 @@ If a Markdown file does not use Dynamic Placeholders, `Copy Raw Content` and `Co
 
 `Copy Expanded Content` replaces only the Dynamic Placeholders listed below.
 
-| Placeholder | Replacement |
-| --- | --- |
-| `{date}` | Current date based on your environment locale |
-| `{time}` | Current time based on your environment locale |
-| `{datetime}` | Current date and time based on your environment locale |
-| `{day}` | Day of the week based on your environment locale |
-| `{timezone}` | Prompt Launcher placeholder for the time zone in `Asia/Tokyo UTC+09:00` format |
-| `{now}` | Current date and time from `{datetime}` plus `{timezone}`, separated by a space |
-| `{uuid}` | Random UUID |
-| `{clipboard}` | Current clipboard text |
+| Placeholder   | Replacement                                                                     |
+| ------------- | ------------------------------------------------------------------------------- |
+| `{date}`      | Current date based on your environment locale                                   |
+| `{time}`      | Current time based on your environment locale                                   |
+| `{datetime}`  | Current date and time based on your environment locale                          |
+| `{day}`       | Day of the week based on your environment locale                                |
+| `{timezone}`  | Prompt Launcher placeholder for the time zone in `Asia/Tokyo UTC+09:00` format  |
+| `{now}`       | Current date and time from `{datetime}` plus `{timezone}`, separated by a space |
+| `{uuid}`      | Random UUID                                                                     |
+| `{clipboard}` | Current clipboard text                                                          |
 
 Placeholders that are not listed here are not replaced and remain unchanged in the copied text.
 
@@ -197,12 +197,12 @@ Use `Show Preview` / `Hide Preview` to toggle the preview pane. The selected sta
 
 Use the `Sort` dropdown on the right side of the search bar to change the list order.
 
-| Sort | Description |
-| --- | --- |
-| Updated (Newest First) | Newest updated files first. This is the default |
-| Updated (Oldest First) | Oldest updated files first |
-| Name (A-Z) | File name ascending |
-| Path (A-Z) | Relative path from the Prompt Set Folder ascending |
+| Sort                   | Description                                        |
+| ---------------------- | -------------------------------------------------- |
+| Updated (Newest First) | Newest updated files first. This is the default    |
+| Updated (Oldest First) | Oldest updated files first                         |
+| Name (A-Z)             | File name ascending                                |
+| Path (A-Z)             | Relative path from the Prompt Set Folder ascending |
 
 ## Markdown File Handling
 

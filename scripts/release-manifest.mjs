@@ -4,10 +4,11 @@ import path from "node:path";
 
 const repoRoot = process.cwd();
 const manifestPath = path.join(repoRoot, ".github", "release-manifest.json");
+const supportedCommands = ["validate", "body", "outputs"];
 
 const command = process.argv[2];
 
-if (!["validate", "body", "outputs"].includes(command)) {
+if (!supportedCommands.includes(command)) {
   throw new Error("Usage: node scripts/release-manifest.mjs validate|body|outputs [--publish-to-raycast true|false]");
 }
 
@@ -15,121 +16,115 @@ const manifest = await readJson(manifestPath);
 
 if (command === "validate") {
   const publishToRaycast = readBooleanOption("--publish-to-raycast");
-  await validateManifest(manifest, publishToRaycast);
+  await validateManifest(manifest, { publishToRaycast });
 }
 
 if (command === "body") {
-  await validateManifest(manifest, false);
+  await validateManifest(manifest);
   process.stdout.write(`${await createReleaseBody(manifest)}\n`);
 }
 
 if (command === "outputs") {
-  await validateManifest(manifest, false);
+  await validateManifest(manifest);
   process.stdout.write(`tag=${manifest.tag}\n`);
   process.stdout.write(`title=${manifest.title}\n`);
 }
 
-async function validateManifest(releaseManifest, publishToRaycast) {
+async function validateManifest(releaseManifest, options = {}) {
   assert.equal(typeof releaseManifest.tag, "string", "release-manifest.json tag must be a string");
   assert.match(releaseManifest.tag, /^v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/, "tag must use vX.Y.Z format");
+
   assert.equal(typeof releaseManifest.title, "string", "release-manifest.json title must be a string");
   assert(releaseManifest.title.length > 0, "release title must not be empty");
-  assert.equal(typeof releaseManifest.repository, "string", "release-manifest.json repository must be a string");
-  assert.match(releaseManifest.repository, /^[^/\s]+\/[^/\s]+$/, "repository must use owner/repository format");
 
-  const bodySource = releaseManifest.githubRelease?.bodySource;
-  assert(["changelog-entry", "manifest-notes"].includes(bodySource), "githubRelease.bodySource is invalid");
+  assert.equal(typeof releaseManifest.previousGitHubReleaseTag, "string", "previousGitHubReleaseTag must be a string");
+  assert.match(
+    releaseManifest.previousGitHubReleaseTag,
+    /^v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/,
+    "previousGitHubReleaseTag must use vX.Y.Z format",
+  );
+  assert.notEqual(
+    releaseManifest.previousGitHubReleaseTag,
+    releaseManifest.tag,
+    "previousGitHubReleaseTag must not be the same as tag",
+  );
 
-  if (publishToRaycast && bodySource !== "changelog-entry") {
-    throw new Error("Raycast publishing requires githubRelease.bodySource to be changelog-entry");
+  assert.equal(
+    typeof releaseManifest.githubReleaseChangelogFile,
+    "string",
+    "githubReleaseChangelogFile must be a string",
+  );
+  assert(
+    releaseManifest.githubReleaseChangelogFile.startsWith(".github/release-changelog/"),
+    "githubReleaseChangelogFile must be under .github/release-changelog/",
+  );
+  assert(
+    releaseManifest.githubReleaseChangelogFile.endsWith(`${releaseManifest.tag}.md`),
+    "githubReleaseChangelogFile file name must match tag",
+  );
+
+  if (releaseManifest.previousRaycastStorePublishTag !== null) {
+    assert.equal(
+      typeof releaseManifest.previousRaycastStorePublishTag,
+      "string",
+      "previousRaycastStorePublishTag must be null or a string",
+    );
+    assert.match(
+      releaseManifest.previousRaycastStorePublishTag,
+      /^v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/,
+      "previousRaycastStorePublishTag must use vX.Y.Z format",
+    );
+    assert.notEqual(
+      releaseManifest.previousRaycastStorePublishTag,
+      releaseManifest.tag,
+      "previousRaycastStorePublishTag must not be the same as tag",
+    );
   }
 
-  if (bodySource === "changelog-entry") {
-    const entry = await readChangelogEntry(releaseManifest);
-    assert(entry.body.length > 0, "changelog entry body must not be empty");
-  }
+  const changelogText = await readReleaseChangelogFile(releaseManifest.githubReleaseChangelogFile);
+  assert(changelogText.trim().length > 0, "githubReleaseChangelogFile must not be empty");
 
-  if (bodySource === "manifest-notes") {
-    const notes = releaseManifest.githubRelease?.notes;
-    assert(Array.isArray(notes), "githubRelease.notes must be an array");
-    assert(notes.length > 0, "githubRelease.notes must not be empty");
-    for (const note of notes) {
-      assert.equal(typeof note, "string", "githubRelease.notes entries must be strings");
-      assert(note.length > 0, "githubRelease.notes entries must not be empty");
-    }
+  if (options.publishToRaycast) {
+    await validateRaycastStoreVersionHistory();
   }
 }
 
 async function createReleaseBody(releaseManifest) {
-  if (releaseManifest.githubRelease.bodySource === "manifest-notes") {
-    return releaseManifest.githubRelease.notes.map((note) => `- ${note}`).join("\n");
-  }
-
-  const entry = await readChangelogEntry(releaseManifest);
-  const changelogUrl = [
-    `https://github.com/${releaseManifest.repository}/blob/${releaseManifest.tag}`,
-    entry.file.split(path.sep).join("/"),
-  ].join("/");
-
-  return [
-    `See [${entry.file} / ${releaseManifest.changelog.entryTitle}](${changelogUrl}#${entry.anchor}).`,
-    "",
-    entry.body,
-  ].join("\n");
+  return (await readReleaseChangelogFile(releaseManifest.githubReleaseChangelogFile)).trimEnd();
 }
 
-async function readChangelogEntry(releaseManifest) {
-  const changelog = releaseManifest.changelog;
-  assert(changelog, "changelog must be defined when githubRelease.bodySource is changelog-entry");
-  assert.equal(typeof changelog.file, "string", "changelog.file must be a string");
-  assert.equal(typeof changelog.entryTitle, "string", "changelog.entryTitle must be a string");
+async function readReleaseChangelogFile(file) {
+  return readFile(path.join(repoRoot, file), "utf8");
+}
 
-  const filePath = path.join(repoRoot, changelog.file);
-  const text = await readFile(filePath, "utf8");
-  const lines = text.split(/\r?\n/);
-  const headingPattern = new RegExp(`^## \\[${escapeRegExp(changelog.entryTitle)}\\] - .+$`);
-  const startIndex = lines.findIndex((line) => headingPattern.test(line));
+async function validateRaycastStoreVersionHistory() {
+  const changelogText = await readFile(path.join(repoRoot, "CHANGELOG.md"), "utf8");
+  const changelogLines = changelogText.split(/\r?\n/);
+  const firstEntryStartIndex = changelogLines.findIndex((line) => line.startsWith("## "));
 
-  assert.notEqual(startIndex, -1, `CHANGELOG.md entry not found: ${changelog.entryTitle}`);
+  assert.notEqual(firstEntryStartIndex, -1, "CHANGELOG.md must contain a Raycast Store Version History entry");
 
-  const bodyLines = [];
-  for (let index = startIndex + 1; index < lines.length; index += 1) {
-    if (lines[index].startsWith("## ")) {
+  const firstEntryHeading = changelogLines[firstEntryStartIndex];
+  assert.match(
+    firstEntryHeading,
+    /^## \[[^\]]+\] - \{PR_MERGE_DATE\}$/,
+    "CHANGELOG.md first entry must use ## [Title] - {PR_MERGE_DATE} format",
+  );
+
+  const firstEntryBodyLines = [];
+
+  for (let index = firstEntryStartIndex + 1; index < changelogLines.length; index += 1) {
+    if (changelogLines[index].startsWith("## ")) {
       break;
     }
-    bodyLines.push(lines[index]);
+
+    firstEntryBodyLines.push(changelogLines[index]);
   }
 
-  return {
-    file: changelog.file,
-    heading: lines[startIndex],
-    anchor: createGitHubHeadingAnchor(lines[startIndex].replace(/^##\s+/, "")),
-    body: trimBlankLines(bodyLines).join("\n"),
-  };
-}
-
-function createGitHubHeadingAnchor(headingText) {
-  return headingText
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s_-]/gu, "")
-    .trim()
-    .replace(/\s+/g, "-");
-}
-
-function trimBlankLines(lines) {
-  let start = 0;
-  let end = lines.length;
-
-  while (start < end && lines[start].trim() === "") {
-    start += 1;
-  }
-
-  while (end > start && lines[end - 1].trim() === "") {
-    end -= 1;
-  }
-
-  return lines.slice(start, end);
+  assert(
+    firstEntryBodyLines.some((line) => line.trim().length > 0),
+    "CHANGELOG.md first entry body must not be empty",
+  );
 }
 
 function readBooleanOption(name) {
@@ -150,10 +145,6 @@ function readBooleanOption(name) {
   }
 
   throw new Error(`${name} must be true or false`);
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function readJson(filePath) {
