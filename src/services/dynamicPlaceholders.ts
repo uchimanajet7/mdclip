@@ -12,7 +12,7 @@ export async function expandDynamicPlaceholders(content: string): Promise<string
     .replaceAll("{day}", formatDay(now))
     .replaceAll("{timezone}", formatTimeZone(now))
     .replaceAll("{now}", formatNow(now))
-    .replaceAll("{uuid}", randomUUID().toUpperCase());
+    .replaceAll("{uuid}", () => randomUUID().toUpperCase());
 
   return clipboardText === undefined ? expandedContent : expandedContent.replaceAll("{clipboard}", clipboardText);
 }

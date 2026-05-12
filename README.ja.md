@@ -180,7 +180,7 @@ Dynamic Placeholders を使っていない Markdown ファイルでは、`Copy R
 | `{day}`       | 実行環境の locale に基づく曜日                                                                                                |
 | `{timezone}`  | Prompt Launcher 追加 placeholder。`Asia/Tokyo UTC+09:00` 形式の time zone                                                     |
 | `{now}`       | `{datetime}` と `{timezone}` を空白で連結した現在日時。AI への指示で現在時点を明示するための Prompt Launcher 追加 placeholder |
-| `{uuid}`      | ランダムな UUID                                                                                                               |
+| `{uuid}`      | 出現箇所ごとに個別生成するランダムな UUID                                                                                     |
 | `{clipboard}` | 現在のクリップボード文字列                                                                                                    |
 
 この表にない placeholder は置換されず、そのままコピー結果に残ります。

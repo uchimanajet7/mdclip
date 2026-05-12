@@ -180,7 +180,7 @@ If a Markdown file does not use Dynamic Placeholders, `Copy Raw Content` and `Co
 | `{day}`       | Day of the week based on your environment locale                                |
 | `{timezone}`  | Prompt Launcher placeholder for the time zone in `Asia/Tokyo UTC+09:00` format  |
 | `{now}`       | Current date and time from `{datetime}` plus `{timezone}`, separated by a space |
-| `{uuid}`      | Random UUID                                                                     |
+| `{uuid}`      | Random UUID generated separately for each `{uuid}` occurrence                   |
 | `{clipboard}` | Current clipboard text                                                          |
 
 Placeholders that are not listed here are not replaced and remain unchanged in the copied text.

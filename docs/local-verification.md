@@ -171,7 +171,7 @@ npm run demo:clean
 - 通常の `.md` ファイル
 - ネストされた大文字拡張子 `.MD` の Markdown ファイル
 - Dynamic Placeholders を含む `.md` ファイル
-- 対応表に記載した全種類の Dynamic Placeholders を含む `.md` ファイル
+- 対応表に記載した全種類の Dynamic Placeholders と複数の `{uuid}` を含む `.md` ファイル
 - 拡張子が `.md` ではないファイル
 - `.git` 配下の `.md` ファイル
 - `node_modules` 配下の `.md` ファイル
@@ -281,6 +281,7 @@ npm run check
 - `src/services/markdownFiles.ts` がディレクトリではない path をエラーにできること
 - `src/services/preview.ts` が指定行数と最大文字数に従って冒頭プレビューを返せること
 - `src/services/dynamicPlaceholders.ts` が `{date}`、`{time}`、`{datetime}`、`{day}`、`{timezone}`、`{now}`、`{uuid}`、`{clipboard}` を置換できること
+- `src/services/dynamicPlaceholders.ts` が複数の `{uuid}` を出現箇所ごとに別々の UUID へ置換できること
 - `src/services/dynamicPlaceholders.ts` が `{clipboard}` を含まない Markdown 本文ではクリップボードを読み取らないこと
 
 この単体確認では、release workflow、publish workflow、GitHub Release body、Dependabot、アイコン生成 script、README や仕様書の文言監視は扱わない。

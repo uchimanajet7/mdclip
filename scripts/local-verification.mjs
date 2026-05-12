@@ -174,7 +174,7 @@ export const Clipboard = {
 
   const { expandDynamicPlaceholders } = await import(pathToFileURL(outputFile));
   const expanded = await expandDynamicPlaceholders(
-    "date={date}\ntime={time}\ndatetime={datetime}\nday={day}\ntimezone={timezone}\nnow={now}\nuuid={uuid}\nclipboard={clipboard}",
+    "date={date}\ntime={time}\ndatetime={datetime}\nday={day}\ntimezone={timezone}\nnow={now}\nuuid_one={uuid}\nuuid_two={uuid}\nclipboard={clipboard}",
   );
 
   assert.match(expanded, /date=.+/);
@@ -186,7 +186,9 @@ export const Clipboard = {
   assert(!expanded.includes("timezone={timezone}"));
   assert.match(expanded, /now=.+ (.+ )?UTC[+-]\d{2}:\d{2}/);
   assert(!expanded.includes("now={now}"));
-  assert.match(expanded, /uuid=[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/);
+  const uuidMatches = expanded.match(/[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}/g);
+  assert.equal(uuidMatches?.length, 2);
+  assert.notEqual(uuidMatches[0], uuidMatches[1]);
   assert.match(expanded, /clipboard=CLIPBOARD_TEXT/);
   assert(!expanded.includes("{date}"));
   assert(!expanded.includes("{clipboard}"));

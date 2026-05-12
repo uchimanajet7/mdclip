@@ -82,7 +82,8 @@ Date and time: {datetime}
 Weekday: {day}
 Time zone: {timezone}
 Now: {now}
-UUID: {uuid}
+UUID 1: {uuid}
+UUID 2: {uuid}
 Clipboard:
 {clipboard}
 `,
