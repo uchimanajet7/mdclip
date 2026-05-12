@@ -31,7 +31,7 @@ npm ci
 | `npm run check`               | `npm run check:type && npm run lint:local && npm run check:local` | Raycast CLI を使わない一括確認                                                                                |
 | `npm run check:type`          | `tsc -p tsconfig.json --noEmit`                                   | TypeScript 型検査                                                                                             |
 | `npm run check:lint`          | `eslint src/**`                                                   | Raycast CLI を使わない source lint                                                                            |
-| `npm run check:format`        | `prettier --check` + 明示対象                                     | 明示対象ファイルの整形差分確認                                                                                |
+| `npm run check:format`        | `node scripts/format.mjs --check`                                 | 明示対象ファイルの整形差分確認                                                                                |
 | `npm run check:local`         | `node scripts/local-verification.mjs`                             | Raycast アプリに依存しない単体確認                                                                            |
 | `npm run update:dependencies` | `node scripts/update-dependencies.mjs`                            | 依存 package と Raycast API を一括更新                                                                        |
 | `npm run lint:local`          | `npm run check:lint && npm run check:format`                      | author 検証を行わないローカル開発用 lint                                                                      |
@@ -39,11 +39,11 @@ npm ci
 | `npm run demo:setup`          | `node scripts/demo-prompts.mjs setup`                             | Raycast 手動動作確認用 Prompt Set を生成                                                                      |
 | `npm run demo:clean`          | `node scripts/demo-prompts.mjs clean`                             | Raycast 手動動作確認用 Prompt Set を削除                                                                      |
 | `npm run icon:generate`       | `node scripts/generate-icon.mjs`                                  | 確認用アイコンを `assets/icon.generated.png` に生成し、確認後または `--yes` 指定時に `assets/icon.png` へ反映 |
-| `npm run fix-lint`            | `eslint src/** --fix && prettier --write` + 明示対象              | author 検証を行わないローカル開発用 lint 自動修正と Prettier 整形                                             |
+| `npm run fix-lint`            | `eslint src/** --fix && npm run format`                           | author 検証を行わないローカル開発用 lint 自動修正と Prettier 整形                                             |
 | `npm run dev`                 | `ray develop`                                                     | Raycast development mode で起動                                                                               |
 | `npm run build`               | `ray build -e dist`                                               | distribution build の確認                                                                                     |
 | `npm run migrate`             | `npx --yes @raycast/migration@latest .`                           | `@raycast/api` 更新時の移行                                                                                   |
-| `npm run format`              | `prettier --write` + 明示対象                                     | 明示対象ファイルの Prettier 整形                                                                              |
+| `npm run format`              | `node scripts/format.mjs --write`                                 | 明示対象ファイルの Prettier 整形                                                                              |
 
 ## 4. 通常のローカル実行順
 

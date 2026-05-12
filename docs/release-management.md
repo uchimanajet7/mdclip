@@ -391,12 +391,12 @@ Pull Request 作成後に確認する項目は以下とする。
 
 `Ready for review` 後は、reviewer からの comment、bot comment、GitHub Actions checks を確認する。reviewer から変更依頼があった場合は、内容を以下の 2 種類に分ける。
 
-| 変更内容                                            | 対応場所                         | Raycast publish 再実行 |
-| --------------------------------------------------- | -------------------------------- | ---------------------- |
-| Pull Request Description、Screencast、Checklist     | Raycast Pull Request 上で直接対応 | 不要                   |
+| 変更内容                                           | 対応場所                          | Raycast publish 再実行 |
+| -------------------------------------------------- | --------------------------------- | ---------------------- |
+| Pull Request Description、Screencast、Checklist    | Raycast Pull Request 上で直接対応 | 不要                   |
 | reviewer への返信                                  | Raycast Pull Request 上で返信     | 不要                   |
-| code、README、CHANGELOG、metadata、assets の修正    | この repository で修正            | 必要                   |
-| Store 用 screenshot や README 用 media file の修正  | この repository で修正            | 必要                   |
+| code、README、CHANGELOG、metadata、assets の修正   | この repository で修正            | 必要                   |
+| Store 用 screenshot や README 用 media file の修正 | この repository で修正            | 必要                   |
 
 この repository の実ファイルを変更する場合は、修正を commit / push する。
 

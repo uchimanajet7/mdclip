@@ -145,7 +145,7 @@
     "check": "npm run check:type && npm run lint:local && npm run check:local",
     "check:type": "tsc -p tsconfig.json --noEmit",
     "check:lint": "eslint src/**",
-    "check:format": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/*.mjs\" \"README.md\" \"README.ja.md\" \"CHANGELOG.md\" \"docs/**/*.md\" \"package.json\" \"tsconfig.json\" \"eslint.config.js\" \".prettierrc\" \".github/dependabot.yml\" \".github/workflows/*.yml\" \".github/release-manifest.json\" \".github/release-changelog/*.md\"",
+    "check:format": "node scripts/format.mjs --check",
     "check:local": "node scripts/local-verification.mjs",
     "update:dependencies": "node scripts/update-dependencies.mjs",
     "dev": "ray develop",
@@ -156,10 +156,10 @@
     "build": "ray build -e dist",
     "lint:local": "npm run check:lint && npm run check:format",
     "lint": "ray lint",
-    "fix-lint": "eslint src/** --fix && prettier --write \"src/**/*.{ts,tsx}\" \"scripts/*.mjs\" \"README.md\" \"README.ja.md\" \"CHANGELOG.md\" \"docs/**/*.md\" \"package.json\" \"tsconfig.json\" \"eslint.config.js\" \".prettierrc\" \".github/dependabot.yml\" \".github/workflows/*.yml\" \".github/release-manifest.json\" \".github/release-changelog/*.md\"",
+    "fix-lint": "eslint src/** --fix && npm run format",
     "migrate": "npx --yes @raycast/migration@latest .",
     "publish": "npx @raycast/api@latest publish",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"scripts/*.mjs\" \"README.md\" \"README.ja.md\" \"CHANGELOG.md\" \"docs/**/*.md\" \"package.json\" \"tsconfig.json\" \"eslint.config.js\" \".prettierrc\" \".github/dependabot.yml\" \".github/workflows/*.yml\" \".github/release-manifest.json\" \".github/release-changelog/*.md\""
+    "format": "node scripts/format.mjs --write"
   },
   "dependencies": {
     "@raycast/api": "^1.104.16",

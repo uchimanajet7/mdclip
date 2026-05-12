@@ -187,8 +187,8 @@ README に表示する画像は `media/prompt-launcher-1.png` とする。README
 
 画像の役割は以下とする。
 
-| 画像                             | 役割                                  |
-| -------------------------------- | ------------------------------------- |
-| `metadata/*.png`                 | Raycast Store 用 screenshot           |
-| Pull Request の Screencast 欄    | reviewer 確認用の Pull Request 説明   |
-| `media/prompt-launcher-1.png`    | README に表示する画像                 |
+| 画像                          | 役割                                |
+| ----------------------------- | ----------------------------------- |
+| `metadata/*.png`              | Raycast Store 用 screenshot         |
+| Pull Request の Screencast 欄 | reviewer 確認用の Pull Request 説明 |
+| `media/prompt-launcher-1.png` | README に表示する画像               |
