@@ -89,6 +89,15 @@ jobs:
             exit 1
           fi
 
+      - name: Configure Git identity for Raycast publish
+        env:
+          GH_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC }}
+        run: |
+          GIT_USER_LOGIN="$(gh api user --jq .login)"
+          GIT_USER_ID="$(gh api user --jq .id)"
+          git config user.name "$GIT_USER_LOGIN"
+          git config user.email "${GIT_USER_ID}+${GIT_USER_LOGIN}@users.noreply.github.com"
+
       - name: Publish to Raycast Store
         env:
           GITHUB_ACCESS_TOKEN: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC }}

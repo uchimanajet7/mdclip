@@ -744,9 +744,9 @@ GitHub Actions の手動 workflow `.github/workflows/release.yml` は、`publish
 
 `publish_to_raycast` が `true` で Raycast Store publish が失敗した場合でも、release tag と GitHub Release は作成済みの状態で残る。この場合は、`Publish Release to Raycast` workflow に同じ `release_tag` を指定して再実行する。
 
-`Publish Release to Raycast` は実行前に、`release_tag` が `vX.Y.Z` 形式であること、Git tag が存在すること、GitHub Release が存在すること、checkout 対象が `release_tag` であること、checkout した tag 内の `.github/release-manifest.json` の `tag` が `release_tag` と一致すること、`CHANGELOG.md` に Raycast Store Version History として使う先頭 entry が存在すること、その先頭 entry が `## [Title] - {PR_MERGE_DATE}` 形式であること、その先頭 entry の本文が空ではないことを確認する。
+`Publish Release to Raycast` は実行前に、`release_tag` が `vX.Y.Z` 形式であること、Git tag が存在すること、GitHub Release が存在すること、checkout 対象が `release_tag` であること、checkout した tag 内の `.github/release-manifest.json` の `tag` が `release_tag` と一致すること、`CHANGELOG.md` に Raycast Store Version History として使う先頭 entry が存在すること、その先頭 entry が `## [Title] - {PR_MERGE_DATE}` 形式であること、その先頭 entry の本文が空ではないこと、`RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` が設定されていることを確認する。
 
-`Publish Release to Raycast` は、`release_tag` を checkout し、`.github/release-manifest.json` と `CHANGELOG.md` の Raycast Store Version History 用先頭 entry を Raycast publish 用として検証し、Raycast publish 用 GitHub token を確認してから `npm run publish` を実行する。release tag 作成、GitHub Release 作成、`npm run check`、`npm run build`、`npm run lint` は実行しない。
+`Publish Release to Raycast` は、`release_tag` を checkout し、`.github/release-manifest.json` と `CHANGELOG.md` の Raycast Store Version History 用先頭 entry を Raycast publish 用として検証し、Raycast publish 用 GitHub token を確認し、その token の認証ユーザーを Git identity として設定してから `npm run publish` を実行する。release tag 作成、GitHub Release 作成、`npm run check`、`npm run build`、`npm run lint` は実行しない。
 
 `Publish Release to Raycast` は `npm run check:local` を実行しない。`npm run check:local` は `local-verification/` を生成するため、Raycast Store publish 直前の workflow に含めない。
 
@@ -754,9 +754,24 @@ GitHub Actions から Raycast Store publish を実行する場合は、Repositor
 
 `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` は Raycast の token ではなく、Public Store へ公開 Pull Request を作成する GitHub アカウントで発行した GitHub Personal Access Token classic とする。scope は `public_repo` だけを設定する。
 
+Raycast 公式 extensions repository は以下である。
+
+```text
+https://github.com/raycast/extensions
+```
+
 `.github/workflows/publish-release-to-raycast.yml` は、Repository secret `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` を `npm run publish` 実行時の `GITHUB_ACCESS_TOKEN` 環境変数へ渡す。`GITHUB_ACCESS_TOKEN` は Raycast CLI publish が GitHub 認証に使用する環境変数である。
 
-GitHub Actions 標準の `GITHUB_TOKEN` は、`raycast/extensions` へ公開 Pull Request を作成する publish 認証には使用しない。`GH_TOKEN` は GitHub Release の存在確認など GitHub CLI 用に限定して使用する。
+`.github/workflows/publish-release-to-raycast.yml` は、Repository secret `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` を GitHub CLI の `GH_TOKEN` としても使用し、認証ユーザーの `login` と `id` を取得する。その値から `npm run publish` の前に Git の `user.name` と `user.email` を設定する。
+
+Git identity の形式は以下とする。
+
+```text
+user.name: <GitHub login>
+user.email: <GitHub user id>+<GitHub login>@users.noreply.github.com
+```
+
+GitHub Actions 標準の `GITHUB_TOKEN` は、`raycast/extensions` へ公開 Pull Request を作成する publish 認証には使用しない。`GH_TOKEN` は GitHub Release の存在確認と、Raycast publish 用 GitHub token の認証ユーザー取得に使用する。Raycast CLI の publish 認証には `GITHUB_ACCESS_TOKEN` を使用する。
 
 Raycast Store publish では、Personal Access Token classic を使用する。この workflow では fine-grained personal access token は使用しない。scope は `public_repo` だけを設定する。Raycast Store publish は、自分が所有していない public repository である `raycast/extensions` への fork 作成、push、Pull Request 作成を含むため、public repository 操作用の `public_repo` を使用する。`repo` は private repository も含むため、この用途では選択しない。
 
