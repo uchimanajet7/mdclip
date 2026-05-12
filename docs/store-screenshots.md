@@ -172,3 +172,23 @@ sips -g pixelWidth -g pixelHeight media/prompt-launcher-1.png
 Store に表示するスクリーンショットは、Raycast `Window Capture` が `Save to Metadata` で作成する `metadata/*.png` とする。
 
 README に表示するスクリーンショットは `media/prompt-launcher-1.png` とする。これは `metadata/prompt-launcher-1.png` を元に `npm run sync:readme-media` で同期する。
+
+## 9. Raycast Pull Request の Screencast
+
+Raycast publish 後に作成される `raycast/extensions` の Pull Request には、Screencast 欄がある。
+
+Screencast 欄は reviewer が画面内容を確認するための Pull Request 上の説明であり、Raycast Store に表示される Store 用 screenshot の保存場所ではない。
+
+Store に表示する screenshot は `metadata/*.png` とする。
+
+Screencast 欄には、`metadata/*.png` のうち reviewer に見せたい画像を貼る。
+
+README に表示する画像は `media/prompt-launcher-1.png` とする。README 用画像を更新する場合は、`metadata/prompt-launcher-1.png` を撮影後に `npm run sync:readme-media` を実行する。
+
+画像の役割は以下とする。
+
+| 画像                             | 役割                                  |
+| -------------------------------- | ------------------------------------- |
+| `metadata/*.png`                 | Raycast Store 用 screenshot           |
+| Pull Request の Screencast 欄    | reviewer 確認用の Pull Request 説明   |
+| `media/prompt-launcher-1.png`    | README に表示する画像                 |

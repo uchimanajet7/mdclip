@@ -58,7 +58,25 @@ README 用画像の同期は `npm run sync:readme-media` で実行する。
 - `docs/release-management.md`
 - `docs/store-screenshots.md`
 
-## 2.3 アイコンセット定義
+## 2.3 公開とリリース管理
+
+GitHub Release と Raycast Store publish の詳細手順は `docs/release-management.md` を正とする。
+
+この Extension では、GitHub Release tag を公開単位として扱う。Raycast Store publish は、作成済み GitHub Release tag を対象に実行する。
+
+Raycast publish により作成される Pull Request は、この repository ではなく Raycast 公式の `raycast/extensions` repository に作成される。
+
+Raycast 公式 extensions repository は以下である。
+
+```text
+https://github.com/raycast/extensions
+```
+
+Pull Request の Description、Screencast、Checklist、reviewer comment への返信は、Raycast Pull Request 上で対応する。
+
+code、README、CHANGELOG、metadata、assets などの実ファイル変更が必要な場合は、この repository で修正し、GitHub Release tag と Raycast Store publish の手順に従って Raycast Pull Request を更新する。
+
+## 2.4 アイコンセット定義
 
 公開用アイコンは、`Prompt Launcher` の主要機能である「既存の Markdown プロンプト群から選択し、クリップボードへコピーする」ことを表現する。
 
@@ -89,7 +107,7 @@ README 用画像の同期は `npm run sync:readme-media` で実行する。
 - rocket 単体
 - 大きな `MD` text
 
-## 2.4 Store スクリーンショット定義
+## 2.5 Store スクリーンショット定義
 
 Raycast Store 公開用スクリーンショットは、Raycast の `Window Capture` 機能で作成する。
 

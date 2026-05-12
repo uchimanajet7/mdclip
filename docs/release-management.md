@@ -13,6 +13,8 @@
 - Raycast Extension の `CHANGELOG.md` は、Raycast Store と extension detail の Version History として表示される。root に配置し、entry は `## [Title] - {PR_MERGE_DATE}` 形式にする。
   - https://developers.raycast.com/basics/prepare-an-extension-for-store
   - https://developers.raycast.com/information/versioning
+- Raycast 公式手順では、Extension の publish は `npm run publish` で行われ、Raycast 公式の `raycast/extensions` repository に Pull Request が作成される。Pull Request 作成後も `npm run publish` を再実行すると、その Pull Request に追加 commit を送ることができる。この project では、ローカルでは `npm run publish` を実行せず、GitHub Actions の `Publish Release to Raycast` workflow 内で実行する。
+  - https://developers.raycast.com/basics/publish-an-extension
 - GitHub Release は Git tag に基づき、GitHub Release notes を持つ。
   - https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases
 - GitHub Actions の手動実行は `workflow_dispatch` で扱う。workflow は GitHub 上に push 済みの内容を使って実行される。
@@ -358,6 +360,53 @@ Workflow input は以下とする。
 `npm run check:local` は `local-verification/` を生成するため、Raycast Store publish 直前の workflow では実行しない。
 
 GitHub Release と Raycast Store publish は、同一の `release_tag` を対象にする。
+
+### 9.4 Raycast publish 後の Pull Request 運用
+
+この project の `Publish Release to Raycast` workflow 内で `npm run publish` が成功すると、Raycast 公式の `raycast/extensions` repository に Pull Request が作成される。
+
+この Pull Request は、この repository の Pull Request ではない。Raycast Store へ公開するための review 対象である。
+
+Raycast 公式 extensions repository は以下である。
+
+```text
+https://github.com/raycast/extensions
+```
+
+作成された Pull Request の URL は以下の形式になる。
+
+```text
+https://github.com/raycast/extensions/pull/<number>
+```
+
+Pull Request 作成後に確認する項目は以下とする。
+
+1. Pull Request の Description が、Extension の目的と主要機能を説明している。
+2. Screencast に、reviewer が画面内容を確認できる画像を貼っている。
+3. Checklist の各項目を確認し、該当するものを check している。
+4. GitHub Actions checks が失敗していない。
+5. 表示されている変更内容が、今回 publish する release tag の内容と一致している。
+
+問題がなければ `Ready for review` にする。
+
+`Ready for review` 後は、reviewer からの comment、bot comment、GitHub Actions checks を確認する。reviewer から変更依頼があった場合は、内容を以下の 2 種類に分ける。
+
+| 変更内容                                            | 対応場所                         | Raycast publish 再実行 |
+| --------------------------------------------------- | -------------------------------- | ---------------------- |
+| Pull Request Description、Screencast、Checklist     | Raycast Pull Request 上で直接対応 | 不要                   |
+| reviewer への返信                                  | Raycast Pull Request 上で返信     | 不要                   |
+| code、README、CHANGELOG、metadata、assets の修正    | この repository で修正            | 必要                   |
+| Store 用 screenshot や README 用 media file の修正  | この repository で修正            | 必要                   |
+
+この repository の実ファイルを変更する場合は、修正を commit / push する。
+
+すでに作成済みの release tag に含まれる内容だけを再 publish する場合は、`Publish Release to Raycast` workflow に同じ `release_tag` を指定して再実行する。
+
+作成済みの release tag に含まれない実ファイル変更を Raycast Pull Request へ反映する場合は、新しい GitHub Release tag を作成し、その tag を対象に Raycast Store publish を実行する。
+
+この project では、Raycast Store publish の対象を GitHub Release tag に固定する。`main` branch や任意 commit SHA から Raycast Store publish しない。
+
+Raycast Pull Request が merge されると、Extension は Raycast Store に公開される。merge 後は Raycast Store 上で、Extension title、README、screenshot、Version History、install が想定どおりであることを確認する。
 
 ## 10. Dependabot
 
