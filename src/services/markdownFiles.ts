@@ -13,7 +13,7 @@ export async function listPromptFiles(promptSet: ConfiguredPromptSet): Promise<P
   }
 
   const files = await walkDirectory(rootPath, rootPath, promptSet);
-  return files.sort((left, right) => left.relativePath.localeCompare(right.relativePath, "ja"));
+  return files.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 }
 
 export async function listPromptFilesFromPromptSets(promptSets: ConfiguredPromptSet[]): Promise<PromptFile[]> {
