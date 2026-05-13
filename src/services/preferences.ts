@@ -48,10 +48,6 @@ export function getConfiguredPromptSetConfigs(): ConfiguredPromptSet[] {
     .filter((config): config is ConfiguredPromptSet => Boolean(config));
 }
 
-export function getEditorApplication() {
-  return getPreferences().editor;
-}
-
 function getEnabledPreference(preferences: ExtensionPreferences, promptSetId: PromptSetId): boolean {
   switch (promptSetId) {
     case 1:
