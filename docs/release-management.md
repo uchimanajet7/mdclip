@@ -251,6 +251,35 @@ Raycast Store Version History の入力は以下の積算である。
 .github/release-changelog/v0.1.3.md
 ```
 
+### 8.4 初回 Raycast Store publish 前に GitHub Release を作成済みの場合
+
+状態:
+
+```text
+最後に作成済みの GitHub Release tag:
+  v0.1.1
+
+今回作成する GitHub Release tag:
+  v0.1.2
+
+最後に Raycast Store publish 済みの GitHub Release tag:
+  なし
+```
+
+`.github/release-manifest.json`:
+
+```json
+{
+  "tag": "v0.1.2",
+  "title": "v0.1.2",
+  "previousGitHubReleaseTag": "v0.1.1",
+  "githubReleaseChangelogFile": ".github/release-changelog/v0.1.2.md",
+  "previousRaycastStorePublishTag": null
+}
+```
+
+Raycast Store Version History の入力は、最初の GitHub Release から `v0.1.2` までの GitHub Release 用 changelog の積算である。
+
 ## 9. GitHub Actions
 
 GitHub Actions は、`Build`、`Release`、`Publish Release to Raycast` を分けて扱う。

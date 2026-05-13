@@ -8,4 +8,5 @@
 - Add recursive Markdown prompt listing from enabled and configured Prompt Set folders.
 - Add actions to copy raw content, copy content with supported Dynamic Placeholders, open files, show files in Finder, and toggle preview.
 - Add preview pane and sorting by updated time, file name, and relative path.
-- Prepare the extension for the initial Raycast Store release with release workflow and documentation updates.
+- Generate a unique value for each `{uuid}` Dynamic Placeholder occurrence in the same prompt.
+- Use the runtime default locale for prompt list sorting and Markdown file ordering.
