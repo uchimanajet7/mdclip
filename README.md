@@ -238,6 +238,8 @@ Check the following.
 
 The configured path may not be a folder, the folder may have been deleted or moved, or Raycast may not be able to read it. Open Extension Preferences and set the Prompt Set Folder again.
 
+In `All Prompt Sets`, folders that can be read still show their Markdown files. Folders that cannot be read appear in a `Could Not Load` section.
+
 ### `Open in Editor` does not open the expected app
 
 Check the `Editor` preference. When `Editor` is not configured, the action is shown as `Open` and the Markdown file opens in the default app.

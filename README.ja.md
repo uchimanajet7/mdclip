@@ -238,6 +238,8 @@ Dynamic Placeholders を使っていない Markdown ファイルでは、`Copy R
 
 設定した path がフォルダではない、フォルダが削除または移動された、または Raycast から対象フォルダへアクセスできない可能性があります。Extension Preferences で Prompt Set Folder を設定し直してください。
 
+`All Prompt Sets` では、読み取れるフォルダの Markdown ファイルは表示されます。読み取れないフォルダは `Could Not Load` section に表示されます。
+
 ### `Open in Editor` が期待したアプリで開かない
 
 Extension Preferences の `Editor` を確認してください。`Editor` が未設定の場合、Action は `Open in Editor` ではなく `Open` と表示され、Markdown ファイルの既定アプリで開きます。

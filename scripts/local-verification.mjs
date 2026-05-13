@@ -74,18 +74,22 @@ async function verifyMarkdownFileListing() {
     outfile: outputFile,
   });
 
-  const { listPromptFiles } = await import(pathToFileURL(outputFile));
+  const { listPromptFiles, listPromptFilesFromPromptSets } = await import(pathToFileURL(outputFile));
   const promptRoot = path.join(fixtureRoot, "prompts");
+  const secondPromptRoot = path.join(fixtureRoot, "second-prompts");
+  const missingPromptRoot = path.join(fixtureRoot, "missing-prompts");
   await mkdir(path.join(promptRoot, "nested"), { recursive: true });
   await mkdir(path.join(promptRoot, ".hidden"), { recursive: true });
   await mkdir(path.join(promptRoot, ".git"), { recursive: true });
   await mkdir(path.join(promptRoot, "node_modules"), { recursive: true });
+  await mkdir(secondPromptRoot, { recursive: true });
   await writeFile(path.join(promptRoot, "a.md"), "# A\n");
   await writeFile(path.join(promptRoot, "nested", "b.MD"), "# B\n");
   await writeFile(path.join(promptRoot, "c.txt"), "C\n");
   await writeFile(path.join(promptRoot, ".hidden", "hidden.md"), "hidden\n");
   await writeFile(path.join(promptRoot, ".git", "ignored.md"), "git\n");
   await writeFile(path.join(promptRoot, "node_modules", "ignored.md"), "node_modules\n");
+  await writeFile(path.join(secondPromptRoot, "second.md"), "# Second\n");
 
   const files = await listPromptFiles({
     id: 1,
@@ -101,6 +105,35 @@ async function verifyMarkdownFileListing() {
   assert(files.every((file) => file.promptSet.displayName === "Fixture"));
   assert(files.every((file) => file.size > 0));
   assert(files.every((file) => file.updatedAt instanceof Date));
+
+  const combinedResult = await listPromptFilesFromPromptSets([
+    {
+      id: 1,
+      commandTitle: "Prompt Set 1",
+      displayName: "Fixture",
+      directory: promptRoot,
+    },
+    {
+      id: 2,
+      commandTitle: "Prompt Set 2",
+      displayName: "Missing Fixture",
+      directory: missingPromptRoot,
+    },
+    {
+      id: 3,
+      commandTitle: "Prompt Set 3",
+      displayName: "Second Fixture",
+      directory: secondPromptRoot,
+    },
+  ]);
+
+  assert.deepEqual(
+    combinedResult.files.map((file) => file.relativePath),
+    ["a.md", path.join("nested", "b.MD"), "second.md"],
+  );
+  assert.equal(combinedResult.failures.length, 1);
+  assert.equal(combinedResult.failures[0].promptSet.displayName, "Missing Fixture");
+  assert.match(combinedResult.failures[0].message, /ENOENT|no such file/i);
 
   const notDirectoryPath = path.join(fixtureRoot, "not-directory.md");
   await writeFile(notDirectoryPath, "# Not Directory\n");

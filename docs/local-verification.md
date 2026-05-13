@@ -287,6 +287,7 @@ npm run check
 - `src/services/markdownFiles.ts` が、拡張子 `.md` の Markdown ファイルを大文字小文字を区別せずに再帰的に検出できること
 - `src/services/markdownFiles.ts` が `.git`、`node_modules`、隠しディレクトリ、拡張子が `.md` ではないファイルを除外できること
 - `src/services/markdownFiles.ts` がディレクトリではない path をエラーにできること
+- `src/services/markdownFiles.ts` が `All Prompt Sets` 用の横断検索で一部 Prompt Set の読み込み失敗と成功分の Markdown ファイルを分けて返せること
 - `src/services/preview.ts` が指定行数と最大文字数に従って冒頭プレビューを返せること
 - `src/services/dynamicPlaceholders.ts` が `{date}`、`{time}`、`{datetime}`、`{day}`、`{timezone}`、`{now}`、`{uuid}`、`{clipboard}` を置換できること
 - `src/services/dynamicPlaceholders.ts` が複数の `{uuid}` を出現箇所ごとに別々の UUID へ置換できること

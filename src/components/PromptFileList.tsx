@@ -11,7 +11,7 @@ import {
   showToast,
 } from "@raycast/api";
 import { useEffect, useMemo, useState } from "react";
-import type { ConfiguredPromptSet, PromptFile } from "../types";
+import type { ConfiguredPromptSet, PromptFile, PromptSetLoadFailure } from "../types";
 import { copyPromptFile } from "../services/clipboard";
 import { listPromptFilesFromPromptSets } from "../services/markdownFiles";
 import { readPromptPreview } from "../services/preview";
@@ -24,6 +24,7 @@ type Props = {
 
 type LoadState = {
   files: PromptFile[];
+  failures: PromptSetLoadFailure[];
   error?: string;
   isLoading: boolean;
 };
@@ -50,7 +51,7 @@ const MAX_PREVIEW_CHARACTERS = 20000;
 const PREVIEW_ENABLED_STORAGE_KEY = "prompt-launcher.preview.enabled";
 
 export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }: Props) {
-  const [state, setState] = useState<LoadState>({ files: [], isLoading: true });
+  const [state, setState] = useState<LoadState>({ files: [], failures: [], isLoading: true });
   const [selectedItemId, setSelectedItemId] = useState<string>();
   const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
   const [previewVisibility, setPreviewVisibility] = useState<PreviewVisibilityState>({
@@ -109,14 +110,33 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
 
     async function loadFiles() {
       try {
-        const files = await listPromptFilesFromPromptSets(promptSets);
+        const result = await listPromptFilesFromPromptSets(promptSets);
+        const successfulPromptSetCount = promptSets.length - result.failures.length;
 
         if (isMounted) {
-          setState({ files, isLoading: false });
+          if (result.failures.length > 0 && successfulPromptSetCount === 0) {
+            setState({
+              files: [],
+              failures: result.failures,
+              error: formatPromptSetFailureMessages(result.failures),
+              isLoading: false,
+            });
+            return;
+          }
+
+          setState({ files: result.files, failures: result.failures, isLoading: false });
+        }
+
+        if (isMounted && result.failures.length > 0) {
+          await showToast({
+            style: Toast.Style.Failure,
+            title: "Some Prompt Sets could not be loaded",
+            message: formatPromptSetFailureNames(result.failures),
+          });
         }
       } catch (error) {
         if (isMounted) {
-          setState({ files: [], error: getErrorMessage(error), isLoading: false });
+          setState({ files: [], failures: [], error: getErrorMessage(error), isLoading: false });
         }
       }
     }
@@ -138,6 +158,7 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
   }, [promptSets, sortMode, state.files]);
 
   const fileCount = filesByPromptSet.reduce((count, group) => count + group.files.length, 0);
+  const failures = state.failures;
   const firstFileId = filesByPromptSet.flatMap((group) => group.files).at(0)?.path;
 
   useEffect(() => {
@@ -184,7 +205,7 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
             </ActionPanel>
           }
         />
-      ) : fileCount === 0 && !state.isLoading ? (
+      ) : fileCount === 0 && failures.length === 0 && !state.isLoading ? (
         <List.EmptyView
           title={emptyTitle}
           description="No .md files were found in the enabled prompt set folders."
@@ -195,22 +216,31 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
           }
         />
       ) : promptSets.length > 1 ? (
-        filesByPromptSet
-          .filter((group) => group.files.length > 0)
-          .map((group) => (
-            <List.Section key={group.promptSet.id} title={group.promptSet.displayName}>
-              {group.files.map((file) => (
-                <PromptFileListItem
-                  key={file.path}
-                  file={file}
-                  editor={preferences.editor}
-                  isSelected={selectedItemId === file.path}
-                  onTogglePreview={togglePreviewVisibility}
-                  previewOptions={previewOptions}
-                />
+        <>
+          {filesByPromptSet
+            .filter((group) => group.files.length > 0)
+            .map((group) => (
+              <List.Section key={group.promptSet.id} title={group.promptSet.displayName}>
+                {group.files.map((file) => (
+                  <PromptFileListItem
+                    key={file.path}
+                    file={file}
+                    editor={preferences.editor}
+                    isSelected={selectedItemId === file.path}
+                    onTogglePreview={togglePreviewVisibility}
+                    previewOptions={previewOptions}
+                  />
+                ))}
+              </List.Section>
+            ))}
+          {failures.length > 0 ? (
+            <List.Section title="Could Not Load">
+              {failures.map((failure) => (
+                <PromptSetFailureListItem key={failure.promptSet.id} failure={failure} />
               ))}
             </List.Section>
-          ))
+          ) : null}
+        </>
       ) : (
         filesByPromptSet.flatMap((group) =>
           group.files.map((file) => (
@@ -226,6 +256,22 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
         )
       )}
     </List>
+  );
+}
+
+function PromptSetFailureListItem({ failure }: { failure: PromptSetLoadFailure }) {
+  return (
+    <List.Item
+      id={`prompt-set-load-failure-${failure.promptSet.id}`}
+      icon={Icon.Warning}
+      title={failure.promptSet.displayName}
+      subtitle={failure.message}
+      actions={
+        <ActionPanel>
+          <Action icon={Icon.Gear} title="Open Extension Preferences" onAction={openExtensionPreferences} />
+        </ActionPanel>
+      }
+    />
   );
 }
 
@@ -434,6 +480,14 @@ function getParentDirectory(relativePath: string): string | undefined {
   const parentDirectory = pathParts.join("/");
 
   return parentDirectory || undefined;
+}
+
+function formatPromptSetFailureNames(failures: PromptSetLoadFailure[]): string {
+  return failures.map((failure) => failure.promptSet.displayName).join(", ");
+}
+
+function formatPromptSetFailureMessages(failures: PromptSetLoadFailure[]): string {
+  return failures.map((failure) => `${failure.promptSet.displayName}: ${failure.message}`).join("\n");
 }
 
 function getErrorMessage(error: unknown): string {

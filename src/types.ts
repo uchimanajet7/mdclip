@@ -20,3 +20,13 @@ export type PromptFile = {
   updatedAt: Date;
   size: number;
 };
+
+export type PromptSetLoadFailure = {
+  promptSet: ConfiguredPromptSet;
+  message: string;
+};
+
+export type PromptFileLoadResult = {
+  files: PromptFile[];
+  failures: PromptSetLoadFailure[];
+};

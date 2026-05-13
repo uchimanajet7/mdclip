@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import type { ConfiguredPromptSet, PromptFile } from "../types";
+import type { ConfiguredPromptSet, PromptFile, PromptFileLoadResult, PromptSetLoadFailure } from "../types";
 
 const EXCLUDED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
 
@@ -16,9 +16,24 @@ export async function listPromptFiles(promptSet: ConfiguredPromptSet): Promise<P
   return files.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 }
 
-export async function listPromptFilesFromPromptSets(promptSets: ConfiguredPromptSet[]): Promise<PromptFile[]> {
-  const fileGroups = await Promise.all(promptSets.map((promptSet) => listPromptFiles(promptSet)));
-  return fileGroups.flat();
+export async function listPromptFilesFromPromptSets(promptSets: ConfiguredPromptSet[]): Promise<PromptFileLoadResult> {
+  const results = await Promise.allSettled(promptSets.map((promptSet) => listPromptFiles(promptSet)));
+  const files: PromptFile[] = [];
+  const failures: PromptSetLoadFailure[] = [];
+
+  results.forEach((result, index) => {
+    if (result.status === "fulfilled") {
+      files.push(...result.value);
+      return;
+    }
+
+    failures.push({
+      promptSet: promptSets[index],
+      message: getErrorMessage(result.reason),
+    });
+  });
+
+  return { files, failures };
 }
 
 async function walkDirectory(
@@ -66,4 +81,12 @@ async function walkDirectory(
 
 function shouldSkipDirectory(directoryName: string): boolean {
   return directoryName.startsWith(".") || EXCLUDED_DIRECTORY_NAMES.has(directoryName);
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
 }
