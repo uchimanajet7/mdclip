@@ -191,7 +191,7 @@ Preview is enabled by default on first launch.
 
 When preview is shown, the extension displays the beginning of the selected file in Raycast's detail pane. Preview content is not loaded while building the list. It is loaded only for the selected file when needed.
 
-Use `Show Preview` / `Hide Preview` to toggle the preview pane. The selected state is stored in Raycast LocalStorage and restored the next time you use the extension.
+Use `Show Preview` / `Hide Preview` to toggle the preview pane. The selected state is stored locally by Raycast and restored the next time you use the extension.
 
 ## Sort
 
@@ -258,7 +258,7 @@ Markdown file content is sent to the clipboard only when you run a copy action.
 
 When you use `Copy Expanded Content`, the current clipboard text is read only if the Markdown file content contains `{clipboard}`.
 
-The preview visibility state is stored in Raycast LocalStorage.
+The preview visibility state is stored locally by Raycast.
 
 This extension does not make network requests.
 

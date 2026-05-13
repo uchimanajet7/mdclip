@@ -1,9 +1,9 @@
 import {
   Action,
   ActionPanel,
+  Cache,
   Icon,
   Keyboard,
-  LocalStorage,
   List,
   Toast,
   getPreferenceValues,
@@ -35,11 +35,6 @@ type PreviewOptions = {
   maxCharacters: number;
 };
 
-type PreviewVisibilityState = {
-  isLoading: boolean;
-  isEnabled: boolean;
-};
-
 type SortMode = "updated-desc" | "updated-asc" | "name-asc" | "path-asc";
 
 const DEFAULT_PREVIEW_LINE_COUNT = 10;
@@ -48,55 +43,25 @@ const DEFAULT_PREVIEW_ENABLED = true;
 const DEFAULT_SORT_MODE: SortMode = "updated-desc";
 const MAX_PREVIEW_LINE_COUNT = 100;
 const MAX_PREVIEW_CHARACTERS = 20000;
-const PREVIEW_ENABLED_STORAGE_KEY = "prompt-launcher.preview.enabled";
+const PREVIEW_ENABLED_CACHE_KEY = "prompt-launcher.preview.enabled";
+const previewVisibilityCache = new Cache();
 
 export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }: Props) {
   const [state, setState] = useState<LoadState>({ files: [], failures: [], isLoading: true });
-  const [selectedItemId, setSelectedItemId] = useState<string>();
   const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
-  const [previewVisibility, setPreviewVisibility] = useState<PreviewVisibilityState>({
-    isLoading: true,
-    isEnabled: DEFAULT_PREVIEW_ENABLED,
-  });
+  const [isPreviewEnabled, setIsPreviewEnabled] = useState(readInitialPreviewVisibility);
   const preferences = getPreferenceValues<ExtensionPreferences>();
-  const previewOptions = getPreviewOptions(preferences, previewVisibility.isEnabled);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadPreviewVisibility() {
-      try {
-        const storedValue = await LocalStorage.getItem<boolean>(PREVIEW_ENABLED_STORAGE_KEY);
-
-        if (isMounted) {
-          setPreviewVisibility({
-            isLoading: false,
-            isEnabled: typeof storedValue === "boolean" ? storedValue : DEFAULT_PREVIEW_ENABLED,
-          });
-        }
-      } catch {
-        if (isMounted) {
-          setPreviewVisibility({ isLoading: false, isEnabled: DEFAULT_PREVIEW_ENABLED });
-        }
-      }
-    }
-
-    loadPreviewVisibility();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const previewOptions = getPreviewOptions(preferences, isPreviewEnabled);
 
   async function togglePreviewVisibility() {
-    const previousIsEnabled = previewVisibility.isEnabled;
-    const nextIsEnabled = !previewVisibility.isEnabled;
-    setPreviewVisibility({ isLoading: false, isEnabled: nextIsEnabled });
+    const previousIsEnabled = isPreviewEnabled;
+    const nextIsEnabled = !isPreviewEnabled;
+    setIsPreviewEnabled(nextIsEnabled);
 
     try {
-      await LocalStorage.setItem(PREVIEW_ENABLED_STORAGE_KEY, nextIsEnabled);
+      previewVisibilityCache.set(PREVIEW_ENABLED_CACHE_KEY, String(nextIsEnabled));
     } catch (error) {
-      setPreviewVisibility({ isLoading: false, isEnabled: previousIsEnabled });
+      setIsPreviewEnabled(previousIsEnabled);
       await showToast({
         style: Toast.Style.Failure,
         title: "Failed to save preview setting",
@@ -159,26 +124,11 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
 
   const fileCount = filesByPromptSet.reduce((count, group) => count + group.files.length, 0);
   const failures = state.failures;
-  const firstFileId = filesByPromptSet.flatMap((group) => group.files).at(0)?.path;
-
-  useEffect(() => {
-    if (!previewOptions.isEnabled || !firstFileId) {
-      return;
-    }
-
-    const selectedFileExists = filesByPromptSet.some((group) =>
-      group.files.some((file) => file.path === selectedItemId),
-    );
-    if (!selectedItemId || !selectedFileExists) {
-      setSelectedItemId(firstFileId);
-    }
-  }, [filesByPromptSet, firstFileId, previewOptions.isEnabled, selectedItemId]);
 
   return (
     <List
-      isLoading={state.isLoading || previewVisibility.isLoading}
+      isLoading={state.isLoading}
       isShowingDetail={previewOptions.isEnabled}
-      onSelectionChange={previewOptions.isEnabled ? (id) => setSelectedItemId(id ?? undefined) : undefined}
       searchBarPlaceholder={searchBarPlaceholder}
       searchBarAccessory={
         <List.Dropdown
@@ -193,7 +143,6 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
           <List.Dropdown.Item title="Path (A-Z)" value="path-asc" />
         </List.Dropdown>
       }
-      selectedItemId={previewOptions.isEnabled ? selectedItemId : undefined}
     >
       {state.error ? (
         <List.EmptyView
@@ -226,7 +175,6 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
                     key={file.path}
                     file={file}
                     editor={preferences.editor}
-                    isSelected={selectedItemId === file.path}
                     onTogglePreview={togglePreviewVisibility}
                     previewOptions={previewOptions}
                   />
@@ -248,7 +196,6 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
               key={file.path}
               file={file}
               editor={preferences.editor}
-              isSelected={selectedItemId === file.path}
               onTogglePreview={togglePreviewVisibility}
               previewOptions={previewOptions}
             />
@@ -278,13 +225,11 @@ function PromptSetFailureListItem({ failure }: { failure: PromptSetLoadFailure }
 function PromptFileListItem({
   file,
   editor,
-  isSelected,
   onTogglePreview,
   previewOptions,
 }: {
   file: PromptFile;
   editor: ExtensionPreferences["editor"];
-  isSelected: boolean;
   onTogglePreview: () => void | Promise<void>;
   previewOptions: PreviewOptions;
 }) {
@@ -296,11 +241,7 @@ function PromptFileListItem({
       title={file.name}
       subtitle={getListItemSubtitle(file)}
       accessories={isPreviewEnabled ? undefined : getListItemAccessories(file)}
-      detail={
-        isPreviewEnabled ? (
-          <PromptFilePreviewDetail file={file} isSelected={isSelected} previewOptions={previewOptions} />
-        ) : undefined
-      }
+      detail={isPreviewEnabled ? <PromptFilePreviewDetail file={file} previewOptions={previewOptions} /> : undefined}
       actions={
         <ActionPanel>
           <Action icon={Icon.Clipboard} title="Copy Raw Content" onAction={() => handleCopy(file, false)} />
@@ -324,29 +265,14 @@ function PromptFileListItem({
   );
 }
 
-function PromptFilePreviewDetail({
-  file,
-  isSelected,
-  previewOptions,
-}: {
-  file: PromptFile;
-  isSelected: boolean;
-  previewOptions: PreviewOptions;
-}) {
-  const [state, setState] = useState<{ markdown: string; isLoading: boolean }>({
-    markdown: "Loading preview...",
-    isLoading: false,
-  });
+function PromptFilePreviewDetail({ file, previewOptions }: { file: PromptFile; previewOptions: PreviewOptions }) {
+  const [markdown, setMarkdown] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadPreview() {
-      if (!isSelected) {
-        return;
-      }
-
-      setState({ markdown: "Loading preview...", isLoading: true });
+      setMarkdown("");
 
       try {
         const preview = await readPromptPreview(file.path, {
@@ -355,17 +281,11 @@ function PromptFilePreviewDetail({
         });
 
         if (isMounted) {
-          setState({
-            markdown: formatPreviewMarkdown(file, preview),
-            isLoading: false,
-          });
+          setMarkdown(formatPreviewMarkdown(file, preview));
         }
       } catch (error) {
         if (isMounted) {
-          setState({
-            markdown: `# ${file.name}\n\nCould not load preview.\n\n${getErrorMessage(error)}`,
-            isLoading: false,
-          });
+          setMarkdown(`# ${file.name}\n\nCould not load preview.\n\n${getErrorMessage(error)}`);
         }
       }
     }
@@ -375,12 +295,11 @@ function PromptFilePreviewDetail({
     return () => {
       isMounted = false;
     };
-  }, [file, isSelected, previewOptions.lineCount, previewOptions.maxCharacters]);
+  }, [file, previewOptions.lineCount, previewOptions.maxCharacters]);
 
   return (
     <List.Item.Detail
-      isLoading={state.isLoading}
-      markdown={state.markdown}
+      markdown={markdown}
       metadata={
         <List.Item.Detail.Metadata>
           <List.Item.Detail.Metadata.Label title="Prompt Set" text={file.promptSet.displayName} />
@@ -517,6 +436,20 @@ function parsePositiveInteger(value: string | undefined, defaultValue: number, m
   }
 
   return Math.min(parsedValue, maxValue);
+}
+
+function readInitialPreviewVisibility(): boolean {
+  const storedValue = previewVisibilityCache.get(PREVIEW_ENABLED_CACHE_KEY);
+
+  if (storedValue === "true") {
+    return true;
+  }
+
+  if (storedValue === "false") {
+    return false;
+  }
+
+  return DEFAULT_PREVIEW_ENABLED;
 }
 
 function formatPreviewMarkdown(file: PromptFile, preview: string): string {
