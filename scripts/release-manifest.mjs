@@ -2,14 +2,16 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-const repoRoot = process.cwd();
+const repoRoot = path.resolve(readStringOption("--repo-root") ?? process.cwd());
 const manifestPath = path.join(repoRoot, ".github", "release-manifest.json");
 const supportedCommands = ["validate", "body", "outputs"];
 
 const command = process.argv[2];
 
 if (!supportedCommands.includes(command)) {
-  throw new Error("Usage: node scripts/release-manifest.mjs validate|body|outputs [--publish-to-raycast true|false]");
+  throw new Error(
+    "Usage: node scripts/release-manifest.mjs validate|body|outputs [--publish-to-raycast true|false] [--repo-root path]",
+  );
 }
 
 const manifest = await readJson(manifestPath);
@@ -145,6 +147,22 @@ function readBooleanOption(name) {
   }
 
   throw new Error(`${name} must be true or false`);
+}
+
+function readStringOption(name) {
+  const optionIndex = process.argv.indexOf(name);
+
+  if (optionIndex === -1) {
+    return undefined;
+  }
+
+  const value = process.argv[optionIndex + 1];
+
+  if (!value || value.startsWith("--")) {
+    throw new Error(`${name} must have a value`);
+  }
+
+  return value;
 }
 
 async function readJson(filePath) {

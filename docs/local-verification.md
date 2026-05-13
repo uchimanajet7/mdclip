@@ -332,9 +332,9 @@ npm run lint
 
 `npm run lint` は GitHub Actions の `Build` で実行する。`Release` は `Build` を呼び出す。`Publish Release to Raycast` では `npm run lint` を個別 step として実行しない。ローカル開発では `npm run check` または `npm run lint:local` を使用する。
 
-`publish` は Raycast Store 公開処理に関わるため、ローカルでは実行しない。GitHub Actions の `Release` または `Publish Release to Raycast` で扱う。
+Raycast Store publish はローカルでは実行しない。GitHub Actions の `Release` または `Publish Release to Raycast` で扱う。
 
-`package.json` には公式手順に合わせて `publish` script を定義する。ただし、実行する場所は GitHub Actions に限定する。
+`package.json` には公式手順に合わせて `publish` script を定義する。この project の通常運用では、ローカルと GitHub Actions のどちらでも `publish` script を実行しない。
 
 GitHub Release 作成もローカルでは実行しない。GitHub Release と Raycast Store publish の手順は `docs/release-management.md` を正とする。
 
