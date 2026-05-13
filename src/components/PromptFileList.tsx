@@ -11,7 +11,7 @@ import {
   showToast,
 } from "@raycast/api";
 import { useEffect, useMemo, useState } from "react";
-import type { ConfiguredPromptSet, ExtensionPreferences, PromptFile } from "../types";
+import type { ConfiguredPromptSet, PromptFile } from "../types";
 import { copyPromptFile } from "../services/clipboard";
 import { listPromptFilesFromPromptSets } from "../services/markdownFiles";
 import { readPromptPreview } from "../services/preview";

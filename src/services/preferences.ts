@@ -1,6 +1,6 @@
 import { getPreferenceValues } from "@raycast/api";
 import path from "path";
-import type { ConfiguredPromptSet, ExtensionPreferences, PromptSetConfig, PromptSetId } from "../types";
+import type { ConfiguredPromptSet, PromptSetConfig, PromptSetId } from "../types";
 
 const PROMPT_SET_COMMAND_TITLES: Record<PromptSetId, string> = {
   1: "Prompt Set 1",
