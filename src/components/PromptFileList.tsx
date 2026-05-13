@@ -402,14 +402,14 @@ function comparePromptFiles(left: PromptFile, right: PromptFile, sortMode: SortM
     case "updated-asc":
       return left.updatedAt.getTime() - right.updatedAt.getTime() || compareByRelativePath(left, right);
     case "name-asc":
-      return left.name.localeCompare(right.name, "ja") || compareByRelativePath(left, right);
+      return left.name.localeCompare(right.name) || compareByRelativePath(left, right);
     case "path-asc":
       return compareByRelativePath(left, right);
   }
 }
 
 function compareByRelativePath(left: PromptFile, right: PromptFile): number {
-  return left.relativePath.localeCompare(right.relativePath, "ja");
+  return left.relativePath.localeCompare(right.relativePath);
 }
 
 function parseSortMode(value: string): SortMode {

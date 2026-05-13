@@ -197,6 +197,8 @@ Use `Show Preview` / `Hide Preview` to toggle the preview pane. The selected sta
 
 Use the `Sort` dropdown on the right side of the search bar to change the list order.
 
+Name and path sorting use the runtime default locale.
+
 | Sort                   | Description                                        |
 | ---------------------- | -------------------------------------------------- |
 | Updated (Newest First) | Newest updated files first. This is the default    |

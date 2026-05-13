@@ -197,6 +197,8 @@ Dynamic Placeholders を使っていない Markdown ファイルでは、`Copy R
 
 検索バー右側の `Sort` dropdown から表示順を切り替えられます。
 
+名前順とパス順のソートは、実行環境の default locale に基づきます。
+
 | Sort                   | 説明                                   |
 | ---------------------- | -------------------------------------- |
 | Updated (Newest First) | 更新日時が新しい順。初期値             |

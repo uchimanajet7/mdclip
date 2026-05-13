@@ -286,6 +286,8 @@ Sort dropdown の選択肢は以下とする。
 | Name (A-Z)             | ファイル名の昇順                 |
 | Path (A-Z)             | 対象フォルダからの相対パスの昇順 |
 
+`Name (A-Z)` と `Path (A-Z)` の文字列比較は、JavaScript 実行環境の default locale に基づく。
+
 Sort dropdown は `storeValue` を有効にし、利用者が最後に選択した sort を Raycast 側に記憶させる。
 
 `All Prompt Sets` ではフォルダごとの section は維持し、section 内の Markdown ファイルだけを選択中の sort に従って並べ替える。
