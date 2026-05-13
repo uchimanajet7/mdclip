@@ -8,7 +8,7 @@
 
 `publish` はローカル確認に含めない。リリースタグ作成、GitHub Release 作成、Raycast Store への公開実行は GitHub Actions で扱う。
 
-GitHub Actions の `Build` workflow は、リモート repository に branch が push された時点、Pull Request の作成または更新時、GitHub Actions 画面からの手動実行時に `npm run check`、`npm run build`、`npm run lint` を実行する。
+GitHub Actions の `Build` workflow は、リモート repository に branch が push された時点、Pull Request の作成または更新時、GitHub Actions 画面からの手動実行時に `npm run build`、`npm run check`、`npm run lint` を実行する。
 
 ## 2. 実行場所
 
@@ -28,7 +28,7 @@ npm ci
 
 | Script                        | 実体                                                              | 用途                                                                                                          |
 | ----------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `npm run check`               | `npm run check:type && npm run lint:local && npm run check:local` | Raycast CLI を使わない一括確認                                                                                |
+| `npm run check`               | `npm run check:type && npm run lint:local && npm run check:local` | `raycast-env.d.ts` 生成後に実行する一括確認                                                                   |
 | `npm run check:type`          | `tsc -p tsconfig.json --noEmit`                                   | TypeScript 型検査                                                                                             |
 | `npm run check:lint`          | `eslint src/**`                                                   | Raycast CLI を使わない source lint                                                                            |
 | `npm run check:format`        | `node scripts/format.mjs --check`                                 | 明示対象ファイルの整形差分確認                                                                                |
@@ -47,7 +47,13 @@ npm ci
 
 ## 4. 通常のローカル実行順
 
-修正後は、先に静的確認を通してから Raycast 上で手動確認する。
+修正後は、必要な生成型を作成してから静的確認を通し、その後に Raycast 上で手動確認する。
+
+`raycast-env.d.ts` が存在しない fresh checkout 直後は、先に `npm run build` を実行する。`raycast-env.d.ts` は Raycast CLI が生成する TypeScript 定義であり、Git 管理対象には含めない。
+
+```bash
+npm run build
+```
 
 ```bash
 npm run check
@@ -57,7 +63,7 @@ npm run check
 npm run dev
 ```
 
-`npm run check` は `npm run lint:local` を含む。通常の修正後は `npm run check` を実行すれば、TypeScript、ESLint、Prettier、Raycast に依存しない単体確認まで実行される。
+`npm run check` は `npm run lint:local` を含む。`raycast-env.d.ts` 生成後は `npm run check` を実行すれば、TypeScript、ESLint、Prettier、Raycast アプリに依存しない単体確認まで実行される。
 
 `npm run lint:local` は `ESLint` と `Prettier` を直接実行する。`package.json` の `author` を Raycast account username として検証しない。
 
@@ -188,11 +194,11 @@ npm ci
 ```
 
 ```bash
-npm run check
+npm run build
 ```
 
 ```bash
-npm run build
+npm run check
 ```
 
 `npm run lint` はローカル公開前確認では実行しない。`npm run lint` は `ray lint` を実行し、package manifest、icon、metadata、author を含む厳密検証を行う。この検証は GitHub Actions の `Build` で実行する。`Release` は `Build` を呼び出す。`Publish Release to Raycast` では `npm run lint` を個別 step として実行しない。`package.json` の `author` は Raycast account username と一致している必要がある。
@@ -200,6 +206,8 @@ npm run build
 `npm run build` は `ray build -e dist` を実行する。Raycast 公式 CLI の説明では、`ray build` は配布用の optimized production build を作成し、`ray build -e dist` は Extension が正しく build できるかの検証に使える。
 
 `npm run build` は、Raycast CLI がローカル拡張出力先へ書き込む可能性がある。具体例として、macOS では `~/.config/raycast/extensions/prompt-launcher` 配下が作成または更新される可能性がある。
+
+`npm run build` は `raycast-env.d.ts` も生成する。`raycast-env.d.ts` は Git 管理対象外であるため、GitHub Actions の `Build` workflow でも `npm run check` より先に `npm run build` を実行する。
 
 `npm run build` 実行後は、Raycast 上で公開前に近い状態の動作を人間が確認する。
 
