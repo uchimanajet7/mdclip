@@ -24,6 +24,7 @@ jobs:
   publish:
     name: Publish Release to Raycast
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -89,7 +90,7 @@ jobs:
             exit 1
           fi
 
-      - name: Publish to Raycast Store
+      - name: Publish or update Raycast Pull Request
         env:
           RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC }}
         run: node scripts/publish-raycast-pr.mjs --source release-source --release-tag "${{ inputs.release_tag }}"

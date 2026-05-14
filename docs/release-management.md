@@ -13,8 +13,10 @@
 - Raycast Extension の `CHANGELOG.md` は、Raycast Store と extension detail の Version History として表示される。root に配置し、entry は `## [Title] - {PR_MERGE_DATE}` 形式にする。
   - https://developers.raycast.com/basics/prepare-an-extension-for-store
   - https://developers.raycast.com/information/versioning
-- Raycast 公式手順では、Extension の publish は `npm run publish` で行われ、Raycast 公式の `raycast/extensions` repository に Pull Request が作成される。Raycast 公式手順では、fork した `raycast/extensions` repository に extension を追加して Pull Request を作成する方法も案内されている。この project ではローカルで `npm run publish` を実行せず、GitHub Actions の `Publish Release to Raycast` workflow が publish 用 fork branch を更新する。
+- Raycast 公式手順では、Extension の publish は `npm run publish` で行われ、Raycast 公式の `raycast/extensions` repository に Pull Request が作成される。Raycast 公式手順では、fork した `raycast/extensions` repository に extension を追加して Pull Request を作成する方法も案内されている。この project ではローカルで `npm run publish` を実行しない。GitHub Actions の `Publish Release to Raycast` workflow が、開いている Raycast Pull Request がない場合は `npm run publish` で初回 Pull Request を作成し、開いている Raycast Pull Request がある場合は publish 用 fork branch を更新する。
   - https://developers.raycast.com/basics/publish-an-extension
+- Raycast 公式手順では、`raycast/extensions` の Pull Request を確認する場合に sparse checkout を使い、対象 extension のみを checkout する方法が案内されている。
+  - https://developers.raycast.com/basics/review-pullrequest
 - GitHub Release は Git tag に基づき、GitHub Release notes を持つ。
   - https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases
 - GitHub Actions の手動実行は `workflow_dispatch` で扱う。workflow は GitHub 上に push 済みの内容を使って実行される。
@@ -357,6 +359,8 @@ Workflow input は以下とする。
 
 `release_tag` は `vX.Y.Z` のような release tag とする。
 
+Workflow job は `timeout-minutes` を設定する。時間がかかる処理では、`git clone`、`git fetch`、`git push`、`npm ci`、`npm run publish` の出力を GitHub Actions log に逐次表示し、停止箇所を確認できるようにする。
+
 `Publish Release to Raycast` は実行前に以下を確認する。
 
 1. `release_tag` が `vX.Y.Z` 形式である。
@@ -376,18 +380,18 @@ Workflow input は以下とする。
 3. `release-source/.github/release-manifest.json` と `release-source/CHANGELOG.md` の Raycast Store Version History 用先頭 entry を検証する。
 4. Raycast publish 用 GitHub token を確認する。
 5. Raycast publish 用 GitHub token の認証ユーザーを取得する。
-6. 認証ユーザーの `raycast-extensions` fork を確認し、存在しない場合は作成する。
-7. `raycast/extensions` の `main` を基準に、認証ユーザーの fork branch `ext/prompt-launcher` を作成または更新する。
-8. `release-source/` の Git 管理対象ファイルを `extensions/prompt-launcher` に配置する。ただし、`.github/` と `raycast-env.d.ts` は配置しない。
-9. `ext/prompt-launcher` branch を認証ユーザーの fork に push する。
-10. `raycast/extensions` に開いている Pull Request がある場合は、その Pull Request を更新する。
-11. `raycast/extensions` に開いている Pull Request がない場合は、draft Pull Request を作成する。
+6. 認証ユーザーの `ext/prompt-launcher` branch を head branch とする、`raycast/extensions` の開いている Pull Request を検索する。
+7. 開いている Pull Request がない場合は、`release-source/` で `npm ci` と `npm run publish` を実行し、Raycast 公式 publish command で初回 Pull Request を作成する。
+8. 開いている Pull Request がある場合は、その Pull Request の head repository と head branch を更新対象にする。
+9. 開いている Pull Request がある場合は、sparse checkout で `extensions/prompt-launcher` だけを対象にし、`raycast/extensions` の `main` を基準に、認証ユーザーの fork branch `ext/prompt-launcher` を作成または更新する。
+10. 開いている Pull Request がある場合は、`release-source/` の Git 管理対象ファイルを `extensions/prompt-launcher` に配置する。ただし、`.github/` と `raycast-env.d.ts` は配置しない。
+11. 開いている Pull Request がある場合は、`ext/prompt-launcher` branch を認証ユーザーの fork に push し、既存 Pull Request を更新する。
 
 `Publish Release to Raycast` は以下を実行しない。
 
 - release tag 作成
 - GitHub Release 作成
-- `npm run publish`
+- 開いている Raycast Pull Request がある場合の `npm run publish`
 - `npm run check`
 - `npm run build`
 - `npm run lint`
@@ -403,7 +407,13 @@ GitHub Release と Raycast Store publish は、同一の `release_tag` を対象
 
 この project の `Publish Release to Raycast` workflow が成功すると、Raycast 公式の `raycast/extensions` repository に Pull Request が作成または更新される。
 
-`Publish Release to Raycast` workflow は、認証ユーザーの fork `raycast-extensions` の `ext/prompt-launcher` branch を push する。すでに `raycast/extensions` に同じ head branch の開いている Pull Request がある場合、その Pull Request は branch push により更新される。開いている Pull Request がない場合、workflow は draft Pull Request を作成する。
+`Publish Release to Raycast` workflow は、Pull Request 番号を固定しない。認証ユーザーの `ext/prompt-launcher` branch を head branch とする、`raycast/extensions` の開いている Pull Request を検索する。
+
+開いている Pull Request がない場合、workflow は `release-source/` で `npm ci` と `npm run publish` を実行し、Raycast 公式 publish command で初回 Pull Request を作成する。
+
+開いている Pull Request がある場合、workflow はその Pull Request の head branch を push する。Pull Request は branch push により更新され、同じ review thread を継続する。
+
+開いている Pull Request がある場合の更新処理では、publish 用 clone を sparse checkout で作成し、`extensions/prompt-launcher` だけを checkout 対象にする。`git clone`、`git fetch`、`git push` は GitHub Actions log に逐次出力する。
 
 この Pull Request は、この repository の Pull Request ではない。Raycast Store へ公開するための review 対象である。
 
@@ -472,7 +482,7 @@ https://github.com/raycast/extensions
 
 Repository secret 名は `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` とする。
 
-`Publish Release to Raycast` workflow は、`RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` を使って認証ユーザーの `login` と `id` を取得する。その値から publish 用 clone の Git `user.name` と `user.email` を設定する。
+`Publish Release to Raycast` workflow は、`RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` を使って認証ユーザーの `login` と `id` を取得する。その値から、初回 `npm run publish` または publish 用 clone の Git `user.name` と `user.email` を設定する。
 
 Git identity の形式は以下とする。
 
@@ -481,11 +491,11 @@ user.name: <GitHub login>
 user.email: <GitHub user id>+<GitHub login>@users.noreply.github.com
 ```
 
-`Publish Release to Raycast` workflow は、publish 用 clone 上で commit と push を行う。そのため、Git identity は publish 用 clone に設定する。
+`Publish Release to Raycast` workflow は、初回 Pull Request 作成では `release-source/` 上で `npm run publish` を実行し、既存 Pull Request 更新では publish 用 clone 上で commit と push を行う。そのため、Git identity は実行対象の Git working tree に設定する。
 
 GitHub Actions 標準の `GITHUB_TOKEN` は、このリポジトリ内の workflow 実行用 token であり、権限は workflow を含むリポジトリに限定される。そのため、`raycast/extensions` へ公開 Pull Request を作成または更新する publish 認証には使用しない。
 
-`Publish Release to Raycast` workflow は、GitHub Release の存在確認には GitHub Actions 標準の `GITHUB_TOKEN` を使用し、Raycast publish 用 fork branch の更新には `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` を使用する。
+`Publish Release to Raycast` workflow は、GitHub Release の存在確認には GitHub Actions 標準の `GITHUB_TOKEN` を使用し、Raycast Pull Request の作成または更新には `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` を使用する。
 
 `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` には、Public Store へ公開 Pull Request を作成する GitHub アカウントで作成した Personal Access Token classic を設定する。この workflow では fine-grained personal access token は使用しない。
 
@@ -516,11 +526,11 @@ Repository Secret の設定手順は以下とする。
 4. `Secret` に Personal Access Token の値を入力する。
 5. `Add secret` で保存する。
 
-この secret が必要になる段階は、`.github/workflows/publish-release-to-raycast.yml` の `Publish to Raycast Store` step に到達した時である。
+この secret が必要になる段階は、`.github/workflows/publish-release-to-raycast.yml` の `Publish or update Raycast Pull Request` step に到達した時である。
 
-`RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` が未設定の場合、workflow は publish 用 fork branch の更新を開始する前に失敗する。
+`RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` が未設定の場合、workflow は Raycast Pull Request の作成または更新を開始する前に失敗する。
 
-publish 用 clone の Git identity は、`RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` の認証ユーザーから設定する。
+Git identity は、`RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` の認証ユーザーから設定する。
 
 この secret が未設定、空、または権限不足の場合、Raycast Store publish は失敗する。
 

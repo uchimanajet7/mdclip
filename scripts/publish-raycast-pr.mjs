@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -31,7 +31,6 @@ if (typeof extensionName !== "string" || extensionName.length === 0) {
 
 const branch = `ext/${extensionName}`;
 const authUser = await getAuthenticatedUser();
-const fork = await ensureFork(authUser.login);
 const workRoot = path.join(
   process.env.RUNNER_TEMP ?? path.join(process.cwd(), "local-verification"),
   "raycast-publish-pr",
@@ -40,22 +39,43 @@ const cloneRoot = path.join(workRoot, "raycast-extensions");
 const targetExtensionPath = path.join(cloneRoot, "extensions", extensionName);
 const existingPullRequest = await findOpenPullRequest(authUser.login, branch);
 
+if (!existingPullRequest) {
+  console.log(`No open Raycast Pull Request found for ${authUser.login}:${branch}.`);
+  console.log("Running the official Raycast publish command to create the initial Pull Request.");
+  await publishWithRaycastCommand(sourceRoot, authUser);
+  process.exit(0);
+}
+
+const forkOwner = existingPullRequest.head?.repo?.owner?.login ?? authUser.login;
+const forkName = existingPullRequest.head?.repo?.name ?? forkRepo;
+
+console.log(`Updating existing Raycast Pull Request: ${existingPullRequest.html_url}`);
+
 await fs.rm(workRoot, { recursive: true, force: true });
 await fs.mkdir(workRoot, { recursive: true });
 
-await runGit([
+console.log(`Cloning ${forkOwner}/${forkName} with sparse checkout.`);
+await runGitStreaming([
   "clone",
-  "--filter=blob:none",
+  "--depth=1",
+  "--filter=tree:0",
+  "--sparse",
   "--no-checkout",
-  authenticatedGitUrl(authUser.login, fork.name),
+  authenticatedGitUrl(forkOwner, forkName),
   cloneRoot,
 ]);
+console.log("Clone completed.");
 
 await runGit(["remote", "add", "upstream", `https://github.com/${upstreamOwner}/${upstreamRepo}.git`], {
   cwd: cloneRoot,
 });
-await runGit(["fetch", "--depth=1", "upstream", "main"], { cwd: cloneRoot });
-await runGit(["checkout", "-B", branch, "upstream/main"], { cwd: cloneRoot });
+console.log(`Preparing ${branch} from ${upstreamOwner}/${upstreamRepo}:main.`);
+await runGitStreaming(["fetch", "--depth=1", "--filter=tree:0", "upstream", "main"], { cwd: cloneRoot });
+console.log("Fetch completed.");
+await runGitStreaming(["sparse-checkout", "set", "--no-cone", `extensions/${extensionName}`], { cwd: cloneRoot });
+console.log("Sparse checkout configured.");
+await runGitStreaming(["checkout", "-B", branch, "upstream/main"], { cwd: cloneRoot });
+console.log(`Checked out ${branch} from upstream/main.`);
 
 await runGit(["config", "user.name", authUser.login], { cwd: cloneRoot });
 await runGit(["config", "user.email", `${authUser.id}+${authUser.login}@users.noreply.github.com`], {
@@ -63,6 +83,7 @@ await runGit(["config", "user.email", `${authUser.id}+${authUser.login}@users.no
 });
 
 await fs.rm(targetExtensionPath, { recursive: true, force: true });
+console.log(`Copying release source into extensions/${extensionName}.`);
 await copyTrackedExtensionFiles(sourceRoot, targetExtensionPath);
 
 await runGit(["add", `extensions/${extensionName}`], { cwd: cloneRoot });
@@ -70,15 +91,11 @@ await runGit(["add", `extensions/${extensionName}`], { cwd: cloneRoot });
 const hasChanges = await hasGitChanges(cloneRoot);
 
 if (!hasChanges) {
-  if (existingPullRequest) {
-    console.log(`Raycast Pull Request already up to date: ${existingPullRequest.html_url}`);
-    process.exit(0);
-  }
-
-  throw new Error("No extension changes were found and no open Raycast Pull Request exists.");
+  console.log(`Raycast Pull Request already up to date: ${existingPullRequest.html_url}`);
+  process.exit(0);
 }
 
-const commitTitle = existingPullRequest ? `Update ${extensionName} extension` : `Add ${extensionName} extension`;
+const commitTitle = `Update ${extensionName} extension`;
 const commitMessage = releaseTag ? `${commitTitle}\n\nRelease tag: ${releaseTag}` : commitTitle;
 
 await runGit(["commit", "-m", commitMessage], { cwd: cloneRoot });
@@ -88,7 +105,9 @@ const pushArgs = remoteBranchSha
   ? ["push", `--force-with-lease=refs/heads/${branch}:${remoteBranchSha}`, "origin", `HEAD:refs/heads/${branch}`]
   : ["push", "origin", `HEAD:refs/heads/${branch}`];
 
-await runGit(pushArgs, { cwd: cloneRoot });
+console.log(`Pushing ${branch} to ${forkOwner}/${forkName}.`);
+await runGitStreaming(pushArgs, { cwd: cloneRoot });
+console.log("Push completed.");
 
 const updatedPullRequest = await findOpenPullRequest(authUser.login, branch);
 
@@ -97,8 +116,7 @@ if (updatedPullRequest) {
   process.exit(0);
 }
 
-const createdPullRequest = await createPullRequest(authUser.login, branch, extensionName);
-console.log(`Created Raycast Pull Request: ${createdPullRequest.html_url}`);
+throw new Error(`Expected open Raycast Pull Request was not found after updating ${authUser.login}:${branch}.`);
 
 function parseArgs(args) {
   const parsed = {};
@@ -134,45 +152,6 @@ async function getAuthenticatedUser() {
   return user;
 }
 
-async function ensureFork(owner) {
-  const existingFork = await getRepository(owner, forkRepo);
-
-  if (existingFork) {
-    return existingFork;
-  }
-
-  await githubApi(`/repos/${upstreamOwner}/${upstreamRepo}/forks`, {
-    method: "POST",
-    body: {
-      name: forkRepo,
-      default_branch_only: true,
-    },
-  });
-
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    await wait(2000);
-    const fork = await getRepository(owner, forkRepo);
-
-    if (fork) {
-      return fork;
-    }
-  }
-
-  throw new Error(`GitHub fork was not ready: ${owner}/${forkRepo}`);
-}
-
-async function getRepository(owner, repo) {
-  try {
-    return await githubApi(`/repos/${owner}/${repo}`);
-  } catch (error) {
-    if (error instanceof GitHubApiError && error.status === 404) {
-      return undefined;
-    }
-
-    throw error;
-  }
-}
-
 async function findOpenPullRequest(owner, headBranch) {
   const pullRequests = await githubApi(
     `/repos/${upstreamOwner}/${upstreamRepo}/pulls?state=open&base=main&head=${owner}:${encodeURIComponent(headBranch)}`,
@@ -187,40 +166,6 @@ async function findOpenPullRequest(owner, headBranch) {
   }
 
   return matchingPullRequests[0];
-}
-
-async function createPullRequest(owner, headBranch, name) {
-  return githubApi(`/repos/${upstreamOwner}/${upstreamRepo}/pulls`, {
-    method: "POST",
-    body: {
-      title: `Add ${name} extension`,
-      head: `${owner}:${headBranch}`,
-      base: "main",
-      maintainer_can_modify: true,
-      draft: true,
-      body: createPullRequestBody(),
-    },
-  });
-}
-
-function createPullRequestBody() {
-  return [
-    "## Description",
-    "",
-    "Add Prompt Launcher, a Raycast extension for finding Markdown prompt files and copying or opening them quickly.",
-    "",
-    "## Screencast",
-    "",
-    "<!-- Add screenshots or a screencast before marking this Pull Request ready for review. -->",
-    "",
-    "## Checklist",
-    "",
-    "- [ ] I read the extension guidelines",
-    "- [ ] I read the documentation about publishing",
-    "- [ ] I ran `npm run build` and tested this distribution build in Raycast",
-    "- [ ] I checked that files in the `assets` folder are used by the extension itself",
-    "- [ ] I checked that assets used by the `README` are placed outside of the `metadata` folder",
-  ].join("\n");
 }
 
 async function copyTrackedExtensionFiles(source, target) {
@@ -262,6 +207,20 @@ function authenticatedGitUrl(owner, repo) {
   return `https://oauth2:${encodeURIComponent(token)}@github.com/${owner}/${repo}.git`;
 }
 
+async function publishWithRaycastCommand(cwd, user) {
+  await runGit(["config", "user.name", user.login], { cwd });
+  await runGit(["config", "user.email", `${user.id}+${user.login}@users.noreply.github.com`], { cwd });
+
+  await runCommand("npm", ["ci"], { cwd });
+  await runCommand("npm", ["run", "publish"], {
+    cwd,
+    env: {
+      GITHUB_ACCESS_TOKEN: token,
+      RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC: token,
+    },
+  });
+}
+
 async function githubApi(endpoint, options = {}) {
   const response = await fetch(`https://api.github.com${endpoint}`, {
     method: options.method ?? "GET",
@@ -297,18 +256,57 @@ async function runGit(args, options = {}) {
   }
 }
 
+async function runGitStreaming(args, options = {}) {
+  return runCommand("git", args, options);
+}
+
+async function runCommand(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: options.cwd,
+      env: {
+        ...process.env,
+        ...options.env,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (data) => {
+      const text = sanitize(data.toString());
+      stdout += text;
+      process.stdout.write(text);
+    });
+
+    child.stderr.on("data", (data) => {
+      const text = sanitize(data.toString());
+      stderr += text;
+      process.stderr.write(text);
+    });
+
+    child.on("error", (error) => {
+      reject(error);
+    });
+
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve({ stdout, stderr });
+        return;
+      }
+
+      reject(new Error(sanitize(`${command} ${args.join(" ")} failed with exit code ${code}\n${stderr}`)));
+    });
+  });
+}
+
 async function readJson(file) {
   return JSON.parse(await fs.readFile(file, "utf8"));
 }
 
 function sanitize(value) {
   return token ? value.replaceAll(token, "***") : value;
-}
-
-function wait(milliseconds) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
-  });
 }
 
 class GitHubApiError extends Error {
