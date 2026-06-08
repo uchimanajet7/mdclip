@@ -1,25 +1,25 @@
 import fs from "fs/promises";
 import path from "path";
-import type { ConfiguredPromptSet, PromptFile, PromptFileLoadResult, PromptSetLoadFailure } from "../types";
+import type { ConfiguredBlockSet, BlockFile, BlockFileLoadResult, BlockSetLoadFailure } from "../types";
 
 const EXCLUDED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
 
-export async function listPromptFiles(promptSet: ConfiguredPromptSet): Promise<PromptFile[]> {
-  const rootPath = path.resolve(promptSet.directory);
+export async function listBlockFiles(blockSet: ConfiguredBlockSet): Promise<BlockFile[]> {
+  const rootPath = path.resolve(blockSet.directory);
   const rootStat = await fs.stat(rootPath);
 
   if (!rootStat.isDirectory()) {
-    throw new Error(`${promptSet.displayName} is not a directory: ${rootPath}`);
+    throw new Error(`${blockSet.displayName} is not a directory: ${rootPath}`);
   }
 
-  const files = await walkDirectory(rootPath, rootPath, promptSet);
+  const files = await walkDirectory(rootPath, rootPath, blockSet);
   return files.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 }
 
-export async function listPromptFilesFromPromptSets(promptSets: ConfiguredPromptSet[]): Promise<PromptFileLoadResult> {
-  const results = await Promise.allSettled(promptSets.map((promptSet) => listPromptFiles(promptSet)));
-  const files: PromptFile[] = [];
-  const failures: PromptSetLoadFailure[] = [];
+export async function listBlockFilesFromBlockSets(blockSets: ConfiguredBlockSet[]): Promise<BlockFileLoadResult> {
+  const results = await Promise.allSettled(blockSets.map((blockSet) => listBlockFiles(blockSet)));
+  const files: BlockFile[] = [];
+  const failures: BlockSetLoadFailure[] = [];
 
   results.forEach((result, index) => {
     if (result.status === "fulfilled") {
@@ -28,7 +28,7 @@ export async function listPromptFilesFromPromptSets(promptSets: ConfiguredPrompt
     }
 
     failures.push({
-      promptSet: promptSets[index],
+      blockSet: blockSets[index],
       message: getErrorMessage(result.reason),
     });
   });
@@ -39,10 +39,10 @@ export async function listPromptFilesFromPromptSets(promptSets: ConfiguredPrompt
 async function walkDirectory(
   rootPath: string,
   currentPath: string,
-  promptSet: ConfiguredPromptSet,
-): Promise<PromptFile[]> {
+  blockSet: ConfiguredBlockSet,
+): Promise<BlockFile[]> {
   const entries = await fs.readdir(currentPath, { withFileTypes: true });
-  const files: PromptFile[] = [];
+  const files: BlockFile[] = [];
 
   for (const entry of entries) {
     if (entry.isSymbolicLink()) {
@@ -56,7 +56,7 @@ async function walkDirectory(
         continue;
       }
 
-      files.push(...(await walkDirectory(rootPath, entryPath, promptSet)));
+      files.push(...(await walkDirectory(rootPath, entryPath, blockSet)));
       continue;
     }
 
@@ -70,7 +70,7 @@ async function walkDirectory(
       path: entryPath,
       name: entry.name,
       relativePath: path.relative(rootPath, entryPath),
-      promptSet,
+      blockSet,
       updatedAt: stat.mtime,
       size: stat.size,
     });

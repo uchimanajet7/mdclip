@@ -1,8 +1,8 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "prompt-launcher",
-  "title": "Prompt Launcher",
-  "description": "Find Markdown prompts from your folders and copy or open them quickly.",
+  "name": "local-copy-blocks",
+  "title": "Local Copy Blocks",
+  "description": "Find local Markdown-backed text blocks and copy them for reuse.",
   "icon": "icon.png",
   "author": "uchimanajet7",
   "license": "MIT",
@@ -14,113 +14,113 @@
     "Developer Tools"
   ],
   "keywords": [
-    "prompt",
-    "prompts",
-    "ai",
+    "local",
+    "copy",
+    "blocks",
     "markdown",
     "clipboard",
-    "snippet"
+    "reuse"
   ],
   "commands": [
     {
-      "name": "prompt-set-1",
-      "title": "Prompt Set 1",
-      "description": "Browse Markdown prompts from Prompt Set 1.",
+      "name": "block-set-1",
+      "title": "Block Set 1",
+      "description": "Browse Markdown-backed text blocks from Block Set 1.",
       "mode": "view"
     },
     {
-      "name": "prompt-set-2",
-      "title": "Prompt Set 2",
-      "description": "Browse Markdown prompts from Prompt Set 2.",
+      "name": "block-set-2",
+      "title": "Block Set 2",
+      "description": "Browse Markdown-backed text blocks from Block Set 2.",
       "mode": "view"
     },
     {
-      "name": "prompt-set-3",
-      "title": "Prompt Set 3",
-      "description": "Browse Markdown prompts from Prompt Set 3.",
+      "name": "block-set-3",
+      "title": "Block Set 3",
+      "description": "Browse Markdown-backed text blocks from Block Set 3.",
       "mode": "view"
     },
     {
-      "name": "all-prompt-sets",
-      "title": "All Prompt Sets",
-      "description": "Search Markdown prompts across all enabled prompt sets.",
+      "name": "all-block-sets",
+      "title": "All Block Sets",
+      "description": "Search Markdown-backed text blocks across all enabled Block Sets.",
       "mode": "view"
     }
   ],
   "preferences": [
     {
       "name": "folder1Enabled",
-      "title": "Prompt Set 1",
-      "label": "Enable Prompt Set 1",
-      "description": "Include Prompt Set 1 in its command and All Prompt Sets.",
+      "title": "Block Set 1",
+      "label": "Enable Block Set 1",
+      "description": "Include Block Set 1 in its command and All Block Sets.",
       "type": "checkbox",
       "required": false,
       "default": true
     },
     {
       "name": "folder1Directory",
-      "title": "Prompt Set 1 Folder",
-      "description": "Folder that Prompt Set 1 reads Markdown prompts from.",
+      "title": "Block Set 1 Folder",
+      "description": "Folder that Block Set 1 reads Markdown-backed text blocks from.",
       "type": "directory",
       "required": false
     },
     {
       "name": "folder1DisplayName",
-      "title": "Prompt Set 1 Name",
-      "description": "Display name for Prompt Set 1. The folder name is used when this is empty.",
+      "title": "Block Set 1 Name",
+      "description": "Display name for Block Set 1. The folder name is used when this is empty.",
       "type": "textfield",
       "required": false
     },
     {
       "name": "folder2Enabled",
-      "title": "Prompt Set 2",
-      "label": "Enable Prompt Set 2",
-      "description": "Include Prompt Set 2 in its command and All Prompt Sets.",
+      "title": "Block Set 2",
+      "label": "Enable Block Set 2",
+      "description": "Include Block Set 2 in its command and All Block Sets.",
       "type": "checkbox",
       "required": false,
       "default": true
     },
     {
       "name": "folder2Directory",
-      "title": "Prompt Set 2 Folder",
-      "description": "Folder that Prompt Set 2 reads Markdown prompts from.",
+      "title": "Block Set 2 Folder",
+      "description": "Folder that Block Set 2 reads Markdown-backed text blocks from.",
       "type": "directory",
       "required": false
     },
     {
       "name": "folder2DisplayName",
-      "title": "Prompt Set 2 Name",
-      "description": "Display name for Prompt Set 2. The folder name is used when this is empty.",
+      "title": "Block Set 2 Name",
+      "description": "Display name for Block Set 2. The folder name is used when this is empty.",
       "type": "textfield",
       "required": false
     },
     {
       "name": "folder3Enabled",
-      "title": "Prompt Set 3",
-      "label": "Enable Prompt Set 3",
-      "description": "Include Prompt Set 3 in its command and All Prompt Sets.",
+      "title": "Block Set 3",
+      "label": "Enable Block Set 3",
+      "description": "Include Block Set 3 in its command and All Block Sets.",
       "type": "checkbox",
       "required": false,
       "default": true
     },
     {
       "name": "folder3Directory",
-      "title": "Prompt Set 3 Folder",
-      "description": "Folder that Prompt Set 3 reads Markdown prompts from.",
+      "title": "Block Set 3 Folder",
+      "description": "Folder that Block Set 3 reads Markdown-backed text blocks from.",
       "type": "directory",
       "required": false
     },
     {
       "name": "folder3DisplayName",
-      "title": "Prompt Set 3 Name",
-      "description": "Display name for Prompt Set 3. The folder name is used when this is empty.",
+      "title": "Block Set 3 Name",
+      "description": "Display name for Block Set 3. The folder name is used when this is empty.",
       "type": "textfield",
       "required": false
     },
     {
       "name": "editor",
       "title": "Editor",
-      "description": "Editor used to open Markdown prompt files.",
+      "description": "Editor used to open Markdown-backed text block files.",
       "type": "appPicker",
       "required": false
     },
@@ -149,8 +149,8 @@
     "check:local": "node scripts/local-verification.mjs",
     "update:dependencies": "node scripts/update-dependencies.mjs",
     "dev": "ray develop",
-    "demo:setup": "node scripts/demo-prompts.mjs setup",
-    "demo:clean": "node scripts/demo-prompts.mjs clean",
+    "demo:setup": "node scripts/demo-block-sets.mjs setup",
+    "demo:clean": "node scripts/demo-block-sets.mjs clean",
     "sync:readme-media": "node scripts/sync-readme-media.mjs",
     "icon:generate": "node scripts/generate-icon.mjs",
     "build": "ray build -e dist",
@@ -162,16 +162,20 @@
     "format": "node scripts/format.mjs --write"
   },
   "dependencies": {
-    "@raycast/api": "^1.104.16",
-    "react": "^19.2.6"
+    "@raycast/api": "^1.104.19",
+    "react": "^19.2.7"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.1.1",
-    "@types/node": "^25.7.0",
-    "@types/react": "^19.2.14",
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
     "esbuild": "^0.28.0",
-    "eslint": "^10.3.0",
+    "eslint": "^10.4.1",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.0": true
   }
 }

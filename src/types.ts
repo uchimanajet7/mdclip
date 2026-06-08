@@ -1,32 +1,32 @@
-export type PromptSetId = 1 | 2 | 3;
+export type BlockSetId = 1 | 2 | 3;
 
-export type PromptSetConfig = {
-  id: PromptSetId;
+export type BlockSetConfig = {
+  id: BlockSetId;
   commandTitle: string;
   displayName: string;
   isEnabled: boolean;
   directory?: string;
 };
 
-export type ConfiguredPromptSet = PromptSetConfig & {
+export type ConfiguredBlockSet = BlockSetConfig & {
   directory: string;
 };
 
-export type PromptFile = {
+export type BlockFile = {
   path: string;
   name: string;
   relativePath: string;
-  promptSet: ConfiguredPromptSet;
+  blockSet: ConfiguredBlockSet;
   updatedAt: Date;
   size: number;
 };
 
-export type PromptSetLoadFailure = {
-  promptSet: ConfiguredPromptSet;
+export type BlockSetLoadFailure = {
+  blockSet: ConfiguredBlockSet;
   message: string;
 };
 
-export type PromptFileLoadResult = {
-  files: PromptFile[];
-  failures: PromptSetLoadFailure[];
+export type BlockFileLoadResult = {
+  files: BlockFile[];
+  failures: BlockSetLoadFailure[];
 };

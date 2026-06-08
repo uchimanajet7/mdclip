@@ -1,43 +1,46 @@
-# Prompt Launcher
+# Local Copy Blocks
 
-`Prompt Launcher` is a Raycast extension for finding Markdown prompt files from local folders, then copying their content or opening them in an editor.
+`Local Copy Blocks` is a Raycast extension for copying reusable text blocks from local Markdown files, either as-is or with supported Dynamic Placeholders expanded at copy time.
 
-It uses your existing Markdown files as they are. You do not need to move your prompts into a Raycast-specific format or manage them inside Raycast.
+Your folders and Markdown files remain the source of truth. The extension adds a fast Raycast copy workflow on top of those files, so you can keep editing, versioning, and organizing them with the tools you already use.
+
+The main strength is the combination of local files, quick access, and copy-time expansion. You can keep simple Markdown files as reusable blocks, find them from Raycast, and choose between copying the original text or copying a version where supported Dynamic Placeholders such as the current date, time zone, UUID, and clipboard text are expanded for the moment you copy.
 
 ## What This Extension Solves
 
-If you manage prompts as Markdown files, editing and version history can stay in your usual editor and Git workflow. The missing part is quickly finding a prompt and copying its content when you need to use it.
+If you keep reusable text blocks in Markdown files, editing and version history can stay in your usual editor and Git workflow. The missing part is quickly finding the right file and copying its content when you need to reuse it.
 
-`Prompt Launcher` focuses on that launch and copy workflow.
+`Local Copy Blocks` focuses on that launch and copy workflow.
 
-- You manage one prompt per Markdown file
-- You edit prompts in your usual editor, such as Visual Studio Code
-- You keep prompt history in Git or another file-based workflow
-- You want Raycast to quickly search, preview, copy, and open existing Markdown prompts
+- You manage one reusable copy block per Markdown file
+- You edit those Markdown files in your usual editor, such as Visual Studio Code
+- You keep content history in Git or another file-based workflow
+- You want Raycast to quickly search, preview, and copy existing Markdown-backed text blocks
+- You want reusable blocks that can include copy-time values such as the current date, time zone, UUID, or clipboard text
 
 ## Features
 
 - Recursively lists Markdown files under enabled and configured folders. The `.md` extension is matched case-insensitively
-- Provides three Prompt Set commands for frequently used folders
-- Searches across all enabled and configured Prompt Sets
+- Provides three Block Set commands for frequently used folders
+- Searches across all enabled and configured Block Sets
 - Copies the full content of the selected Markdown file
-- Copies the selected Markdown file after replacing supported Dynamic Placeholders
+- Expands supported Dynamic Placeholders such as `{date}`, `{datetime}`, `{timezone}`, `{now}`, `{uuid}`, and `{clipboard}` when copying
 - Shows an optional preview of the beginning of the selected file
 - Opens the selected file in a configured editor, the default app, another compatible app, or Finder
 - Sorts the list by updated time, file name, or relative path
 
-![Prompt Launcher showing a Prompt Set with Markdown preview and copy action](media/prompt-launcher-1.png)
+![Local Copy Blocks showing a Block Set with Markdown preview and copy action](media/local-copy-blocks-1.png)
 
 ## Requirements
 
-Prepare at least one folder that contains Markdown prompt files.
+Prepare at least one folder that contains Markdown files you want to reuse as copy blocks.
 
-Each Markdown file is treated as one prompt. Frontmatter, special code blocks, or custom separators are not required.
+Each Markdown file is treated as one reusable copy block. Frontmatter, special code blocks, or custom separators are not required.
 
 Example:
 
 ```text
-prompts/
+copy-blocks/
 ├── review.md
 ├── refactor.md
 └── writing/
@@ -48,47 +51,47 @@ prompts/
 
 ## Setup
 
-After installing the extension, open `Prompt Launcher` from Raycast Preferences > Extensions and set at least one of `Prompt Set 1 Folder`, `Prompt Set 2 Folder`, or `Prompt Set 3 Folder`.
+After installing the extension, open `Local Copy Blocks` from Raycast Preferences > Extensions and set at least one of `Block Set 1 Folder`, `Block Set 2 Folder`, or `Block Set 3 Folder`.
 
-You can also open the same preferences screen from `Open Extension Preferences` when a disabled or unconfigured Prompt Set is opened.
+You can also open the same preferences screen from `Open Extension Preferences` when a disabled or unconfigured Block Set is opened.
 
-You do not need to configure all three Prompt Set Folders. At least one enabled Prompt Set with a configured Prompt Set Folder is required to show Markdown files.
+You do not need to configure all three Block Set Folders. At least one enabled Block Set with a configured Block Set Folder is required to show Markdown files.
 
-Each Prompt Set appears as its own section in Raycast Preferences. The `Enable Prompt Set N` checkbox controls whether that Prompt Set is included in its command and in `All Prompt Sets`.
+Each Block Set appears as its own section in Raycast Preferences. The `Enable Block Set N` checkbox controls whether that Block Set is included in its command and in `All Block Sets`.
 
 ```text
-Prompt Launcher Preferences
-├── Prompt Set 1
-│   ├── Enable Prompt Set 1
-│   ├── Prompt Set 1 Folder
-│   └── Prompt Set 1 Name
-├── Prompt Set 2
-│   ├── Enable Prompt Set 2
-│   ├── Prompt Set 2 Folder
-│   └── Prompt Set 2 Name
-├── Prompt Set 3
-│   ├── Enable Prompt Set 3
-│   ├── Prompt Set 3 Folder
-│   └── Prompt Set 3 Name
+Local Copy Blocks Preferences
+├── Block Set 1
+│   ├── Enable Block Set 1
+│   ├── Block Set 1 Folder
+│   └── Block Set 1 Name
+├── Block Set 2
+│   ├── Enable Block Set 2
+│   ├── Block Set 2 Folder
+│   └── Block Set 2 Name
+├── Block Set 3
+│   ├── Enable Block Set 3
+│   ├── Block Set 3 Folder
+│   └── Block Set 3 Name
 └── Shared Preferences
     ├── Editor
     ├── Preview Line Count
     └── Preview Max Characters
 ```
 
-| Prompt Set Section | Preference          | Requirement                    | Description                                                  |
-| ------------------ | ------------------- | ------------------------------ | ------------------------------------------------------------ |
-| Prompt Set 1       | Enable Prompt Set 1 | Optional, on by default        | Includes `Prompt Set 1` in its command and `All Prompt Sets` |
-| Prompt Set 1       | Prompt Set 1 Folder | Required to use `Prompt Set 1` | Markdown folder used by `Prompt Set 1`                       |
-| Prompt Set 1       | Prompt Set 1 Name   | Optional                       | Display name shown in Raycast                                |
-| Prompt Set 2       | Enable Prompt Set 2 | Optional, on by default        | Includes `Prompt Set 2` in its command and `All Prompt Sets` |
-| Prompt Set 2       | Prompt Set 2 Folder | Required to use `Prompt Set 2` | Markdown folder used by `Prompt Set 2`                       |
-| Prompt Set 2       | Prompt Set 2 Name   | Optional                       | Display name shown in Raycast                                |
-| Prompt Set 3       | Enable Prompt Set 3 | Optional, on by default        | Includes `Prompt Set 3` in its command and `All Prompt Sets` |
-| Prompt Set 3       | Prompt Set 3 Folder | Required to use `Prompt Set 3` | Markdown folder used by `Prompt Set 3`                       |
-| Prompt Set 3       | Prompt Set 3 Name   | Optional                       | Display name shown in Raycast                                |
+| Block Set Section | Preference         | Requirement                   | Description                                                |
+| ----------------- | ------------------ | ----------------------------- | ---------------------------------------------------------- |
+| Block Set 1       | Enable Block Set 1 | Optional, on by default       | Includes `Block Set 1` in its command and `All Block Sets` |
+| Block Set 1       | Block Set 1 Folder | Required to use `Block Set 1` | Markdown folder used by `Block Set 1`                      |
+| Block Set 1       | Block Set 1 Name   | Optional                      | Display name shown in Raycast                              |
+| Block Set 2       | Enable Block Set 2 | Optional, on by default       | Includes `Block Set 2` in its command and `All Block Sets` |
+| Block Set 2       | Block Set 2 Folder | Required to use `Block Set 2` | Markdown folder used by `Block Set 2`                      |
+| Block Set 2       | Block Set 2 Name   | Optional                      | Display name shown in Raycast                              |
+| Block Set 3       | Enable Block Set 3 | Optional, on by default       | Includes `Block Set 3` in its command and `All Block Sets` |
+| Block Set 3       | Block Set 3 Folder | Required to use `Block Set 3` | Markdown folder used by `Block Set 3`                      |
+| Block Set 3       | Block Set 3 Name   | Optional                      | Display name shown in Raycast                              |
 
-Other preferences apply to all Prompt Sets.
+Other preferences apply to all Block Sets.
 
 | Preference             | Requirement | Description                                                           |
 | ---------------------- | ----------- | --------------------------------------------------------------------- |
@@ -96,34 +99,34 @@ Other preferences apply to all Prompt Sets.
 | Preview Line Count     | Optional    | Number of leading lines shown in the preview. Default is `10`         |
 | Preview Max Characters | Optional    | Maximum number of characters shown in the preview. Default is `4000`  |
 
-If you turn off `Enable Prompt Set N`, that Prompt Set is excluded from its command and from `All Prompt Sets` until you turn it on again.
+If you turn off `Enable Block Set N`, that Block Set is excluded from its command and from `All Block Sets` until you turn it on again.
 
-If you open an enabled Prompt Set command without setting its folder, the extension shows a configuration screen.
+If you open an enabled Block Set command without setting its folder, the extension shows a configuration screen.
 
-If a Prompt Set Name is empty, the configured folder name is used as the display name.
+If a Block Set Name is empty, the configured folder name is used as the display name.
 
 ## First Use
 
-1. Open `Prompt Launcher` from Raycast Preferences > Extensions
-2. Set `Prompt Set 1 Folder` to a folder that contains Markdown prompt files
-3. Keep `Enable Prompt Set 1` turned on
-4. Optionally set `Prompt Set 1 Name`
-5. Open `Prompt Set 1` in Raycast
+1. Open `Local Copy Blocks` from Raycast Preferences > Extensions
+2. Set `Block Set 1 Folder` to a folder that contains Markdown-backed text block files
+3. Keep `Enable Block Set 1` turned on
+4. Optionally set `Block Set 1 Name`
+5. Open `Block Set 1` in Raycast
 6. Select a Markdown file from the list
 7. Press Enter to run `Copy Raw Content`
 
-Open `All Prompt Sets` when you want to search across multiple enabled folders.
+Open `All Block Sets` when you want to search across multiple enabled folders.
 
 ## Commands
 
-| Command         | Description                                                             |
-| --------------- | ----------------------------------------------------------------------- |
-| Prompt Set 1    | Shows Markdown prompts from `Prompt Set 1 Folder`                       |
-| Prompt Set 2    | Shows Markdown prompts from `Prompt Set 2 Folder`                       |
-| Prompt Set 3    | Shows Markdown prompts from `Prompt Set 3 Folder`                       |
-| All Prompt Sets | Searches Markdown prompts across all enabled and configured Prompt Sets |
+| Command        | Description                                                                       |
+| -------------- | --------------------------------------------------------------------------------- |
+| Block Set 1    | Shows Markdown-backed text blocks from `Block Set 1 Folder`                       |
+| Block Set 2    | Shows Markdown-backed text blocks from `Block Set 2 Folder`                       |
+| Block Set 3    | Shows Markdown-backed text blocks from `Block Set 3 Folder`                       |
+| All Block Sets | Searches Markdown-backed text blocks across all enabled and configured Block Sets |
 
-Raycast hotkeys can be assigned per command. Assign hotkeys to the Prompt Sets you use most often, and use `All Prompt Sets` when you want to search across enabled folders.
+Raycast hotkeys can be assigned per command. Assign hotkeys to the Block Sets you use most often, and use `All Block Sets` when you want to search across enabled folders.
 
 ## Actions
 
@@ -149,7 +152,7 @@ The following actions are available when a Markdown file is selected.
 
 `Copy Expanded Content` replaces supported Dynamic Placeholders in the Markdown file content before copying. It does not modify the original Markdown file.
 
-Prompt Launcher supports a subset of placeholder names used by Raycast Dynamic Placeholders, plus its own `{timezone}` and `{now}` placeholders. It is not fully compatible with Raycast Dynamic Placeholders, and the replacement values are generated by Prompt Launcher.
+Local Copy Blocks supports a subset of placeholder names used by Raycast Dynamic Placeholders, plus its own `{timezone}` and `{now}` placeholders. It is not fully compatible with Raycast Dynamic Placeholders, and the replacement values are generated by Local Copy Blocks.
 
 Reference: [Raycast Dynamic Placeholders](https://manual.raycast.com/dynamic-placeholders)
 
@@ -172,16 +175,16 @@ If a Markdown file does not use Dynamic Placeholders, `Copy Raw Content` and `Co
 
 `Copy Expanded Content` replaces only the Dynamic Placeholders listed below.
 
-| Placeholder   | Replacement                                                                     |
-| ------------- | ------------------------------------------------------------------------------- |
-| `{date}`      | Current date based on your environment locale                                   |
-| `{time}`      | Current time based on your environment locale                                   |
-| `{datetime}`  | Current date and time based on your environment locale                          |
-| `{day}`       | Day of the week based on your environment locale                                |
-| `{timezone}`  | Prompt Launcher placeholder for the time zone in `Asia/Tokyo UTC+09:00` format  |
-| `{now}`       | Current date and time from `{datetime}` plus `{timezone}`, separated by a space |
-| `{uuid}`      | Random UUID generated separately for each `{uuid}` occurrence                   |
-| `{clipboard}` | Current clipboard text                                                          |
+| Placeholder   | Replacement                                                                      |
+| ------------- | -------------------------------------------------------------------------------- |
+| `{date}`      | Current date based on your environment locale                                    |
+| `{time}`      | Current time based on your environment locale                                    |
+| `{datetime}`  | Current date and time based on your environment locale                           |
+| `{day}`       | Day of the week based on your environment locale                                 |
+| `{timezone}`  | Local Copy Blocks placeholder for the time zone in `Asia/Tokyo UTC+09:00` format |
+| `{now}`       | Current date and time from `{datetime}` plus `{timezone}`, separated by a space  |
+| `{uuid}`      | Random UUID generated separately for each `{uuid}` occurrence                    |
+| `{clipboard}` | Current clipboard text                                                           |
 
 Placeholders that are not listed here are not replaced and remain unchanged in the copied text.
 
@@ -199,12 +202,12 @@ Use the `Sort` dropdown on the right side of the search bar to change the list o
 
 Name and path sorting use the runtime default locale.
 
-| Sort                   | Description                                        |
-| ---------------------- | -------------------------------------------------- |
-| Updated (Newest First) | Newest updated files first. This is the default    |
-| Updated (Oldest First) | Oldest updated files first                         |
-| Name (A-Z)             | File name ascending                                |
-| Path (A-Z)             | Relative path from the Prompt Set Folder ascending |
+| Sort                   | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| Updated (Newest First) | Newest updated files first. This is the default   |
+| Updated (Oldest First) | Oldest updated files first                        |
+| Name (A-Z)             | File name ascending                               |
+| Path (A-Z)             | Relative path from the Block Set Folder ascending |
 
 ## Markdown File Handling
 
@@ -221,24 +224,24 @@ Symbolic links are not followed.
 
 ## Troubleshooting
 
-### A Prompt Set asks me to configure preferences
+### A Block Set asks me to configure preferences
 
-The Prompt Set is disabled or its folder is not configured. Open Raycast Extension Preferences, turn on the Prompt Set if needed, and set the Prompt Set Folder.
+The Block Set is disabled or its folder is not configured. Open Raycast Extension Preferences, turn on the Block Set if needed, and set the Block Set Folder.
 
 ### Markdown files are not shown
 
 Check the following.
 
-- The Prompt Set Folder points to the correct folder
+- The Block Set Folder points to the correct folder
 - The file extension is `.md`, matched case-insensitively
 - The file is not under `.git`, `node_modules`, or a hidden directory
 - The folder exists and can be read by Raycast
 
 ### A configured folder fails to load
 
-The configured path may not be a folder, the folder may have been deleted or moved, or Raycast may not be able to read it. Open Extension Preferences and set the Prompt Set Folder again.
+The configured path may not be a folder, the folder may have been deleted or moved, or Raycast may not be able to read it. Open Extension Preferences and set the Block Set Folder again.
 
-In `All Prompt Sets`, folders that can be read still show their Markdown files. Folders that cannot be read appear in a `Could Not Load` section.
+In `All Block Sets`, folders that can be read still show their Markdown files. Folders that cannot be read appear in a `Could Not Load` section.
 
 ### `Open in Editor` does not open the expected app
 
@@ -252,7 +255,7 @@ When `{clipboard}` is used, the clipboard text at the time of copying is inserte
 
 ## Privacy and Data Handling
 
-`Prompt Launcher` reads Markdown files under the enabled Prompt Set Folders that you configure.
+`Local Copy Blocks` reads Markdown files under the enabled Block Set Folders that you configure.
 
 Markdown file content is sent to the clipboard only when you run a copy action.
 
@@ -264,4 +267,4 @@ This extension does not make network requests.
 
 ## File Safety
 
-`Prompt Launcher` does not create, edit, rename, move, or delete Markdown files. It does not perform Git operations or sync files to a cloud service.
+`Local Copy Blocks` does not create, edit, rename, move, or delete Markdown files. It does not perform Git operations or sync files to a cloud service.

@@ -15,7 +15,7 @@ await mkdir(fixtureRoot, { recursive: true });
 await mkdir(distRoot, { recursive: true });
 
 await verifyCommandEntryPoints();
-await verifyPromptSetPreferences();
+await verifyBlockSetPreferences();
 await verifyMarkdownFileListing();
 await verifyPreview();
 await verifyDynamicPlaceholdersExpansion();
@@ -31,7 +31,7 @@ async function verifyCommandEntryPoints() {
   }
 }
 
-async function verifyPromptSetPreferences() {
+async function verifyBlockSetPreferences() {
   const packageJson = JSON.parse(await readText("package.json"));
   const preferences = Object.fromEntries(
     (packageJson.preferences ?? []).map((preference) => [preference.name, preference]),
@@ -39,8 +39,8 @@ async function verifyPromptSetPreferences() {
 
   for (const index of [1, 2, 3]) {
     assert.equal(preferences[`folder${index}Enabled`].type, "checkbox");
-    assert.equal(preferences[`folder${index}Enabled`].title, `Prompt Set ${index}`);
-    assert.equal(preferences[`folder${index}Enabled`].label, `Enable Prompt Set ${index}`);
+    assert.equal(preferences[`folder${index}Enabled`].title, `Block Set ${index}`);
+    assert.equal(preferences[`folder${index}Enabled`].label, `Enable Block Set ${index}`);
     assert.equal(preferences[`folder${index}Enabled`].default, true);
     assert.equal(preferences[`folder${index}Enabled`].required, false);
     assert.equal(preferences[`folder${index}Directory`].type, "directory");
@@ -74,56 +74,56 @@ async function verifyMarkdownFileListing() {
     outfile: outputFile,
   });
 
-  const { listPromptFiles, listPromptFilesFromPromptSets } = await import(pathToFileURL(outputFile));
-  const promptRoot = path.join(fixtureRoot, "prompts");
-  const secondPromptRoot = path.join(fixtureRoot, "second-prompts");
-  const missingPromptRoot = path.join(fixtureRoot, "missing-prompts");
-  await mkdir(path.join(promptRoot, "nested"), { recursive: true });
-  await mkdir(path.join(promptRoot, ".hidden"), { recursive: true });
-  await mkdir(path.join(promptRoot, ".git"), { recursive: true });
-  await mkdir(path.join(promptRoot, "node_modules"), { recursive: true });
-  await mkdir(secondPromptRoot, { recursive: true });
-  await writeFile(path.join(promptRoot, "a.md"), "# A\n");
-  await writeFile(path.join(promptRoot, "nested", "b.MD"), "# B\n");
-  await writeFile(path.join(promptRoot, "c.txt"), "C\n");
-  await writeFile(path.join(promptRoot, ".hidden", "hidden.md"), "hidden\n");
-  await writeFile(path.join(promptRoot, ".git", "ignored.md"), "git\n");
-  await writeFile(path.join(promptRoot, "node_modules", "ignored.md"), "node_modules\n");
-  await writeFile(path.join(secondPromptRoot, "second.md"), "# Second\n");
+  const { listBlockFiles, listBlockFilesFromBlockSets } = await import(pathToFileURL(outputFile));
+  const blockRoot = path.join(fixtureRoot, "blocks");
+  const secondBlockRoot = path.join(fixtureRoot, "second-blocks");
+  const missingBlockRoot = path.join(fixtureRoot, "missing-blocks");
+  await mkdir(path.join(blockRoot, "nested"), { recursive: true });
+  await mkdir(path.join(blockRoot, ".hidden"), { recursive: true });
+  await mkdir(path.join(blockRoot, ".git"), { recursive: true });
+  await mkdir(path.join(blockRoot, "node_modules"), { recursive: true });
+  await mkdir(secondBlockRoot, { recursive: true });
+  await writeFile(path.join(blockRoot, "a.md"), "# A\n");
+  await writeFile(path.join(blockRoot, "nested", "b.MD"), "# B\n");
+  await writeFile(path.join(blockRoot, "c.txt"), "C\n");
+  await writeFile(path.join(blockRoot, ".hidden", "hidden.md"), "hidden\n");
+  await writeFile(path.join(blockRoot, ".git", "ignored.md"), "git\n");
+  await writeFile(path.join(blockRoot, "node_modules", "ignored.md"), "node_modules\n");
+  await writeFile(path.join(secondBlockRoot, "second.md"), "# Second\n");
 
-  const files = await listPromptFiles({
+  const files = await listBlockFiles({
     id: 1,
-    commandTitle: "Prompt Set 1",
+    commandTitle: "Block Set 1",
     displayName: "Fixture",
-    directory: promptRoot,
+    directory: blockRoot,
   });
 
   assert.deepEqual(
     files.map((file) => file.relativePath),
     ["a.md", path.join("nested", "b.MD")],
   );
-  assert(files.every((file) => file.promptSet.displayName === "Fixture"));
+  assert(files.every((file) => file.blockSet.displayName === "Fixture"));
   assert(files.every((file) => file.size > 0));
   assert(files.every((file) => file.updatedAt instanceof Date));
 
-  const combinedResult = await listPromptFilesFromPromptSets([
+  const combinedResult = await listBlockFilesFromBlockSets([
     {
       id: 1,
-      commandTitle: "Prompt Set 1",
+      commandTitle: "Block Set 1",
       displayName: "Fixture",
-      directory: promptRoot,
+      directory: blockRoot,
     },
     {
       id: 2,
-      commandTitle: "Prompt Set 2",
+      commandTitle: "Block Set 2",
       displayName: "Missing Fixture",
-      directory: missingPromptRoot,
+      directory: missingBlockRoot,
     },
     {
       id: 3,
-      commandTitle: "Prompt Set 3",
+      commandTitle: "Block Set 3",
       displayName: "Second Fixture",
-      directory: secondPromptRoot,
+      directory: secondBlockRoot,
     },
   ]);
 
@@ -132,7 +132,7 @@ async function verifyMarkdownFileListing() {
     ["a.md", path.join("nested", "b.MD"), "second.md"],
   );
   assert.equal(combinedResult.failures.length, 1);
-  assert.equal(combinedResult.failures[0].promptSet.displayName, "Missing Fixture");
+  assert.equal(combinedResult.failures[0].blockSet.displayName, "Missing Fixture");
   assert.match(combinedResult.failures[0].message, /ENOENT|no such file/i);
 
   const notDirectoryPath = path.join(fixtureRoot, "not-directory.md");
@@ -140,9 +140,9 @@ async function verifyMarkdownFileListing() {
 
   await assert.rejects(
     () =>
-      listPromptFiles({
+      listBlockFiles({
         id: 1,
-        commandTitle: "Prompt Set 1",
+        commandTitle: "Block Set 1",
         displayName: "Not Directory",
         directory: notDirectoryPath,
       }),
@@ -163,12 +163,12 @@ async function verifyPreview() {
     outfile: outputFile,
   });
 
-  const { readPromptPreview } = await import(pathToFileURL(outputFile));
+  const { readBlockPreview } = await import(pathToFileURL(outputFile));
   const previewFilePath = path.join(fixtureRoot, "preview.md");
   await writeFile(previewFilePath, ["line1", "line2", "line3", "line4"].join("\n"));
 
-  assert.equal(await readPromptPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), "line1\nline2");
-  assert.equal(await readPromptPreview(previewFilePath, { lineCount: 10, maxCharacters: 8 }), "line1\nli");
+  assert.equal(await readBlockPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), "line1\nline2");
+  assert.equal(await readBlockPreview(previewFilePath, { lineCount: 10, maxCharacters: 8 }), "line1\nli");
 }
 
 async function verifyDynamicPlaceholdersExpansion() {
@@ -190,10 +190,10 @@ async function verifyDynamicPlaceholdersExpansion() {
           }));
           pluginBuild.onLoad({ filter: /.*/, namespace: "raycast-api-stub" }, () => ({
             contents: `
-globalThis.__promptLauncherClipboardReadCount = 0;
+globalThis.__localCopyBlocksClipboardReadCount = 0;
 export const Clipboard = {
   readText: async () => {
-    globalThis.__promptLauncherClipboardReadCount += 1;
+    globalThis.__localCopyBlocksClipboardReadCount += 1;
     return "CLIPBOARD_TEXT";
   },
 };
@@ -225,11 +225,11 @@ export const Clipboard = {
   assert.match(expanded, /clipboard=CLIPBOARD_TEXT/);
   assert(!expanded.includes("{date}"));
   assert(!expanded.includes("{clipboard}"));
-  assert.equal(globalThis.__promptLauncherClipboardReadCount, 1);
+  assert.equal(globalThis.__localCopyBlocksClipboardReadCount, 1);
 
-  globalThis.__promptLauncherClipboardReadCount = 0;
+  globalThis.__localCopyBlocksClipboardReadCount = 0;
   await expandDynamicPlaceholders("date={date}\ntimezone={timezone}");
-  assert.equal(globalThis.__promptLauncherClipboardReadCount, 0);
+  assert.equal(globalThis.__localCopyBlocksClipboardReadCount, 0);
 }
 
 async function readText(relativePath) {

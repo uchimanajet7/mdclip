@@ -1,37 +1,37 @@
 import { getPreferenceValues } from "@raycast/api";
 import path from "path";
-import type { ConfiguredPromptSet, PromptSetConfig, PromptSetId } from "../types";
+import type { ConfiguredBlockSet, BlockSetConfig, BlockSetId } from "../types";
 
-const PROMPT_SET_COMMAND_TITLES: Record<PromptSetId, string> = {
-  1: "Prompt Set 1",
-  2: "Prompt Set 2",
-  3: "Prompt Set 3",
+const BLOCK_SET_COMMAND_TITLES: Record<BlockSetId, string> = {
+  1: "Block Set 1",
+  2: "Block Set 2",
+  3: "Block Set 3",
 };
 
 export function getPreferences(): ExtensionPreferences {
   return getPreferenceValues<ExtensionPreferences>();
 }
 
-export function getPromptSetConfig(promptSetId: PromptSetId): PromptSetConfig {
+export function getBlockSetConfig(blockSetId: BlockSetId): BlockSetConfig {
   const preferences = getPreferences();
-  const directory = getDirectoryPreference(preferences, promptSetId);
-  const isEnabled = getEnabledPreference(preferences, promptSetId);
+  const directory = getDirectoryPreference(preferences, blockSetId);
+  const isEnabled = getEnabledPreference(preferences, blockSetId);
   const displayName =
-    getDisplayNamePreference(preferences, promptSetId) ||
+    getDisplayNamePreference(preferences, blockSetId) ||
     getDirectoryName(directory) ||
-    PROMPT_SET_COMMAND_TITLES[promptSetId];
+    BLOCK_SET_COMMAND_TITLES[blockSetId];
 
   return {
-    id: promptSetId,
-    commandTitle: PROMPT_SET_COMMAND_TITLES[promptSetId],
+    id: blockSetId,
+    commandTitle: BLOCK_SET_COMMAND_TITLES[blockSetId],
     displayName,
     isEnabled,
     directory,
   };
 }
 
-export function getConfiguredPromptSetConfig(promptSetId: PromptSetId): ConfiguredPromptSet | undefined {
-  const config = getPromptSetConfig(promptSetId);
+export function getConfiguredBlockSetConfig(blockSetId: BlockSetId): ConfiguredBlockSet | undefined {
+  const config = getBlockSetConfig(blockSetId);
   if (!config.isEnabled || !config.directory) {
     return undefined;
   }
@@ -42,14 +42,14 @@ export function getConfiguredPromptSetConfig(promptSetId: PromptSetId): Configur
   };
 }
 
-export function getConfiguredPromptSetConfigs(): ConfiguredPromptSet[] {
+export function getConfiguredBlockSetConfigs(): ConfiguredBlockSet[] {
   return ([1, 2, 3] as const)
-    .map((promptSetId) => getConfiguredPromptSetConfig(promptSetId))
-    .filter((config): config is ConfiguredPromptSet => Boolean(config));
+    .map((blockSetId) => getConfiguredBlockSetConfig(blockSetId))
+    .filter((config): config is ConfiguredBlockSet => Boolean(config));
 }
 
-function getEnabledPreference(preferences: ExtensionPreferences, promptSetId: PromptSetId): boolean {
-  switch (promptSetId) {
+function getEnabledPreference(preferences: ExtensionPreferences, blockSetId: BlockSetId): boolean {
+  switch (blockSetId) {
     case 1:
       return preferences.folder1Enabled !== false;
     case 2:
@@ -59,8 +59,8 @@ function getEnabledPreference(preferences: ExtensionPreferences, promptSetId: Pr
   }
 }
 
-function getDirectoryPreference(preferences: ExtensionPreferences, promptSetId: PromptSetId): string | undefined {
-  switch (promptSetId) {
+function getDirectoryPreference(preferences: ExtensionPreferences, blockSetId: BlockSetId): string | undefined {
+  switch (blockSetId) {
     case 1:
       return preferences.folder1Directory;
     case 2:
@@ -70,8 +70,8 @@ function getDirectoryPreference(preferences: ExtensionPreferences, promptSetId: 
   }
 }
 
-function getDisplayNamePreference(preferences: ExtensionPreferences, promptSetId: PromptSetId): string | undefined {
-  switch (promptSetId) {
+function getDisplayNamePreference(preferences: ExtensionPreferences, blockSetId: BlockSetId): string | undefined {
+  switch (blockSetId) {
     case 1:
       return preferences.folder1DisplayName?.trim();
     case 2:

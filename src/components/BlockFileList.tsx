@@ -11,20 +11,20 @@ import {
   showToast,
 } from "@raycast/api";
 import { useEffect, useMemo, useState } from "react";
-import type { ConfiguredPromptSet, PromptFile, PromptSetLoadFailure } from "../types";
-import { copyPromptFile } from "../services/clipboard";
-import { listPromptFilesFromPromptSets } from "../services/markdownFiles";
-import { readPromptPreview } from "../services/preview";
+import type { ConfiguredBlockSet, BlockFile, BlockSetLoadFailure } from "../types";
+import { copyBlockFile } from "../services/clipboard";
+import { listBlockFilesFromBlockSets } from "../services/markdownFiles";
+import { readBlockPreview } from "../services/preview";
 
 type Props = {
-  promptSets: ConfiguredPromptSet[];
+  blockSets: ConfiguredBlockSet[];
   searchBarPlaceholder: string;
   emptyTitle: string;
 };
 
 type LoadState = {
-  files: PromptFile[];
-  failures: PromptSetLoadFailure[];
+  files: BlockFile[];
+  failures: BlockSetLoadFailure[];
   error?: string;
   isLoading: boolean;
 };
@@ -43,10 +43,10 @@ const DEFAULT_PREVIEW_ENABLED = true;
 const DEFAULT_SORT_MODE: SortMode = "updated-desc";
 const MAX_PREVIEW_LINE_COUNT = 100;
 const MAX_PREVIEW_CHARACTERS = 20000;
-const PREVIEW_ENABLED_CACHE_KEY = "prompt-launcher.preview.enabled";
+const PREVIEW_ENABLED_CACHE_KEY = "local-copy-blocks.preview.enabled";
 const previewVisibilityCache = new Cache();
 
-export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }: Props) {
+export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: Props) {
   const [state, setState] = useState<LoadState>({ files: [], failures: [], isLoading: true });
   const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
   const [isPreviewEnabled, setIsPreviewEnabled] = useState(readInitialPreviewVisibility);
@@ -75,15 +75,15 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
 
     async function loadFiles() {
       try {
-        const result = await listPromptFilesFromPromptSets(promptSets);
-        const successfulPromptSetCount = promptSets.length - result.failures.length;
+        const result = await listBlockFilesFromBlockSets(blockSets);
+        const successfulBlockSetCount = blockSets.length - result.failures.length;
 
         if (isMounted) {
-          if (result.failures.length > 0 && successfulPromptSetCount === 0) {
+          if (result.failures.length > 0 && successfulBlockSetCount === 0) {
             setState({
               files: [],
               failures: result.failures,
-              error: formatPromptSetFailureMessages(result.failures),
+              error: formatBlockSetFailureMessages(result.failures),
               isLoading: false,
             });
             return;
@@ -95,8 +95,8 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
         if (isMounted && result.failures.length > 0) {
           await showToast({
             style: Toast.Style.Failure,
-            title: "Some Prompt Sets could not be loaded",
-            message: formatPromptSetFailureNames(result.failures),
+            title: "Some Block Sets could not be loaded",
+            message: formatBlockSetFailureNames(result.failures),
           });
         }
       } catch (error) {
@@ -111,18 +111,18 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
     return () => {
       isMounted = false;
     };
-  }, [promptSets]);
+  }, [blockSets]);
 
-  const filesByPromptSet = useMemo(() => {
-    return promptSets.map((promptSet) => ({
-      promptSet,
+  const filesByBlockSet = useMemo(() => {
+    return blockSets.map((blockSet) => ({
+      blockSet,
       files: state.files
-        .filter((file) => file.promptSet.id === promptSet.id)
-        .sort((left, right) => comparePromptFiles(left, right, sortMode)),
+        .filter((file) => file.blockSet.id === blockSet.id)
+        .sort((left, right) => compareBlockFiles(left, right, sortMode)),
     }));
-  }, [promptSets, sortMode, state.files]);
+  }, [blockSets, sortMode, state.files]);
 
-  const fileCount = filesByPromptSet.reduce((count, group) => count + group.files.length, 0);
+  const fileCount = filesByBlockSet.reduce((count, group) => count + group.files.length, 0);
   const failures = state.failures;
 
   return (
@@ -146,7 +146,7 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
     >
       {state.error ? (
         <List.EmptyView
-          title="Could not load Markdown prompts"
+          title="Could not load Markdown-backed text blocks"
           description={state.error}
           actions={
             <ActionPanel>
@@ -157,21 +157,21 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
       ) : fileCount === 0 && failures.length === 0 && !state.isLoading ? (
         <List.EmptyView
           title={emptyTitle}
-          description="No .md files were found in the enabled prompt set folders."
+          description="No .md files were found in the enabled block set folders."
           actions={
             <ActionPanel>
               <Action icon={Icon.Gear} title="Open Extension Preferences" onAction={openExtensionPreferences} />
             </ActionPanel>
           }
         />
-      ) : promptSets.length > 1 ? (
+      ) : blockSets.length > 1 ? (
         <>
-          {filesByPromptSet
+          {filesByBlockSet
             .filter((group) => group.files.length > 0)
             .map((group) => (
-              <List.Section key={group.promptSet.id} title={group.promptSet.displayName}>
+              <List.Section key={group.blockSet.id} title={group.blockSet.displayName}>
                 {group.files.map((file) => (
-                  <PromptFileListItem
+                  <BlockFileListItem
                     key={file.path}
                     file={file}
                     editor={preferences.editor}
@@ -184,15 +184,15 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
           {failures.length > 0 ? (
             <List.Section title="Could Not Load">
               {failures.map((failure) => (
-                <PromptSetFailureListItem key={failure.promptSet.id} failure={failure} />
+                <BlockSetFailureListItem key={failure.blockSet.id} failure={failure} />
               ))}
             </List.Section>
           ) : null}
         </>
       ) : (
-        filesByPromptSet.flatMap((group) =>
+        filesByBlockSet.flatMap((group) =>
           group.files.map((file) => (
-            <PromptFileListItem
+            <BlockFileListItem
               key={file.path}
               file={file}
               editor={preferences.editor}
@@ -206,12 +206,12 @@ export function PromptFileList({ promptSets, searchBarPlaceholder, emptyTitle }:
   );
 }
 
-function PromptSetFailureListItem({ failure }: { failure: PromptSetLoadFailure }) {
+function BlockSetFailureListItem({ failure }: { failure: BlockSetLoadFailure }) {
   return (
     <List.Item
-      id={`prompt-set-load-failure-${failure.promptSet.id}`}
+      id={`block-set-load-failure-${failure.blockSet.id}`}
       icon={Icon.Warning}
-      title={failure.promptSet.displayName}
+      title={failure.blockSet.displayName}
       subtitle={failure.message}
       actions={
         <ActionPanel>
@@ -222,13 +222,13 @@ function PromptSetFailureListItem({ failure }: { failure: PromptSetLoadFailure }
   );
 }
 
-function PromptFileListItem({
+function BlockFileListItem({
   file,
   editor,
   onTogglePreview,
   previewOptions,
 }: {
-  file: PromptFile;
+  file: BlockFile;
   editor: ExtensionPreferences["editor"];
   onTogglePreview: () => void | Promise<void>;
   previewOptions: PreviewOptions;
@@ -241,7 +241,7 @@ function PromptFileListItem({
       title={file.name}
       subtitle={getListItemSubtitle(file)}
       accessories={isPreviewEnabled ? undefined : getListItemAccessories(file)}
-      detail={isPreviewEnabled ? <PromptFilePreviewDetail file={file} previewOptions={previewOptions} /> : undefined}
+      detail={isPreviewEnabled ? <BlockFilePreviewDetail file={file} previewOptions={previewOptions} /> : undefined}
       actions={
         <ActionPanel>
           <Action icon={Icon.Clipboard} title="Copy Raw Content" onAction={() => handleCopy(file, false)} />
@@ -265,7 +265,7 @@ function PromptFileListItem({
   );
 }
 
-function PromptFilePreviewDetail({ file, previewOptions }: { file: PromptFile; previewOptions: PreviewOptions }) {
+function BlockFilePreviewDetail({ file, previewOptions }: { file: BlockFile; previewOptions: PreviewOptions }) {
   const [markdown, setMarkdown] = useState("");
 
   useEffect(() => {
@@ -275,7 +275,7 @@ function PromptFilePreviewDetail({ file, previewOptions }: { file: PromptFile; p
       setMarkdown("");
 
       try {
-        const preview = await readPromptPreview(file.path, {
+        const preview = await readBlockPreview(file.path, {
           lineCount: previewOptions.lineCount,
           maxCharacters: previewOptions.maxCharacters,
         });
@@ -302,7 +302,7 @@ function PromptFilePreviewDetail({ file, previewOptions }: { file: PromptFile; p
       markdown={markdown}
       metadata={
         <List.Item.Detail.Metadata>
-          <List.Item.Detail.Metadata.Label title="Prompt Set" text={file.promptSet.displayName} />
+          <List.Item.Detail.Metadata.Label title="Block Set" text={file.blockSet.displayName} />
           <List.Item.Detail.Metadata.Label title="Relative Path" text={file.relativePath} />
           <List.Item.Detail.Metadata.Separator />
           <List.Item.Detail.Metadata.Label title="Size" text={formatFileSize(file.size)} />
@@ -315,13 +315,13 @@ function PromptFilePreviewDetail({ file, previewOptions }: { file: PromptFile; p
   );
 }
 
-async function handleCopy(file: PromptFile, expand: boolean): Promise<void> {
+async function handleCopy(file: BlockFile, expand: boolean): Promise<void> {
   try {
-    await copyPromptFile(file, { expand });
+    await copyBlockFile(file, { expand });
   } catch (error) {
     await showToast({
       style: Toast.Style.Failure,
-      title: "Failed to copy prompt",
+      title: "Failed to copy content",
       message: getErrorMessage(error),
     });
   }
@@ -360,7 +360,7 @@ function padDatePart(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function comparePromptFiles(left: PromptFile, right: PromptFile, sortMode: SortMode): number {
+function compareBlockFiles(left: BlockFile, right: BlockFile, sortMode: SortMode): number {
   switch (sortMode) {
     case "updated-desc":
       return right.updatedAt.getTime() - left.updatedAt.getTime() || compareByRelativePath(left, right);
@@ -373,7 +373,7 @@ function comparePromptFiles(left: PromptFile, right: PromptFile, sortMode: SortM
   }
 }
 
-function compareByRelativePath(left: PromptFile, right: PromptFile): number {
+function compareByRelativePath(left: BlockFile, right: BlockFile): number {
   return left.relativePath.localeCompare(right.relativePath);
 }
 
@@ -385,11 +385,11 @@ function parseSortMode(value: string): SortMode {
   return DEFAULT_SORT_MODE;
 }
 
-function getListItemAccessories(file: PromptFile): List.Item.Accessory[] {
+function getListItemAccessories(file: BlockFile): List.Item.Accessory[] {
   return [{ text: formatListDateTime(file.updatedAt) }, { text: formatFileSize(file.size) }];
 }
 
-function getListItemSubtitle(file: PromptFile): string | undefined {
+function getListItemSubtitle(file: BlockFile): string | undefined {
   return getParentDirectory(file.relativePath);
 }
 
@@ -401,12 +401,12 @@ function getParentDirectory(relativePath: string): string | undefined {
   return parentDirectory || undefined;
 }
 
-function formatPromptSetFailureNames(failures: PromptSetLoadFailure[]): string {
-  return failures.map((failure) => failure.promptSet.displayName).join(", ");
+function formatBlockSetFailureNames(failures: BlockSetLoadFailure[]): string {
+  return failures.map((failure) => failure.blockSet.displayName).join(", ");
 }
 
-function formatPromptSetFailureMessages(failures: PromptSetLoadFailure[]): string {
-  return failures.map((failure) => `${failure.promptSet.displayName}: ${failure.message}`).join("\n");
+function formatBlockSetFailureMessages(failures: BlockSetLoadFailure[]): string {
+  return failures.map((failure) => `${failure.blockSet.displayName}: ${failure.message}`).join("\n");
 }
 
 function getErrorMessage(error: unknown): string {
@@ -452,7 +452,7 @@ function readInitialPreviewVisibility(): boolean {
   return DEFAULT_PREVIEW_ENABLED;
 }
 
-function formatPreviewMarkdown(file: PromptFile, preview: string): string {
+function formatPreviewMarkdown(file: BlockFile, preview: string): string {
   const previewContent = preview.trimEnd() || "(Empty file)";
   const indentedPreview = previewContent
     .split("\n")

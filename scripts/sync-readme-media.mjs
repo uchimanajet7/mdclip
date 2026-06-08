@@ -2,8 +2,8 @@ import { copyFile, mkdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 const repoRoot = process.cwd();
-const sourcePath = path.join(repoRoot, "metadata", "prompt-launcher-1.png");
-const targetPath = path.join(repoRoot, "media", "prompt-launcher-1.png");
+const sourcePath = path.join(repoRoot, "metadata", "local-copy-blocks-1.png");
+const targetPath = path.join(repoRoot, "media", "local-copy-blocks-1.png");
 
 await assertFileExists(sourcePath);
 await mkdir(path.dirname(targetPath), { recursive: true });

@@ -16,7 +16,7 @@ const data = new Uint8ClampedArray(width * height * 4);
 
 function parseOverwriteMode(args) {
   if (args.length === 0) {
-    return "prompt";
+    return "ask";
   }
 
   if (args.length === 1 && args[0] === "--yes") {

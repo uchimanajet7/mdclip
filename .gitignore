@@ -3,6 +3,6 @@ dist
 .DS_Store
 .raycast
 raycast-env.d.ts
-demo/prompt-sets/
+demo/block-sets/
 assets/icon.generated.png
 local-verification/
