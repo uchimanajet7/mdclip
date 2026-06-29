@@ -166,7 +166,7 @@
     "react": "^19.2.7"
   },
   "devDependencies": {
-    "@raycast/eslint-config": "^2.1.1",
+    "@raycast/eslint-config": "^2.2.0",
     "@types/node": "^25.9.2",
     "@types/react": "^19.2.17",
     "esbuild": "^0.28.0",
