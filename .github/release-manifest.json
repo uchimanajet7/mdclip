@@ -1,7 +1,6 @@
 {
-  "tag": "v0.1.4",
-  "title": "v0.1.4",
-  "previousGitHubReleaseTag": "v0.1.3",
-  "githubReleaseChangelogFile": ".github/release-changelog/v0.1.4.md",
-  "previousRaycastStorePublishTag": null
+  "tag": "v0.2.0",
+  "title": "v0.2.0",
+  "previousGitHubReleaseTag": "v0.1.4",
+  "githubReleaseChangelogFile": ".github/release-changelog/v0.2.0.md"
 }

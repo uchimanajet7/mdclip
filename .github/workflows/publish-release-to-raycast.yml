@@ -1,4 +1,4 @@
-name: Publish Release to Raycast
+name: Inactive - Publish Release to Raycast
 
 on:
   workflow_dispatch:
@@ -21,9 +21,22 @@ permissions:
   contents: read
 
 jobs:
+  inactive:
+    name: Raycast Store publish is inactive
+    runs-on: ubuntu-latest
+    if: ${{ vars.MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED != 'true' }}
+    steps:
+      - name: Explain inactive Store publish path
+        run: |
+          echo "Raycast Store publishing is inactive for MdClip."
+          echo "This workflow is retained as a guarded publish path that uses raycast-publish resources only after re-approval."
+          echo "Set repository variable MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED=true only after the Store path is explicitly re-approved."
+          exit 1
+
   publish:
     name: Publish Release to Raycast
     runs-on: ubuntu-latest
+    if: ${{ vars.MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED == 'true' }}
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -78,7 +91,7 @@ jobs:
           fi
 
       - name: Validate release manifest
-        run: node scripts/release-manifest.mjs validate --publish-to-raycast true --repo-root release-source
+        run: node scripts/release-manifest.mjs validate --repo-root release-source
 
       - name: Verify Raycast publish GitHub token
         env:
@@ -92,5 +105,6 @@ jobs:
 
       - name: Publish or update Raycast Pull Request
         env:
+          MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED: ${{ vars.MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED }}
           RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC: ${{ secrets.RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC }}
         run: node scripts/publish-raycast-pr.mjs --source release-source --release-tag "${{ inputs.release_tag }}"

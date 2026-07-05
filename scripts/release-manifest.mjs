@@ -9,16 +9,17 @@ const supportedCommands = ["validate", "body", "outputs"];
 const command = process.argv[2];
 
 if (!supportedCommands.includes(command)) {
-  throw new Error(
-    "Usage: node scripts/release-manifest.mjs validate|body|outputs [--publish-to-raycast true|false] [--repo-root path]",
-  );
+  throw new Error("Usage: node scripts/release-manifest.mjs validate|body|outputs [--repo-root path]");
+}
+
+if (process.argv.includes("--publish-to-raycast")) {
+  throw new Error("Raycast Store publish validation is inactive. Use GitHub Release validation without Store flags.");
 }
 
 const manifest = await readJson(manifestPath);
 
 if (command === "validate") {
-  const publishToRaycast = readBooleanOption("--publish-to-raycast");
-  await validateManifest(manifest, { publishToRaycast });
+  await validateManifest(manifest);
 }
 
 if (command === "body") {
@@ -65,30 +66,8 @@ async function validateManifest(releaseManifest, options = {}) {
     "githubReleaseChangelogFile file name must match tag",
   );
 
-  if (releaseManifest.previousRaycastStorePublishTag !== null) {
-    assert.equal(
-      typeof releaseManifest.previousRaycastStorePublishTag,
-      "string",
-      "previousRaycastStorePublishTag must be null or a string",
-    );
-    assert.match(
-      releaseManifest.previousRaycastStorePublishTag,
-      /^v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/,
-      "previousRaycastStorePublishTag must use vX.Y.Z format",
-    );
-    assert.notEqual(
-      releaseManifest.previousRaycastStorePublishTag,
-      releaseManifest.tag,
-      "previousRaycastStorePublishTag must not be the same as tag",
-    );
-  }
-
   const changelogText = await readReleaseChangelogFile(releaseManifest.githubReleaseChangelogFile);
   assert(changelogText.trim().length > 0, "githubReleaseChangelogFile must not be empty");
-
-  if (options.publishToRaycast) {
-    await validateRaycastStoreVersionHistory();
-  }
 }
 
 async function createReleaseBody(releaseManifest) {
@@ -97,56 +76,6 @@ async function createReleaseBody(releaseManifest) {
 
 async function readReleaseChangelogFile(file) {
   return readFile(path.join(repoRoot, file), "utf8");
-}
-
-async function validateRaycastStoreVersionHistory() {
-  const changelogText = await readFile(path.join(repoRoot, "CHANGELOG.md"), "utf8");
-  const changelogLines = changelogText.split(/\r?\n/);
-  const firstEntryStartIndex = changelogLines.findIndex((line) => line.startsWith("## "));
-
-  assert.notEqual(firstEntryStartIndex, -1, "CHANGELOG.md must contain a Raycast Store Version History entry");
-
-  const firstEntryHeading = changelogLines[firstEntryStartIndex];
-  assert.match(
-    firstEntryHeading,
-    /^## \[[^\]]+\] - \{PR_MERGE_DATE\}$/,
-    "CHANGELOG.md first entry must use ## [Title] - {PR_MERGE_DATE} format",
-  );
-
-  const firstEntryBodyLines = [];
-
-  for (let index = firstEntryStartIndex + 1; index < changelogLines.length; index += 1) {
-    if (changelogLines[index].startsWith("## ")) {
-      break;
-    }
-
-    firstEntryBodyLines.push(changelogLines[index]);
-  }
-
-  assert(
-    firstEntryBodyLines.some((line) => line.trim().length > 0),
-    "CHANGELOG.md first entry body must not be empty",
-  );
-}
-
-function readBooleanOption(name) {
-  const optionIndex = process.argv.indexOf(name);
-
-  if (optionIndex === -1) {
-    return false;
-  }
-
-  const value = process.argv[optionIndex + 1];
-
-  if (value === "true") {
-    return true;
-  }
-
-  if (value === "false") {
-    return false;
-  }
-
-  throw new Error(`${name} must be true or false`);
 }
 
 function readStringOption(name) {

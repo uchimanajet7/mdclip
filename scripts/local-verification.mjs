@@ -15,7 +15,7 @@ await mkdir(fixtureRoot, { recursive: true });
 await mkdir(distRoot, { recursive: true });
 
 await verifyCommandEntryPoints();
-await verifyBlockSetPreferences();
+await verifyMarkdownSourcePreferences();
 await verifyMarkdownFileListing();
 await verifyPreview();
 await verifyDynamicPlaceholdersExpansion();
@@ -31,7 +31,7 @@ async function verifyCommandEntryPoints() {
   }
 }
 
-async function verifyBlockSetPreferences() {
+async function verifyMarkdownSourcePreferences() {
   const packageJson = JSON.parse(await readText("package.json"));
   const preferences = Object.fromEntries(
     (packageJson.preferences ?? []).map((preference) => [preference.name, preference]),
@@ -39,13 +39,15 @@ async function verifyBlockSetPreferences() {
 
   for (const index of [1, 2, 3]) {
     assert.equal(preferences[`folder${index}Enabled`].type, "checkbox");
-    assert.equal(preferences[`folder${index}Enabled`].title, `Block Set ${index}`);
-    assert.equal(preferences[`folder${index}Enabled`].label, `Enable Block Set ${index}`);
+    assert.equal(preferences[`folder${index}Enabled`].title, `Markdown Source ${index}`);
+    assert.equal(preferences[`folder${index}Enabled`].label, `Enable Markdown Source ${index}`);
     assert.equal(preferences[`folder${index}Enabled`].default, true);
     assert.equal(preferences[`folder${index}Enabled`].required, false);
     assert.equal(preferences[`folder${index}Directory`].type, "directory");
+    assert.equal(preferences[`folder${index}Directory`].title, `Markdown Source ${index} Folder`);
     assert.equal(preferences[`folder${index}Directory`].required, false);
     assert.equal(preferences[`folder${index}DisplayName`].type, "textfield");
+    assert.equal(preferences[`folder${index}DisplayName`].title, `Markdown Source ${index} Name`);
     assert.equal(preferences[`folder${index}DisplayName`].required, false);
   }
 }
@@ -74,56 +76,56 @@ async function verifyMarkdownFileListing() {
     outfile: outputFile,
   });
 
-  const { listBlockFiles, listBlockFilesFromBlockSets } = await import(pathToFileURL(outputFile));
-  const blockRoot = path.join(fixtureRoot, "blocks");
-  const secondBlockRoot = path.join(fixtureRoot, "second-blocks");
-  const missingBlockRoot = path.join(fixtureRoot, "missing-blocks");
-  await mkdir(path.join(blockRoot, "nested"), { recursive: true });
-  await mkdir(path.join(blockRoot, ".hidden"), { recursive: true });
-  await mkdir(path.join(blockRoot, ".git"), { recursive: true });
-  await mkdir(path.join(blockRoot, "node_modules"), { recursive: true });
-  await mkdir(secondBlockRoot, { recursive: true });
-  await writeFile(path.join(blockRoot, "a.md"), "# A\n");
-  await writeFile(path.join(blockRoot, "nested", "b.MD"), "# B\n");
-  await writeFile(path.join(blockRoot, "c.txt"), "C\n");
-  await writeFile(path.join(blockRoot, ".hidden", "hidden.md"), "hidden\n");
-  await writeFile(path.join(blockRoot, ".git", "ignored.md"), "git\n");
-  await writeFile(path.join(blockRoot, "node_modules", "ignored.md"), "node_modules\n");
-  await writeFile(path.join(secondBlockRoot, "second.md"), "# Second\n");
+  const { listMarkdownFiles, listMarkdownFilesFromMarkdownSources } = await import(pathToFileURL(outputFile));
+  const markdownSourceRoot = path.join(fixtureRoot, "markdown-source");
+  const secondMarkdownSourceRoot = path.join(fixtureRoot, "second-markdown-source");
+  const missingMarkdownSourceRoot = path.join(fixtureRoot, "missing-markdown-source");
+  await mkdir(path.join(markdownSourceRoot, "nested"), { recursive: true });
+  await mkdir(path.join(markdownSourceRoot, ".hidden"), { recursive: true });
+  await mkdir(path.join(markdownSourceRoot, ".git"), { recursive: true });
+  await mkdir(path.join(markdownSourceRoot, "node_modules"), { recursive: true });
+  await mkdir(secondMarkdownSourceRoot, { recursive: true });
+  await writeFile(path.join(markdownSourceRoot, "a.md"), "# A\n");
+  await writeFile(path.join(markdownSourceRoot, "nested", "b.MD"), "# B\n");
+  await writeFile(path.join(markdownSourceRoot, "c.txt"), "C\n");
+  await writeFile(path.join(markdownSourceRoot, ".hidden", "hidden.md"), "hidden\n");
+  await writeFile(path.join(markdownSourceRoot, ".git", "ignored.md"), "git\n");
+  await writeFile(path.join(markdownSourceRoot, "node_modules", "ignored.md"), "node_modules\n");
+  await writeFile(path.join(secondMarkdownSourceRoot, "second.md"), "# Second\n");
 
-  const files = await listBlockFiles({
+  const files = await listMarkdownFiles({
     id: 1,
-    commandTitle: "Block Set 1",
+    commandTitle: "Markdown Source 1",
     displayName: "Fixture",
-    directory: blockRoot,
+    directory: markdownSourceRoot,
   });
 
   assert.deepEqual(
     files.map((file) => file.relativePath),
     ["a.md", path.join("nested", "b.MD")],
   );
-  assert(files.every((file) => file.blockSet.displayName === "Fixture"));
+  assert(files.every((file) => file.markdownSource.displayName === "Fixture"));
   assert(files.every((file) => file.size > 0));
   assert(files.every((file) => file.updatedAt instanceof Date));
 
-  const combinedResult = await listBlockFilesFromBlockSets([
+  const combinedResult = await listMarkdownFilesFromMarkdownSources([
     {
       id: 1,
-      commandTitle: "Block Set 1",
+      commandTitle: "Markdown Source 1",
       displayName: "Fixture",
-      directory: blockRoot,
+      directory: markdownSourceRoot,
     },
     {
       id: 2,
-      commandTitle: "Block Set 2",
+      commandTitle: "Markdown Source 2",
       displayName: "Missing Fixture",
-      directory: missingBlockRoot,
+      directory: missingMarkdownSourceRoot,
     },
     {
       id: 3,
-      commandTitle: "Block Set 3",
+      commandTitle: "Markdown Source 3",
       displayName: "Second Fixture",
-      directory: secondBlockRoot,
+      directory: secondMarkdownSourceRoot,
     },
   ]);
 
@@ -132,7 +134,7 @@ async function verifyMarkdownFileListing() {
     ["a.md", path.join("nested", "b.MD"), "second.md"],
   );
   assert.equal(combinedResult.failures.length, 1);
-  assert.equal(combinedResult.failures[0].blockSet.displayName, "Missing Fixture");
+  assert.equal(combinedResult.failures[0].markdownSource.displayName, "Missing Fixture");
   assert.match(combinedResult.failures[0].message, /ENOENT|no such file/i);
 
   const notDirectoryPath = path.join(fixtureRoot, "not-directory.md");
@@ -140,9 +142,9 @@ async function verifyMarkdownFileListing() {
 
   await assert.rejects(
     () =>
-      listBlockFiles({
+      listMarkdownFiles({
         id: 1,
-        commandTitle: "Block Set 1",
+        commandTitle: "Markdown Source 1",
         displayName: "Not Directory",
         directory: notDirectoryPath,
       }),
@@ -163,12 +165,12 @@ async function verifyPreview() {
     outfile: outputFile,
   });
 
-  const { readBlockPreview } = await import(pathToFileURL(outputFile));
+  const { readMarkdownPreview } = await import(pathToFileURL(outputFile));
   const previewFilePath = path.join(fixtureRoot, "preview.md");
   await writeFile(previewFilePath, ["line1", "line2", "line3", "line4"].join("\n"));
 
-  assert.equal(await readBlockPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), "line1\nline2");
-  assert.equal(await readBlockPreview(previewFilePath, { lineCount: 10, maxCharacters: 8 }), "line1\nli");
+  assert.equal(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), "line1\nline2");
+  assert.equal(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 8 }), "line1\nli");
 }
 
 async function verifyDynamicPlaceholdersExpansion() {
@@ -190,10 +192,10 @@ async function verifyDynamicPlaceholdersExpansion() {
           }));
           pluginBuild.onLoad({ filter: /.*/, namespace: "raycast-api-stub" }, () => ({
             contents: `
-globalThis.__localCopyBlocksClipboardReadCount = 0;
+globalThis.__mdclipClipboardReadCount = 0;
 export const Clipboard = {
   readText: async () => {
-    globalThis.__localCopyBlocksClipboardReadCount += 1;
+    globalThis.__mdclipClipboardReadCount += 1;
     return "CLIPBOARD_TEXT";
   },
 };
@@ -225,11 +227,11 @@ export const Clipboard = {
   assert.match(expanded, /clipboard=CLIPBOARD_TEXT/);
   assert(!expanded.includes("{date}"));
   assert(!expanded.includes("{clipboard}"));
-  assert.equal(globalThis.__localCopyBlocksClipboardReadCount, 1);
+  assert.equal(globalThis.__mdclipClipboardReadCount, 1);
 
-  globalThis.__localCopyBlocksClipboardReadCount = 0;
+  globalThis.__mdclipClipboardReadCount = 0;
   await expandDynamicPlaceholders("date={date}\ntimezone={timezone}");
-  assert.equal(globalThis.__localCopyBlocksClipboardReadCount, 0);
+  assert.equal(globalThis.__mdclipClipboardReadCount, 0);
 }
 
 async function readText(relativePath) {

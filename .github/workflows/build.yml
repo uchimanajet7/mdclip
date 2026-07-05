@@ -31,8 +31,8 @@ jobs:
       - name: Build extension
         run: npm run build
 
-      - name: Run local checks
-        run: npm run check
-
-      - name: Run Raycast lint
+      - name: Run local verification
         run: npm run lint
+
+      - name: Run Raycast CLI lint
+        run: npm run lint:raycast

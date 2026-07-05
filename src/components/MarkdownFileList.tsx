@@ -11,20 +11,20 @@ import {
   showToast,
 } from "@raycast/api";
 import { useEffect, useMemo, useState } from "react";
-import type { ConfiguredBlockSet, BlockFile, BlockSetLoadFailure } from "../types";
-import { copyBlockFile } from "../services/clipboard";
-import { listBlockFilesFromBlockSets } from "../services/markdownFiles";
-import { readBlockPreview } from "../services/preview";
+import type { ConfiguredMarkdownSource, MarkdownFile, MarkdownSourceLoadFailure } from "../types";
+import { copyMarkdownFile } from "../services/clipboard";
+import { listMarkdownFilesFromMarkdownSources } from "../services/markdownFiles";
+import { readMarkdownPreview } from "../services/preview";
 
 type Props = {
-  blockSets: ConfiguredBlockSet[];
+  markdownSources: ConfiguredMarkdownSource[];
   searchBarPlaceholder: string;
   emptyTitle: string;
 };
 
 type LoadState = {
-  files: BlockFile[];
-  failures: BlockSetLoadFailure[];
+  files: MarkdownFile[];
+  failures: MarkdownSourceLoadFailure[];
   error?: string;
   isLoading: boolean;
 };
@@ -43,10 +43,10 @@ const DEFAULT_PREVIEW_ENABLED = true;
 const DEFAULT_SORT_MODE: SortMode = "updated-desc";
 const MAX_PREVIEW_LINE_COUNT = 100;
 const MAX_PREVIEW_CHARACTERS = 20000;
-const PREVIEW_ENABLED_CACHE_KEY = "local-copy-blocks.preview.enabled";
+const PREVIEW_ENABLED_CACHE_KEY = "mdclip.preview.enabled";
 const previewVisibilityCache = new Cache();
 
-export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: Props) {
+export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyTitle }: Props) {
   const [state, setState] = useState<LoadState>({ files: [], failures: [], isLoading: true });
   const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
   const [isPreviewEnabled, setIsPreviewEnabled] = useState(readInitialPreviewVisibility);
@@ -75,15 +75,15 @@ export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: P
 
     async function loadFiles() {
       try {
-        const result = await listBlockFilesFromBlockSets(blockSets);
-        const successfulBlockSetCount = blockSets.length - result.failures.length;
+        const result = await listMarkdownFilesFromMarkdownSources(markdownSources);
+        const successfulMarkdownSourceCount = markdownSources.length - result.failures.length;
 
         if (isMounted) {
-          if (result.failures.length > 0 && successfulBlockSetCount === 0) {
+          if (result.failures.length > 0 && successfulMarkdownSourceCount === 0) {
             setState({
               files: [],
               failures: result.failures,
-              error: formatBlockSetFailureMessages(result.failures),
+              error: formatMarkdownSourceFailureMessages(result.failures),
               isLoading: false,
             });
             return;
@@ -95,8 +95,8 @@ export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: P
         if (isMounted && result.failures.length > 0) {
           await showToast({
             style: Toast.Style.Failure,
-            title: "Some Block Sets could not be loaded",
-            message: formatBlockSetFailureNames(result.failures),
+            title: "Some Markdown Sources could not be loaded",
+            message: formatMarkdownSourceFailureNames(result.failures),
           });
         }
       } catch (error) {
@@ -111,18 +111,18 @@ export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: P
     return () => {
       isMounted = false;
     };
-  }, [blockSets]);
+  }, [markdownSources]);
 
-  const filesByBlockSet = useMemo(() => {
-    return blockSets.map((blockSet) => ({
-      blockSet,
+  const filesByMarkdownSource = useMemo(() => {
+    return markdownSources.map((markdownSource) => ({
+      markdownSource,
       files: state.files
-        .filter((file) => file.blockSet.id === blockSet.id)
-        .sort((left, right) => compareBlockFiles(left, right, sortMode)),
+        .filter((file) => file.markdownSource.id === markdownSource.id)
+        .sort((left, right) => compareMarkdownFiles(left, right, sortMode)),
     }));
-  }, [blockSets, sortMode, state.files]);
+  }, [markdownSources, sortMode, state.files]);
 
-  const fileCount = filesByBlockSet.reduce((count, group) => count + group.files.length, 0);
+  const fileCount = filesByMarkdownSource.reduce((count, group) => count + group.files.length, 0);
   const failures = state.failures;
 
   return (
@@ -146,7 +146,7 @@ export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: P
     >
       {state.error ? (
         <List.EmptyView
-          title="Could not load Markdown-backed text blocks"
+          title="Could not load Markdown files"
           description={state.error}
           actions={
             <ActionPanel>
@@ -157,21 +157,21 @@ export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: P
       ) : fileCount === 0 && failures.length === 0 && !state.isLoading ? (
         <List.EmptyView
           title={emptyTitle}
-          description="No .md files were found in the enabled block set folders."
+          description="No .md files were found in the enabled Markdown Source folders."
           actions={
             <ActionPanel>
               <Action icon={Icon.Gear} title="Open Extension Preferences" onAction={openExtensionPreferences} />
             </ActionPanel>
           }
         />
-      ) : blockSets.length > 1 ? (
+      ) : markdownSources.length > 1 ? (
         <>
-          {filesByBlockSet
+          {filesByMarkdownSource
             .filter((group) => group.files.length > 0)
             .map((group) => (
-              <List.Section key={group.blockSet.id} title={group.blockSet.displayName}>
+              <List.Section key={group.markdownSource.id} title={group.markdownSource.displayName}>
                 {group.files.map((file) => (
-                  <BlockFileListItem
+                  <MarkdownFileListItem
                     key={file.path}
                     file={file}
                     editor={preferences.editor}
@@ -184,15 +184,15 @@ export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: P
           {failures.length > 0 ? (
             <List.Section title="Could Not Load">
               {failures.map((failure) => (
-                <BlockSetFailureListItem key={failure.blockSet.id} failure={failure} />
+                <MarkdownSourceFailureListItem key={failure.markdownSource.id} failure={failure} />
               ))}
             </List.Section>
           ) : null}
         </>
       ) : (
-        filesByBlockSet.flatMap((group) =>
+        filesByMarkdownSource.flatMap((group) =>
           group.files.map((file) => (
-            <BlockFileListItem
+            <MarkdownFileListItem
               key={file.path}
               file={file}
               editor={preferences.editor}
@@ -206,12 +206,12 @@ export function BlockFileList({ blockSets, searchBarPlaceholder, emptyTitle }: P
   );
 }
 
-function BlockSetFailureListItem({ failure }: { failure: BlockSetLoadFailure }) {
+function MarkdownSourceFailureListItem({ failure }: { failure: MarkdownSourceLoadFailure }) {
   return (
     <List.Item
-      id={`block-set-load-failure-${failure.blockSet.id}`}
+      id={`markdown-source-load-failure-${failure.markdownSource.id}`}
       icon={Icon.Warning}
-      title={failure.blockSet.displayName}
+      title={failure.markdownSource.displayName}
       subtitle={failure.message}
       actions={
         <ActionPanel>
@@ -222,13 +222,13 @@ function BlockSetFailureListItem({ failure }: { failure: BlockSetLoadFailure }) 
   );
 }
 
-function BlockFileListItem({
+function MarkdownFileListItem({
   file,
   editor,
   onTogglePreview,
   previewOptions,
 }: {
-  file: BlockFile;
+  file: MarkdownFile;
   editor: ExtensionPreferences["editor"];
   onTogglePreview: () => void | Promise<void>;
   previewOptions: PreviewOptions;
@@ -241,7 +241,7 @@ function BlockFileListItem({
       title={file.name}
       subtitle={getListItemSubtitle(file)}
       accessories={isPreviewEnabled ? undefined : getListItemAccessories(file)}
-      detail={isPreviewEnabled ? <BlockFilePreviewDetail file={file} previewOptions={previewOptions} /> : undefined}
+      detail={isPreviewEnabled ? <MarkdownFilePreviewDetail file={file} previewOptions={previewOptions} /> : undefined}
       actions={
         <ActionPanel>
           <Action icon={Icon.Clipboard} title="Copy Raw Content" onAction={() => handleCopy(file, false)} />
@@ -265,7 +265,7 @@ function BlockFileListItem({
   );
 }
 
-function BlockFilePreviewDetail({ file, previewOptions }: { file: BlockFile; previewOptions: PreviewOptions }) {
+function MarkdownFilePreviewDetail({ file, previewOptions }: { file: MarkdownFile; previewOptions: PreviewOptions }) {
   const [markdown, setMarkdown] = useState("");
 
   useEffect(() => {
@@ -275,7 +275,7 @@ function BlockFilePreviewDetail({ file, previewOptions }: { file: BlockFile; pre
       setMarkdown("");
 
       try {
-        const preview = await readBlockPreview(file.path, {
+        const preview = await readMarkdownPreview(file.path, {
           lineCount: previewOptions.lineCount,
           maxCharacters: previewOptions.maxCharacters,
         });
@@ -302,7 +302,7 @@ function BlockFilePreviewDetail({ file, previewOptions }: { file: BlockFile; pre
       markdown={markdown}
       metadata={
         <List.Item.Detail.Metadata>
-          <List.Item.Detail.Metadata.Label title="Block Set" text={file.blockSet.displayName} />
+          <List.Item.Detail.Metadata.Label title="Markdown Source" text={file.markdownSource.displayName} />
           <List.Item.Detail.Metadata.Label title="Relative Path" text={file.relativePath} />
           <List.Item.Detail.Metadata.Separator />
           <List.Item.Detail.Metadata.Label title="Size" text={formatFileSize(file.size)} />
@@ -315,9 +315,9 @@ function BlockFilePreviewDetail({ file, previewOptions }: { file: BlockFile; pre
   );
 }
 
-async function handleCopy(file: BlockFile, expand: boolean): Promise<void> {
+async function handleCopy(file: MarkdownFile, expand: boolean): Promise<void> {
   try {
-    await copyBlockFile(file, { expand });
+    await copyMarkdownFile(file, { expand });
   } catch (error) {
     await showToast({
       style: Toast.Style.Failure,
@@ -360,7 +360,7 @@ function padDatePart(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function compareBlockFiles(left: BlockFile, right: BlockFile, sortMode: SortMode): number {
+function compareMarkdownFiles(left: MarkdownFile, right: MarkdownFile, sortMode: SortMode): number {
   switch (sortMode) {
     case "updated-desc":
       return right.updatedAt.getTime() - left.updatedAt.getTime() || compareByRelativePath(left, right);
@@ -373,7 +373,7 @@ function compareBlockFiles(left: BlockFile, right: BlockFile, sortMode: SortMode
   }
 }
 
-function compareByRelativePath(left: BlockFile, right: BlockFile): number {
+function compareByRelativePath(left: MarkdownFile, right: MarkdownFile): number {
   return left.relativePath.localeCompare(right.relativePath);
 }
 
@@ -385,11 +385,11 @@ function parseSortMode(value: string): SortMode {
   return DEFAULT_SORT_MODE;
 }
 
-function getListItemAccessories(file: BlockFile): List.Item.Accessory[] {
+function getListItemAccessories(file: MarkdownFile): List.Item.Accessory[] {
   return [{ text: formatListDateTime(file.updatedAt) }, { text: formatFileSize(file.size) }];
 }
 
-function getListItemSubtitle(file: BlockFile): string | undefined {
+function getListItemSubtitle(file: MarkdownFile): string | undefined {
   return getParentDirectory(file.relativePath);
 }
 
@@ -401,12 +401,12 @@ function getParentDirectory(relativePath: string): string | undefined {
   return parentDirectory || undefined;
 }
 
-function formatBlockSetFailureNames(failures: BlockSetLoadFailure[]): string {
-  return failures.map((failure) => failure.blockSet.displayName).join(", ");
+function formatMarkdownSourceFailureNames(failures: MarkdownSourceLoadFailure[]): string {
+  return failures.map((failure) => failure.markdownSource.displayName).join(", ");
 }
 
-function formatBlockSetFailureMessages(failures: BlockSetLoadFailure[]): string {
-  return failures.map((failure) => `${failure.blockSet.displayName}: ${failure.message}`).join("\n");
+function formatMarkdownSourceFailureMessages(failures: MarkdownSourceLoadFailure[]): string {
+  return failures.map((failure) => `${failure.markdownSource.displayName}: ${failure.message}`).join("\n");
 }
 
 function getErrorMessage(error: unknown): string {
@@ -452,7 +452,7 @@ function readInitialPreviewVisibility(): boolean {
   return DEFAULT_PREVIEW_ENABLED;
 }
 
-function formatPreviewMarkdown(file: BlockFile, preview: string): string {
+function formatPreviewMarkdown(file: MarkdownFile, preview: string): string {
   const previewContent = preview.trimEnd() || "(Empty file)";
   const indentedPreview = previewContent
     .split("\n")

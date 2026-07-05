@@ -9,6 +9,14 @@ const execFileAsync = promisify(execFile);
 const upstreamOwner = "raycast";
 const upstreamRepo = "extensions";
 const forkRepo = "raycast-extensions";
+const publishResourceDirectory = "raycast-publish";
+
+if (process.env.MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED !== "true") {
+  throw new Error(
+    "Raycast Store publishing is inactive for MdClip. Set MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED=true only after explicit Store-path re-approval.",
+  );
+}
+
 const token = process.env.RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC;
 const options = parseArgs(process.argv.slice(2));
 
@@ -35,14 +43,19 @@ const workRoot = path.join(
   process.env.RUNNER_TEMP ?? path.join(process.cwd(), "local-verification"),
   "raycast-publish-pr",
 );
+const publishSourceRoot = path.join(workRoot, "publish-source");
 const cloneRoot = path.join(workRoot, "raycast-extensions");
 const targetExtensionPath = path.join(cloneRoot, "extensions", extensionName);
 const existingPullRequest = await findOpenPullRequest(authUser.login, branch);
 
+await fs.rm(workRoot, { recursive: true, force: true });
+await fs.mkdir(workRoot, { recursive: true });
+await prepareRaycastPublishSource(sourceRoot, publishSourceRoot, authUser);
+
 if (!existingPullRequest) {
   console.log(`No open Raycast Pull Request found for ${authUser.login}:${branch}.`);
   console.log("Running the official Raycast publish command to create the initial Pull Request.");
-  await publishWithRaycastCommand(sourceRoot, authUser);
+  await publishWithRaycastCommand(publishSourceRoot, authUser);
   process.exit(0);
 }
 
@@ -50,9 +63,6 @@ const forkOwner = existingPullRequest.head?.repo?.owner?.login ?? authUser.login
 const forkName = existingPullRequest.head?.repo?.name ?? forkRepo;
 
 console.log(`Updating existing Raycast Pull Request: ${existingPullRequest.html_url}`);
-
-await fs.rm(workRoot, { recursive: true, force: true });
-await fs.mkdir(workRoot, { recursive: true });
 
 console.log(`Cloning ${forkOwner}/${forkName} with sparse checkout.`);
 await runGitStreaming([
@@ -84,7 +94,7 @@ await runGit(["config", "user.email", `${authUser.id}+${authUser.login}@users.no
 
 await fs.rm(targetExtensionPath, { recursive: true, force: true });
 console.log(`Copying release source into extensions/${extensionName}.`);
-await copyTrackedExtensionFiles(sourceRoot, targetExtensionPath);
+await copyPreparedExtensionFiles(publishSourceRoot, targetExtensionPath);
 
 await runGit(["add", `extensions/${extensionName}`], { cwd: cloneRoot });
 
@@ -168,6 +178,24 @@ async function findOpenPullRequest(owner, headBranch) {
   return matchingPullRequests[0];
 }
 
+async function prepareRaycastPublishSource(source, target, user) {
+  const publishReadme = path.join(source, publishResourceDirectory, "README.md");
+  const publishChangelog = path.join(source, publishResourceDirectory, "CHANGELOG.md");
+
+  await assertFileExists(publishReadme, "Raycast publish README");
+  await assertFileExists(publishChangelog, "Raycast publish CHANGELOG");
+
+  await copyTrackedExtensionFiles(source, target);
+  await fs.copyFile(publishReadme, path.join(target, "README.md"), fsConstants.COPYFILE_FICLONE);
+  await fs.copyFile(publishChangelog, path.join(target, "CHANGELOG.md"), fsConstants.COPYFILE_FICLONE);
+
+  await runGit(["init"], { cwd: target });
+  await runGit(["config", "user.name", user.login], { cwd: target });
+  await runGit(["config", "user.email", `${user.id}+${user.login}@users.noreply.github.com`], { cwd: target });
+  await runGit(["add", "."], { cwd: target });
+  await runGit(["commit", "-m", "Prepare Raycast publish source"], { cwd: target });
+}
+
 async function copyTrackedExtensionFiles(source, target) {
   const { stdout } = await runGit(["-C", source, "ls-files", "-z"]);
   const files = stdout.split("\0").filter(Boolean).filter(isPublishFile);
@@ -177,9 +205,9 @@ async function copyTrackedExtensionFiles(source, target) {
   for (const file of files) {
     const sourceFile = path.join(source, file);
     const targetFile = path.join(target, file);
-    const stat = await fs.stat(sourceFile);
+    const stat = await statOrUndefined(sourceFile);
 
-    if (!stat.isFile()) {
+    if (!stat?.isFile()) {
       continue;
     }
 
@@ -189,7 +217,67 @@ async function copyTrackedExtensionFiles(source, target) {
 }
 
 function isPublishFile(file) {
-  return !file.startsWith(".github/") && file !== "raycast-env.d.ts";
+  return (
+    !file.startsWith(".github/") &&
+    !file.startsWith("docs/") &&
+    !file.startsWith(`${publishResourceDirectory}/`) &&
+    !file.startsWith("_local/") &&
+    file !== "README.md" &&
+    file !== "README.ja.md" &&
+    file !== "CHANGELOG.md" &&
+    file !== "raycast-env.d.ts"
+  );
+}
+
+async function copyPreparedExtensionFiles(source, target, relativePath = "") {
+  await fs.mkdir(target, { recursive: true });
+
+  for (const entry of await fs.readdir(path.join(source, relativePath), { withFileTypes: true })) {
+    const entryRelativePath = path.join(relativePath, entry.name);
+
+    if (entryRelativePath === ".git" || entryRelativePath.startsWith(`.git${path.sep}`)) {
+      continue;
+    }
+
+    if (entryRelativePath === "node_modules" || entryRelativePath.startsWith(`node_modules${path.sep}`)) {
+      continue;
+    }
+
+    const sourceEntry = path.join(source, entryRelativePath);
+    const targetEntry = path.join(target, entryRelativePath);
+
+    if (entry.isDirectory()) {
+      await copyPreparedExtensionFiles(source, target, entryRelativePath);
+      continue;
+    }
+
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    await fs.mkdir(path.dirname(targetEntry), { recursive: true });
+    await fs.copyFile(sourceEntry, targetEntry, fsConstants.COPYFILE_FICLONE);
+  }
+}
+
+async function assertFileExists(filePath, label) {
+  const stat = await statOrUndefined(filePath);
+
+  if (!stat?.isFile()) {
+    throw new Error(`${label} is required: ${filePath}`);
+  }
+}
+
+async function statOrUndefined(filePath) {
+  try {
+    return await fs.stat(filePath);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 async function hasGitChanges(cwd) {
@@ -212,7 +300,7 @@ async function publishWithRaycastCommand(cwd, user) {
   await runGit(["config", "user.email", `${user.id}+${user.login}@users.noreply.github.com`], { cwd });
 
   await runCommand("npm", ["ci"], { cwd });
-  await runCommand("npm", ["run", "publish"], {
+  await runCommand("npx", ["--yes", "@raycast/api@latest", "publish"], {
     cwd,
     env: {
       GITHUB_ACCESS_TOKEN: token,

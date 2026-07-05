@@ -1,37 +1,39 @@
 import { getPreferenceValues } from "@raycast/api";
 import path from "path";
-import type { ConfiguredBlockSet, BlockSetConfig, BlockSetId } from "../types";
+import type { ConfiguredMarkdownSource, MarkdownSourceConfig, MarkdownSourceId } from "../types";
 
-const BLOCK_SET_COMMAND_TITLES: Record<BlockSetId, string> = {
-  1: "Block Set 1",
-  2: "Block Set 2",
-  3: "Block Set 3",
+const MARKDOWN_SOURCE_COMMAND_TITLES: Record<MarkdownSourceId, string> = {
+  1: "Markdown Source 1",
+  2: "Markdown Source 2",
+  3: "Markdown Source 3",
 };
 
 export function getPreferences(): ExtensionPreferences {
   return getPreferenceValues<ExtensionPreferences>();
 }
 
-export function getBlockSetConfig(blockSetId: BlockSetId): BlockSetConfig {
+export function getMarkdownSourceConfig(markdownSourceId: MarkdownSourceId): MarkdownSourceConfig {
   const preferences = getPreferences();
-  const directory = getDirectoryPreference(preferences, blockSetId);
-  const isEnabled = getEnabledPreference(preferences, blockSetId);
+  const directory = getDirectoryPreference(preferences, markdownSourceId);
+  const isEnabled = getEnabledPreference(preferences, markdownSourceId);
   const displayName =
-    getDisplayNamePreference(preferences, blockSetId) ||
+    getDisplayNamePreference(preferences, markdownSourceId) ||
     getDirectoryName(directory) ||
-    BLOCK_SET_COMMAND_TITLES[blockSetId];
+    MARKDOWN_SOURCE_COMMAND_TITLES[markdownSourceId];
 
   return {
-    id: blockSetId,
-    commandTitle: BLOCK_SET_COMMAND_TITLES[blockSetId],
+    id: markdownSourceId,
+    commandTitle: MARKDOWN_SOURCE_COMMAND_TITLES[markdownSourceId],
     displayName,
     isEnabled,
     directory,
   };
 }
 
-export function getConfiguredBlockSetConfig(blockSetId: BlockSetId): ConfiguredBlockSet | undefined {
-  const config = getBlockSetConfig(blockSetId);
+export function getConfiguredMarkdownSourceConfig(
+  markdownSourceId: MarkdownSourceId,
+): ConfiguredMarkdownSource | undefined {
+  const config = getMarkdownSourceConfig(markdownSourceId);
   if (!config.isEnabled || !config.directory) {
     return undefined;
   }
@@ -42,14 +44,14 @@ export function getConfiguredBlockSetConfig(blockSetId: BlockSetId): ConfiguredB
   };
 }
 
-export function getConfiguredBlockSetConfigs(): ConfiguredBlockSet[] {
+export function getConfiguredMarkdownSourceConfigs(): ConfiguredMarkdownSource[] {
   return ([1, 2, 3] as const)
-    .map((blockSetId) => getConfiguredBlockSetConfig(blockSetId))
-    .filter((config): config is ConfiguredBlockSet => Boolean(config));
+    .map((markdownSourceId) => getConfiguredMarkdownSourceConfig(markdownSourceId))
+    .filter((config): config is ConfiguredMarkdownSource => Boolean(config));
 }
 
-function getEnabledPreference(preferences: ExtensionPreferences, blockSetId: BlockSetId): boolean {
-  switch (blockSetId) {
+function getEnabledPreference(preferences: ExtensionPreferences, markdownSourceId: MarkdownSourceId): boolean {
+  switch (markdownSourceId) {
     case 1:
       return preferences.folder1Enabled !== false;
     case 2:
@@ -59,8 +61,11 @@ function getEnabledPreference(preferences: ExtensionPreferences, blockSetId: Blo
   }
 }
 
-function getDirectoryPreference(preferences: ExtensionPreferences, blockSetId: BlockSetId): string | undefined {
-  switch (blockSetId) {
+function getDirectoryPreference(
+  preferences: ExtensionPreferences,
+  markdownSourceId: MarkdownSourceId,
+): string | undefined {
+  switch (markdownSourceId) {
     case 1:
       return preferences.folder1Directory;
     case 2:
@@ -70,8 +75,11 @@ function getDirectoryPreference(preferences: ExtensionPreferences, blockSetId: B
   }
 }
 
-function getDisplayNamePreference(preferences: ExtensionPreferences, blockSetId: BlockSetId): string | undefined {
-  switch (blockSetId) {
+function getDisplayNamePreference(
+  preferences: ExtensionPreferences,
+  markdownSourceId: MarkdownSourceId,
+): string | undefined {
+  switch (markdownSourceId) {
     case 1:
       return preferences.folder1DisplayName?.trim();
     case 2:

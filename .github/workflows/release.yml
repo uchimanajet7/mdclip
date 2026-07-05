@@ -2,12 +2,6 @@ name: Release
 
 on:
   workflow_dispatch:
-    inputs:
-      publish_to_raycast:
-        description: "Publish this release to the Raycast Store"
-        required: true
-        type: boolean
-        default: true
 
 permissions:
   contents: write
@@ -44,7 +38,7 @@ jobs:
         run: node scripts/release-manifest.mjs outputs >> "$GITHUB_OUTPUT"
 
       - name: Validate release manifest
-        run: node scripts/release-manifest.mjs validate --publish-to-raycast "${{ inputs.publish_to_raycast }}"
+        run: node scripts/release-manifest.mjs validate
 
       - name: Create and push release tag
         run: |
@@ -88,14 +82,3 @@ jobs:
           TAG: ${{ needs.prepare-tag.outputs.tag }}
           TITLE: ${{ needs.prepare-tag.outputs.title }}
         run: gh release create "$TAG" --title "$TITLE" --notes-file "$RUNNER_TEMP/release-body.md" --verify-tag
-
-  publish-release-to-raycast:
-    name: Publish Release to Raycast
-    needs:
-      - prepare-tag
-      - github-release
-    if: ${{ inputs.publish_to_raycast }}
-    uses: ./.github/workflows/publish-release-to-raycast.yml
-    with:
-      release_tag: ${{ needs.prepare-tag.outputs.tag }}
-    secrets: inherit

@@ -7,7 +7,7 @@ export type PreviewOptions = {
   maxCharacters: number;
 };
 
-export async function readBlockPreview(filePath: string, options: PreviewOptions): Promise<string> {
+export async function readMarkdownPreview(filePath: string, options: PreviewOptions): Promise<string> {
   const safeLineCount = Math.max(1, options.lineCount);
   const safeMaxCharacters = Math.max(1, options.maxCharacters);
   const file = await fs.open(filePath, "r");

@@ -1,32 +1,32 @@
-export type BlockSetId = 1 | 2 | 3;
+export type MarkdownSourceId = 1 | 2 | 3;
 
-export type BlockSetConfig = {
-  id: BlockSetId;
+export type MarkdownSourceConfig = {
+  id: MarkdownSourceId;
   commandTitle: string;
   displayName: string;
   isEnabled: boolean;
   directory?: string;
 };
 
-export type ConfiguredBlockSet = BlockSetConfig & {
+export type ConfiguredMarkdownSource = MarkdownSourceConfig & {
   directory: string;
 };
 
-export type BlockFile = {
+export type MarkdownFile = {
   path: string;
   name: string;
   relativePath: string;
-  blockSet: ConfiguredBlockSet;
+  markdownSource: ConfiguredMarkdownSource;
   updatedAt: Date;
   size: number;
 };
 
-export type BlockSetLoadFailure = {
-  blockSet: ConfiguredBlockSet;
+export type MarkdownSourceLoadFailure = {
+  markdownSource: ConfiguredMarkdownSource;
   message: string;
 };
 
-export type BlockFileLoadResult = {
-  files: BlockFile[];
-  failures: BlockSetLoadFailure[];
+export type MarkdownFileLoadResult = {
+  files: MarkdownFile[];
+  failures: MarkdownSourceLoadFailure[];
 };

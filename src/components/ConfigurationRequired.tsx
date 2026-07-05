@@ -8,7 +8,7 @@ type Props = {
 export function ConfigurationRequired({ title, message }: Props) {
   return (
     <Detail
-      markdown={`# ${title}\n\n${message}\n\nOpen Extension Preferences to configure Local Copy Blocks.`}
+      markdown={`# ${title}\n\n${message}\n\nOpen Extension Preferences to configure MdClip.`}
       actions={
         <ActionPanel>
           <Action icon={Icon.Gear} title="Open Extension Preferences" onAction={openExtensionPreferences} />

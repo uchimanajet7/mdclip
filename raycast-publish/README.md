@@ -1,34 +1,21 @@
 # MdClip
 
-MdClip is a personal/local Raycast extension for finding local Markdown files and copying their contents from Raycast.
+MdClip helps you find local Markdown files in Raycast and copy their contents for reuse.
 
-It is maintained in this public GitHub repository, but the active distribution path is source use: download or check out the repository, install dependencies, and run the extension with Raycast development mode. Raycast Store publishing is not the active path.
+Your Markdown files remain the source of truth. MdClip adds a fast Raycast workflow on top of folders you already manage, so you can keep editing, versioning, and organizing the files with your existing tools.
 
 ![MdClip showing a Markdown Source preview in Raycast](media/mdclip-1.png)
 
 ## What It Does
 
-MdClip treats your Markdown files as the source of truth.
-
-- You keep reusable text in normal `.md` files.
-- You group those files into up to three Markdown Sources.
-- You open a Markdown Source command in Raycast, search the files, preview the selected file, and copy its contents.
-- You can copy the raw file contents or copy an expanded version where supported placeholders are replaced at copy time.
+- Browse local Markdown files from up to three configured Markdown Sources.
+- Search across all enabled Markdown Sources from one command.
+- Preview Markdown file contents before copying.
+- Copy raw Markdown file contents.
+- Copy expanded contents with supported placeholders replaced at copy time.
+- Open the selected file in an editor, another app, or Finder.
 
 MdClip does not create, edit, move, rename, or delete your Markdown files.
-
-## Use From Source
-
-MdClip is intended to be used from this repository.
-
-```bash
-npm ci
-npm run dev
-```
-
-After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
-
-For the full setup, update, and removal steps, see [Run From Source](docs/run-from-source.md).
 
 ## Commands
 
@@ -41,31 +28,9 @@ For the full setup, update, and removal steps, see [Run From Source](docs/run-fr
 
 Use individual Markdown Source commands when you know which folder contains the file. Use All Markdown Sources when you want to search every enabled source at once.
 
-Raycast Root Search may show these commands in a different order from this table or from the `package.json` command array. MdClip declares the commands as Markdown Source 1, 2, 3, then All Markdown Sources, but Raycast ranks Root Search results with its own ranking data. If a command appears too high or too low in Root Search, use Raycast's Reset Ranking action. See Raycast's [Search Bar manual](https://manual.raycast.com/search-bar) and [Manifest command properties](https://developers.raycast.com/information/manifest).
-
 ## Preferences
 
 Configure at least one Markdown Source folder before using the extension.
-
-```text
-MdClip Preferences
-├── Markdown Source 1
-│   ├── Enable Markdown Source 1
-│   ├── Markdown Source 1 Folder
-│   └── Markdown Source 1 Name
-├── Markdown Source 2
-│   ├── Enable Markdown Source 2
-│   ├── Markdown Source 2 Folder
-│   └── Markdown Source 2 Name
-├── Markdown Source 3
-│   ├── Enable Markdown Source 3
-│   ├── Markdown Source 3 Folder
-│   └── Markdown Source 3 Name
-└── Shared Preferences
-    ├── Editor
-    ├── Preview Line Count
-    └── Preview Max Characters
-```
 
 | Preference             | Requirement | Description                                                                |
 | ---------------------- | ----------- | -------------------------------------------------------------------------- |
@@ -119,28 +84,6 @@ The following paths are excluded:
 - files whose extension is not `.md`
 
 Symbolic links are not followed.
-
-## Local Verification
-
-Normal local verification is:
-
-```bash
-npm run lint
-```
-
-Raycast CLI lint is kept separate:
-
-```bash
-npm run lint:raycast
-```
-
-For details, see [Local Verification](docs/local-verification.md).
-
-## Release And Store Status
-
-The active public release unit is GitHub Releases.
-
-Raycast Store publishing is inactive. Store publish commands, Store screenshots, and Store Version History are not part of the normal source-use path. The inactive publish resources are preserved under [raycast-publish](raycast-publish/publish.md) for future re-evaluation, and the current release policy is described in [Release Management](docs/release-management.md).
 
 ## Data Handling
 

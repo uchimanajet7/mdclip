@@ -1,282 +1,189 @@
 # ソースコードから使う手順
 
-## 1. この手順でできること
+## 1. 目的
 
-この手順では、`Local Copy Blocks` をソースコードから自分の Mac に読み込み、Raycast 上で使える状態にします。
+この手順では、MdClip を GitHub の source code から自分の Mac に読み込み、Raycast development mode で使える状態にします。
 
-Raycast Store からインストールする手順ではありません。Store 版と異なり、この手順で読み込んだ Extension は自動更新されません。更新したい場合は、ソースコードを更新してから再度 `npm run dev` を実行します。
+これは Raycast Store から install する手順ではありません。この方法で読み込んだ extension は、Raycast Store 経由では自動更新されません。更新する場合は source code を更新し、必要に応じて `npm ci` を実行してから、再度 `npm run dev` を実行します。
 
-`Local Copy Blocks` の機能と使い方は [README](../README.ja.md) を参照してください。開発者向けの確認手順は [ローカル確認手順](local-verification.md) を参照してください。
+MdClip は過去に Raycast Store 公開を試みましたが、名称や説明を変更しても既存の reusable-text / snippet 系 workflow と重なるという review concern が残りました。そのため現在は source-use を通常経路とし、Store 公開用 resource は `raycast-publish/` に分けて保持しています。
 
-## 2. 向いている人
+## 2. 必要なもの
 
-- Raycast Store を使わずに `Local Copy Blocks` を使いたい人
-- 自分の Mac に Node.js と npm を入れても問題ない人
-- ターミナルで数個のコマンドを実行できる人
-- 使わなくなった場合に Extension、ソースコード、追加したツールを削除したい人
+| 必要なもの                      | 用途                                              |
+| ------------------------------- | ------------------------------------------------- |
+| macOS                           | Raycast と MdClip を実行する                      |
+| Raycast                         | MdClip を起動する                                 |
+| Node.js と npm                  | 依存関係の install と development mode 起動に使う |
+| GitHub から取得した source code | MdClip 本体                                       |
 
-Node.js や npm を入れたくない場合、この手順は向きません。
+Git は必須ではありません。Git を使わない場合は GitHub の ZIP download で利用できます。
 
-## 3. 必要なもの
+## 3. Source code を取得する
 
-| 必要なもの   | 用途                                                    |
-| ------------ | ------------------------------------------------------- |
-| macOS        | Raycast と Extension を実行する環境                     |
-| Raycast      | `Local Copy Blocks` を起動するアプリ                    |
-| Node.js      | Extension をビルドして Raycast に読み込むための実行環境 |
-| npm          | 依存 package を準備するための package manager           |
-| ソースコード | `Local Copy Blocks` の Extension 本体                   |
+### 3.1 ZIP で取得する
 
-Git は必須ではありません。Git を入れたくない場合は、GitHub から ZIP をダウンロードして使えます。
+Git を使わない場合は、GitHub Web UI と Finder だけで取得できます。
 
-## 4. ツールをインストールする
+1. Web browser で `https://github.com/uchimanajet7/mdclip` を開く。
+2. 緑色の `Code` button を押す。
+3. `Download ZIP` を選ぶ。
+4. Finder で download した ZIP file を開いて展開する。
+5. 展開された `mdclip` folder を、自分で管理しやすい場所へ移動する。
 
-### 4.1 Raycast
+完了確認:
 
-Raycast をインストールしていない場合は、[Raycast 公式サイト](https://www.raycast.com/)からダウンロードして `/Applications` に配置します。
+- Finder で `mdclip` folder を開ける。
+- その folder の中に `package.json` がある。
 
-Raycast を起動し、初期設定を完了してください。
+### 3.2 GitHub Desktop で取得する
 
-Homebrew をすでに使っている場合は、次の方法でもインストールできます。
+GitHub Desktop を使う場合は、次の手順で repository を clone します。
 
-```bash
-brew install --cask raycast
-```
+1. GitHub Desktop を開く。
+2. menu bar から `File` > `Clone Repository...` を選ぶ。
+3. `URL` tab を開く。
+4. `Repository URL` に `https://github.com/uchimanajet7/mdclip.git` を入力する。
+5. `Local Path` に保存先 folder を選ぶ。
+6. `Clone` を押す。
+7. clone 完了後、GitHub Desktop の `Repository` > `Show in Finder` を選ぶ。
 
-### 4.2 Node.js と npm
+完了確認:
 
-Node.js をインストールしていない場合は、[Node.js 公式サイト](https://nodejs.org/)から macOS 用の LTS 版をインストールします。npm は Node.js と一緒に入ります。
+- Finder で `mdclip` folder を開ける。
+- その folder の中に `package.json` がある。
+- GitHub Desktop の repository 名が `mdclip` になっている。
 
-Homebrew をすでに使っている場合は、次の方法でもインストールできます。
+### 3.3 CLI で取得する場合
 
-```bash
-brew install node
-```
-
-インストール後、ターミナルで次を実行します。
-
-```bash
-node -v
-```
-
-```bash
-npm -v
-```
-
-このリポジトリの `package-lock.json` では `@raycast/api` が Node.js `>=22.22.2` を要求します。`node -v` で `v22.22.2` 以上が表示され、`npm -v` でバージョンが表示されれば、この手順で使えます。
-
-### 4.3 Git
-
-Git は、ソースコードを `git clone` で取得したい場合だけ必要です。
-
-Git を入れずに使う場合は、GitHub の `Code` > `Download ZIP` または GitHub Release の `Source code` ZIP を使ってください。
-
-Git を使う場合は、次でインストール済みか確認します。
+CLI を使う場合は、作業用 folder で次を実行します。
 
 ```bash
-git --version
+git clone https://github.com/uchimanajet7/mdclip.git
+cd mdclip
 ```
 
-Homebrew をすでに使っている場合は、次の方法でもインストールできます。
+この CLI 手順は任意です。GitHub Desktop または ZIP で取得した場合は不要です。
 
-```bash
-brew install git
-```
+## 4. 依存関係を入れる
 
-## 5. ソースコードを取得する
+Finder で `mdclip` folder を開き、folder を右クリックして `フォルダに新規ターミナル` を選びます。
 
-作業用フォルダを 1 つ決めます。例として、`~/Downloads` や `~/Developer` など、自分で削除してよい場所を使います。
-
-### 5.1 ZIP で取得する
-
-Git を使わない場合は、[GitHub repository](https://github.com/uchimanajet7/raycast-local-copy-blocks) から ZIP をダウンロードして展開します。
-
-展開した `raycast-local-copy-blocks` フォルダを Finder で開きます。
-
-### 5.2 Git で取得する
-
-Git を使う場合は、作業用フォルダで次を実行します。
-
-```bash
-git clone https://github.com/uchimanajet7/raycast-local-copy-blocks.git
-```
-
-```bash
-cd raycast-local-copy-blocks
-```
-
-## 6. 依存 package を準備する
-
-ターミナルで `raycast-local-copy-blocks` フォルダに移動します。
-
-ZIP で取得した場合は、Finder で展開したフォルダを右クリックして `フォルダに新規ターミナル` を開くと、そのフォルダでターミナルを開始できます。
-
-フォルダ内で次を実行します。
+開いた terminal で次を実行します。
 
 ```bash
 npm ci
 ```
 
-`npm ci` は、`package-lock.json` に記録された依存 package を `node_modules` にインストールします。`node_modules` は `raycast-local-copy-blocks` フォルダの中に作成されます。
+`npm ci` は `package-lock.json` に記録された依存関係を `node_modules` に install します。
 
-## 7. Raycast で起動する
+完了確認:
 
-`raycast-local-copy-blocks` フォルダで次を実行します。
+- command が失敗せずに終了する。
+- `mdclip/node_modules` folder が作成される。
+
+## 5. Raycast development mode で起動する
+
+同じ `mdclip` folder の terminal で次を実行します。
 
 ```bash
 npm run dev
 ```
 
-`ready - built extension successfully` が表示されたら、Raycast で `Block Set 1`、`Block Set 2`、`Block Set 3`、`All Block Sets` を検索できます。
+`ready - built extension successfully` が表示されたら、Raycast から MdClip の commands を開けます。
 
-このコマンドは Raycast の development mode として Extension を読み込みます。試している間はターミナルを開いたままにしてください。終了する場合は、ターミナルで `Control + C` を押します。
+起動中は terminal を閉じないでください。終了する場合は terminal で `Control + C` を押します。
 
-## 8. Block Set を設定する
+## 6. Markdown Source を設定する
 
-Raycast で `Local Copy Blocks` の Extension Preferences を開き、少なくとも 1 つの Block Set Folder を設定します。
+Raycast で MdClip の extension preferences を開き、少なくとも 1 つの Markdown Source Folder を設定します。
 
-最初に使う場合は、次の設定だけで始められます。
+最初は次だけで始められます。
 
 ```text
-Enable Block Set 1:
+Enable Markdown Source 1:
 on
 
-Block Set 1 Folder:
-再利用したい Markdown ファイルを含むフォルダ
+Markdown Source 1 Folder:
+再利用したい Markdown ファイルを含む folder
 ```
 
-設定後、Raycast で `Block Set 1` を開き、Markdown ファイルが表示されることを確認します。
+設定後、Raycast で `Markdown Source 1` を開き、Markdown files が表示されることを確認します。
 
-## 9. 動作確認する
+## 7. 動作確認する
 
-Markdown ファイルを選択し、以下を確認します。
+Markdown file を選択し、次を確認します。
 
-- `Copy Raw Content` で Markdown ファイルの本文をそのままコピーできる
-- `Copy Expanded Content` で対応する Dynamic Placeholders を展開してコピーできる
-- preview pane で Markdown ファイルの冒頭を確認できる
-- `All Block Sets` で有効な Block Set を横断検索できる
+- `Copy Raw Content` で Markdown file の本文をそのままコピーできる。
+- `Copy Expanded Content` で対応する Dynamic Placeholders を展開してコピーできる。
+- preview pane で Markdown file の冒頭を確認できる。
+- `All Markdown Sources` で有効な source を横断検索できる。
 
-Dynamic Placeholders の詳細は [README の Dynamic Placeholders](../README.ja.md#dynamic-placeholders) を参照してください。
+Dynamic Placeholders の詳細は [README.ja](../README.ja.md#dynamic-placeholders) を参照してください。
 
-## 10. ソースコードを更新する
+## 8. 更新する
 
-ZIP で取得した場合は、GitHub から新しい ZIP をダウンロードして展開し直します。
+### ZIP で取得した場合
 
-Git で取得した場合は、`raycast-local-copy-blocks` フォルダで次を実行します。
+1. GitHub Web UI で `https://github.com/uchimanajet7/mdclip` を開く。
+2. `Code` > `Download ZIP` で新しい ZIP を download する。
+3. Finder で展開する。
+4. 必要なら古い `mdclip` folder と入れ替える。
+5. 新しい `mdclip` folder で `npm ci` を実行する。
+6. `npm run dev` を実行する。
+
+### GitHub Desktop で取得した場合
+
+1. GitHub Desktop で `mdclip` repository を開く。
+2. 上部の `Fetch origin` を押す。
+3. 更新がある場合は `Pull origin` を押す。
+4. `Repository` > `Show in Finder` で folder を開く。
+5. その folder で terminal を開く。
+6. `npm ci` を実行する。
+7. `npm run dev` を実行する。
+
+### CLI で取得した場合
 
 ```bash
 git pull
-```
-
-更新後、次を実行します。
-
-```bash
 npm ci
-```
-
-```bash
 npm run dev
 ```
 
-## 11. 使うのをやめる
+## 9. 使うのをやめる
 
-削除する対象は、Raycast に読み込んだ Extension、ダウンロードまたは clone したソースコード、必要に応じて追加したツールです。
+削除対象は、Raycast に読み込んだ MdClip extension、取得した source code、必要に応じて追加した tool です。
 
-### 11.1 Extension を Raycast から外す
+### 9.1 Raycast から外す
 
-Raycast で `Manage Extensions` を開き、`Local Copy Blocks` を選択して uninstall または remove の Action を実行します。Raycast の Extension 管理方法は [Manage Extensions Command](https://developers.raycast.com/information/developer-tools/manage-extensions-command) でも確認できます。
+1. Raycast で `Manage Extensions` を開く。
+2. MdClip を選択する。
+3. uninstall または remove の action を実行する。
 
-Raycast 上で削除できない場合は、Raycast を終了してから次のフォルダを確認します。
-
-```text
-~/.config/raycast/extensions/local-copy-blocks
-```
-
-存在する場合は、この `local-copy-blocks` フォルダだけを削除します。`~/.config/raycast/extensions` には他のローカル Extension が入っている場合があります。
-
-### 11.2 ソースコードを削除する
-
-ZIP で取得した場合は、展開した `raycast-local-copy-blocks` フォルダを削除します。
-
-Git で取得した場合は、`git clone` で作成した `raycast-local-copy-blocks` フォルダを削除します。
-
-このフォルダを削除すると、`npm ci` で作成された `node_modules` も一緒に削除されます。
-
-### 11.3 Raycast を削除する
-
-Raycast 自体を使わない場合は、Raycast を終了してから `/Applications/Raycast.app` をゴミ箱へ移動します。
-
-Homebrew で Raycast をインストールした場合は、次でも削除できます。
-
-```bash
-brew uninstall --cask raycast
-```
-
-Raycast の設定や他の Raycast データも消す場合は、次のデータフォルダを削除します。他の Raycast 設定や Extension 情報も消えるため、必要な場合だけ行ってください。
+Raycast 上で外せない場合は、Raycast を終了してから Finder で次の folder を確認します。
 
 ```text
-~/.config/raycast
+~/.config/raycast/extensions/mdclip
 ```
 
-### 11.4 Node.js と npm を削除する
+存在する場合は、この `mdclip` folder だけを削除します。`~/.config/raycast/extensions` には他の local extension が入っている場合があります。
 
-Node.js と npm を他の用途で使わない場合は、インストール方法に合わせて削除します。
+### 9.2 Source code を削除する
 
-Homebrew で Node.js をインストールした場合は、次を実行します。
+ZIP で取得した場合は、Finder で展開した `mdclip` folder を削除します。
 
-```bash
-brew uninstall node
-```
+GitHub Desktop で取得した場合は、先に GitHub Desktop で対象 repository が `mdclip` であることを確認し、`Repository` > `Show in Finder` で folder を開いてから、GitHub Desktop 側で repository を閉じ、Finder で `mdclip` folder を削除します。
 
-```bash
-brew cleanup
-```
+CLI で取得した場合は、`git clone` で作成した `mdclip` folder を削除します。
 
-Node.js 公式 installer でインストールした場合は、他の開発環境で Node.js を使っていないことを確認し、Node.js 公式配布物の macOS installer に対応する削除手順で削除します。
+source code folder を削除すると、`npm ci` で作成された `node_modules` も一緒に削除されます。
 
-削除前に、現在使われている `node` と `npm` の場所を確認します。
+## 10. 戻せたことを確認する
 
-```bash
-which node
-```
+導入前の状態に戻す場合は、次を確認します。
 
-```bash
-which npm
-```
+- Raycast で MdClip の command が表示されない。
+- `~/.config/raycast/extensions/mdclip` が存在しない。
+- download または clone した `mdclip` folder が残っていない。
 
-削除後は、次のコマンドで Node.js と npm が見つからないことを確認します。
-
-```bash
-node -v
-```
-
-```bash
-npm -v
-```
-
-### 11.5 Git を削除する
-
-Git をこの手順のためだけに Homebrew で入れた場合は、次を実行します。
-
-```bash
-brew uninstall git
-```
-
-```bash
-brew cleanup
-```
-
-macOS の Command Line Tools と一緒に入った Git は、他の開発ツールでも使われる場合があります。不要であることを確認できない場合は、そのまま残してください。
-
-## 12. 戻せたことを確認する
-
-導入前の状態に戻す場合は、以下を確認します。
-
-- Raycast で `Local Copy Blocks` の Command が表示されない
-- `~/.config/raycast/extensions/local-copy-blocks` が存在しない
-- ダウンロードまたは clone した `raycast-local-copy-blocks` フォルダが残っていない
-- Node.js を削除した場合は `node -v` が失敗する
-- npm を削除した場合は `npm -v` が失敗する
-- Git を削除した場合は `git --version` が失敗する
-
-Raycast、Node.js、npm、Git を他の用途でも使う場合は、それらのツール自体は削除せず、`Local Copy Blocks` の Extension とソースコードだけ削除してください。
+Node.js、npm、Git、GitHub Desktop、Raycast を他の用途でも使う場合は、それらの tool 自体は削除せず、MdClip の extension と source code だけを削除してください。
