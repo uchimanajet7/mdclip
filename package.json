@@ -67,7 +67,7 @@
     {
       "name": "folder1DisplayName",
       "title": "Markdown Source 1 Name",
-      "description": "Display name for Markdown Source 1. The folder name is used when this is empty.",
+      "description": "Name shown for Markdown Source 1 inside MdClip lists and metadata. This does not rename the Raycast Root Search command. The folder name is used when empty.",
       "type": "textfield",
       "required": false
     },
@@ -90,7 +90,7 @@
     {
       "name": "folder2DisplayName",
       "title": "Markdown Source 2 Name",
-      "description": "Display name for Markdown Source 2. The folder name is used when this is empty.",
+      "description": "Name shown for Markdown Source 2 inside MdClip lists and metadata. This does not rename the Raycast Root Search command. The folder name is used when empty.",
       "type": "textfield",
       "required": false
     },
@@ -113,7 +113,7 @@
     {
       "name": "folder3DisplayName",
       "title": "Markdown Source 3 Name",
-      "description": "Display name for Markdown Source 3. The folder name is used when this is empty.",
+      "description": "Name shown for Markdown Source 3 inside MdClip lists and metadata. This does not rename the Raycast Root Search command. The folder name is used when empty.",
       "type": "textfield",
       "required": false
     },

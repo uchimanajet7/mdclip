@@ -2,7 +2,7 @@
 
 MdClip is a personal/local Raycast extension for finding local Markdown files and copying their contents from Raycast.
 
-It is maintained in this public GitHub repository, but the active distribution path is source use: download or check out the repository, install dependencies, and run the extension with Raycast development mode. Raycast Store publishing is not the active path.
+Use MdClip when you keep reusable text in Markdown files and want to search, preview, and copy those files from Raycast without changing the originals. Start with the Get Started section below to run the extension locally.
 
 ![MdClip showing a Markdown Source preview in Raycast](media/mdclip-1.png)
 
@@ -17,9 +17,9 @@ MdClip treats your Markdown files as the source of truth.
 
 MdClip does not create, edit, move, rename, or delete your Markdown files.
 
-## Use From Source
+## Get Started
 
-MdClip is intended to be used from this repository.
+For normal use, download `Source code (zip)` from the [latest GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest). The downloaded source archive is tied to the latest release tag.
 
 ```bash
 npm ci
@@ -28,7 +28,7 @@ npm run dev
 
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
 
-For the full setup, update, and removal steps, see [Run From Source](docs/run-from-source.md).
+For the full setup, update, and removal steps, see [Getting Started](docs/getting-started.md).
 
 ## Commands
 
@@ -45,7 +45,7 @@ Raycast Root Search may show these commands in a different order from this table
 
 ## Preferences
 
-Configure at least one Markdown Source folder before using the extension.
+Configure at least one enabled Markdown Source folder before using the extension. Each individual folder preference is optional in Raycast, so unused sources can be left empty.
 
 ```text
 MdClip Preferences
@@ -67,14 +67,14 @@ MdClip Preferences
     └── Preview Max Characters
 ```
 
-| Preference             | Requirement | Description                                                                |
-| ---------------------- | ----------- | -------------------------------------------------------------------------- |
-| Enable Markdown Source | Optional    | Includes or excludes that source from its command and All Markdown Sources |
-| Markdown Source Folder | Required    | Folder containing Markdown files for that source                           |
-| Markdown Source Name   | Optional    | Display name shown in Raycast. The folder name is used when empty          |
-| Editor                 | Optional    | App used by Open in Editor                                                 |
-| Preview Line Count     | Optional    | Number of leading lines shown in the preview. Default is `10`              |
-| Preview Max Characters | Optional    | Maximum number of characters shown in the preview. Default is `4000`       |
+| Preference             | Requirement | Description                                                                                                                                                  |
+| ---------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Enable Markdown Source | Optional    | Includes or excludes that source from its command and All Markdown Sources                                                                                   |
+| Markdown Source Folder | Optional    | Folder containing Markdown files for that source. At least one enabled source needs a folder                                                                 |
+| Markdown Source Name   | Optional    | Source display name used inside MdClip lists, sections, and metadata. It does not rename the Raycast Root Search command. The folder name is used when empty |
+| Editor                 | Optional    | App used by Open in Editor                                                                                                                                   |
+| Preview Line Count     | Optional    | Number of leading lines shown in the preview. Default is `10`, maximum is `100`. Values that cannot be read as a positive integer use the default            |
+| Preview Max Characters | Optional    | Maximum number of characters shown in the preview. Default is `4000`, maximum is `20000`. Values that cannot be read as a positive integer use the default   |
 
 ## Actions
 
@@ -120,28 +120,6 @@ The following paths are excluded:
 
 Symbolic links are not followed.
 
-## Local Verification
-
-Normal local verification is:
-
-```bash
-npm run lint
-```
-
-Raycast CLI lint is kept separate:
-
-```bash
-npm run lint:raycast
-```
-
-For details, see [Local Verification](docs/local-verification.md).
-
-## Release And Store Status
-
-The active public release unit is GitHub Releases.
-
-Raycast Store publishing is inactive. Store publish commands, Store screenshots, and Store Version History are not part of the normal source-use path. The inactive publish resources are preserved under [raycast-publish](raycast-publish/publish.md) for future re-evaluation, and the current release policy is described in [Release Management](docs/release-management.md).
-
 ## Data Handling
 
 MdClip reads Markdown files only from folders you configure as enabled Markdown Sources.
@@ -149,3 +127,8 @@ MdClip reads Markdown files only from folders you configure as enabled Markdown 
 Markdown contents are sent to the clipboard only when you run a copy action. The current clipboard text is read only when `Copy Expanded Content` processes a Markdown file containing `{clipboard}`.
 
 MdClip does not make network requests during normal extension use.
+
+## Development And Maintenance
+
+- [Development and maintenance verification](docs/local-verification.md)
+- [Maintainer release management](docs/release-management.md)

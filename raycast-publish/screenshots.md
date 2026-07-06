@@ -1,10 +1,10 @@
-# Raycast Store Screenshot Procedure
+# MdClip Store Screenshot Re-Approval Procedure
 
 ## 1. Purpose
 
-This procedure preserves the Raycast Store screenshot workflow for MdClip.
+This procedure defines the Store screenshot and metadata workflow for MdClip when Raycast Store publication is explicitly re-approved.
 
-The active repository path is source use, and Store publishing is inactive. Use this procedure only when Raycast Store publication is explicitly re-approved or when the same screenshots are needed as current MdClip UI evidence.
+For current README/GitHub media outside Store publication, use `docs/screenshot-media.md` first. When Store publication is re-approved, start from current MdClip UI evidence and complete the Store-specific checks in this file.
 
 ## 2. Official References
 
@@ -31,15 +31,15 @@ Do not replace Raycast GUI/manual capture with generated images, ad hoc conversi
 
 ## 4. Managed Files
 
-| Path                             | Role                                              |
-| -------------------------------- | ------------------------------------------------- |
-| `metadata/mdclip-1.png`          | Store screenshot 1 and current MdClip UI evidence |
-| `metadata/mdclip-2.png`          | Store screenshot 2 and current MdClip UI evidence |
-| `metadata/mdclip-3.png`          | Store screenshot 3 and current MdClip UI evidence |
-| `media/mdclip-1.png`             | README media copied from `metadata/mdclip-1.png`  |
-| `docs/assets/autumnal-peach.png` | Reusable Window Capture background                |
-| `raycast-publish/README.md`      | Store-facing README source                        |
-| `raycast-publish/CHANGELOG.md`   | Store Version History source                      |
+| Path                             | Role                                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------------------- |
+| `metadata/mdclip-1.png`          | Current MdClip UI evidence and Store screenshot 1 after Store-specific review           |
+| `metadata/mdclip-2.png`          | Current MdClip UI evidence and Store screenshot 2 after Store-specific review           |
+| `metadata/mdclip-3.png`          | Current MdClip UI evidence and Store screenshot 3 after Store-specific review           |
+| `media/mdclip-1.png`             | README/GitHub media copied from `metadata/mdclip-1.png`                                 |
+| `docs/assets/autumnal-peach.png` | Reusable Window Capture background                                                      |
+| `raycast-publish/README.md`      | Store-facing README source to use as root `README.md` in a prepared publish source      |
+| `raycast-publish/CHANGELOG.md`   | Store Version History source to use as root `CHANGELOG.md` in a prepared publish source |
 
 The old `metadata/local-copy-blocks-*.png` and `media/local-copy-blocks-1.png` files are not current MdClip evidence.
 
@@ -154,9 +154,9 @@ For each target:
 
 Do not manually crop, resize, composite, or retouch the screenshot unless a later approved procedure explicitly changes this rule.
 
-## 8. README Media Sync
+## 8. README/GitHub Media Sync
 
-After `metadata/mdclip-1.png` exists and has passed review, sync the README/GitHub media image:
+For current README/GitHub media, follow `docs/screenshot-media.md`. After `metadata/mdclip-1.png` exists and has passed review, sync the README/GitHub media image:
 
 ```sh
 npm run sync:readme-media
@@ -167,6 +167,8 @@ The sync script copies:
 ```text
 metadata/mdclip-1.png -> media/mdclip-1.png
 ```
+
+For Store publication, complete the Store-specific review in this file before using the same media in a prepared publish source.
 
 ## 9. Verification
 
@@ -196,7 +198,7 @@ Also verify:
 
 Human visual review is required before using screenshots for Store publication.
 
-## 10. Raycast Pull Request Screencast
+## 10. Raycast Pull Request Review Evidence
 
 Raycast publish creates or updates a pull request in `raycast/extensions`.
 

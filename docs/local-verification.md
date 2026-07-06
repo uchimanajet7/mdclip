@@ -1,14 +1,14 @@
-# MdClip ローカル検証
+# MdClip 開発・メンテナンス検証
 
 ## 1. 目的
 
-この文書は、MdClip をローカルで開発、修正、確認するための検証手順を定義します。
+この文書は、MdClip の開発、修正、メンテナンス、release 準備で使う検証手順を定義します。
 
-MdClip の通常経路は、GitHub の source checkout または ZIP から依存関係を入れ、Raycast development mode で使うことです。Raycast Store publish、Store screenshot 作成、Store publish 用 Pull Request 作成は通常経路ではありません。
+MdClip を利用するための導入、更新、削除手順は [使い始める手順](getting-started.md) にまとめています。この文書では、repository checkout や source archive 上で変更確認、release 前確認、Raycast CLI 検証、手動 UI 確認を行う場合の確認範囲を扱います。
 
 ## 2. 検証方針
 
-通常のローカル検証は `npm run lint` を使います。
+開発・メンテナンス時の標準検証は `npm run lint` を使います。
 
 `npm run lint` は Raycast CLI の `ray lint` ではありません。TypeScript、source ESLint、Prettier check、リポジトリ固有の local verification をまとめて実行します。
 

@@ -1,12 +1,12 @@
-# MdClip Screenshot and Media Procedure
+# MdClip UI Evidence and README Media Procedure
 
 ## 1. Purpose
 
-This document defines the current screenshot and media procedure for MdClip.
+This document defines how to create and verify current MdClip UI evidence for README media, the public GitHub repository, GitHub Release review, and manual release-preparation checks.
 
-The purpose is to create current MdClip UI evidence for the public GitHub repository, README media, release review, and later manual verification. This is not a Raycast Store publishing approval.
+Use this procedure when refreshing `metadata/mdclip-*.png`, syncing `media/mdclip-1.png`, or confirming that current screenshots represent the active MdClip UI.
 
-Raycast Store publishing is inactive. If Store publishing is re-approved later, Store-specific requirements must be handled through `raycast-publish/screenshots.md` as part of the coordinated publish resource set.
+Store publication uses the separate re-approval path described in [Store publish re-approval path](#11-store-publish-re-approval-path).
 
 ## 2. Source Of Truth
 
@@ -15,13 +15,13 @@ Use these sources in this order:
 1. Current MdClip product direction and implementation.
 2. This document.
 3. [Local Verification](local-verification.md).
-4. [Run From Source](run-from-source.md).
+4. [Getting Started](getting-started.md).
 5. [Release Management](release-management.md).
 6. Current Raycast and GitHub documentation.
 
 Relevant official references:
 
-- Raycast screenshot requirements and Window Capture:
+- Raycast Window Capture reference:
   https://developers.raycast.com/basics/prepare-an-extension-for-store
 - Raycast local extension development path:
   https://manual.raycast.com/extensions
@@ -63,21 +63,21 @@ Changed for MdClip:
 - Product name is `MdClip`.
 - UI concepts are `Markdown Source`, `Markdown files`, and `Markdown file contents`.
 - Current screenshot file names use `mdclip`.
-- `metadata/local-copy-blocks-*.png` and `media/local-copy-blocks-1.png` are historical old UI evidence only.
+- `metadata/local-copy-blocks-*.png` and `media/local-copy-blocks-1.png` are historical old UI evidence file names only.
 - README/GitHub media is source-use evidence, not Store submission material.
 
 ## 5. Managed Files And Roles
 
-| Path                               | Role                                                    | Current status                                             |
-| ---------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
-| `docs/screenshot-media.md`         | Current screenshot and media procedure                  | Active                                                     |
-| `docs/assets/autumnal-peach.png`   | Reusable Window Capture background                      | Active helper asset                                        |
-| `metadata/mdclip-1.png`            | Current MdClip screenshot 1                             | To be created by Raycast GUI/manual capture                |
-| `metadata/mdclip-2.png`            | Current MdClip screenshot 2                             | To be created by Raycast GUI/manual capture                |
-| `metadata/mdclip-3.png`            | Current MdClip screenshot 3                             | To be created by Raycast GUI/manual capture                |
-| `media/mdclip-1.png`               | README/GitHub media copied from `metadata/mdclip-1.png` | To be created by `npm run sync:readme-media` after capture |
-| `metadata/local-copy-blocks-*.png` | Old Store-oriented screenshots                          | Historical only until replacement cleanup is approved      |
-| `media/local-copy-blocks-1.png`    | Old README media                                        | Historical only until replacement cleanup is approved      |
+| Path                               | Role                                                    | Current status                        |
+| ---------------------------------- | ------------------------------------------------------- | ------------------------------------- |
+| `docs/screenshot-media.md`         | Current screenshot and media procedure                  | Active                                |
+| `docs/assets/autumnal-peach.png`   | Reusable Window Capture background                      | Active helper asset                   |
+| `metadata/mdclip-1.png`            | Current MdClip screenshot 1                             | Exists as a current `2000 x 1250` PNG |
+| `metadata/mdclip-2.png`            | Current MdClip screenshot 2                             | Exists as a current `2000 x 1250` PNG |
+| `metadata/mdclip-3.png`            | Current MdClip screenshot 3                             | Exists as a current `2000 x 1250` PNG |
+| `media/mdclip-1.png`               | README/GitHub media copied from `metadata/mdclip-1.png` | Exists as current README/GitHub media |
+| `metadata/local-copy-blocks-*.png` | Old Store-oriented screenshots                          | Not present in the current media set  |
+| `media/local-copy-blocks-1.png`    | Old README media                                        | Not present in the current media set  |
 
 `assets/` is for runtime extension assets such as icons. It is not the screenshot evidence folder.
 
@@ -162,7 +162,7 @@ Reference:
 
 ## 7. Capture Targets
 
-Create at least these three current MdClip screenshots before replacing old media.
+Use or refresh these three current MdClip screenshots when screenshot evidence is regenerated.
 
 | File                    | Command                | Required state                                                                                              | Purpose                                                      |
 | ----------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
@@ -240,8 +240,10 @@ Also verify:
 - Action Panel screenshot shows action icons consistently
 - `git status --short` shows only approved media changes
 
-Human visual review is required before old Store-oriented images are archived or deleted.
+Human visual review is required before current screenshot or README media files are replaced, archived, or deleted.
 
-## 11. Store Publishing Re-Approval
+## 11. Store publish re-approval path
 
-If Raycast Store publishing is re-approved later, do not reuse old Store screenshots as current evidence. Start from the current MdClip screenshots, then apply `raycast-publish/screenshots.md` and current Raycast Store requirements as a separate Store re-approval batch.
+Raycast Store publication has its own screenshot and metadata requirements. When Store publication is re-approved, use `raycast-publish/screenshots.md` together with current Raycast Store documentation.
+
+Start from current MdClip UI evidence, then complete Store-specific screenshot review as part of the coordinated publish resource set.
