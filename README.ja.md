@@ -94,7 +94,7 @@ Markdown ファイルを選択した状態で、次の action を使えます。
 
 ## Dynamic Placeholders
 
-`Copy Expanded Content` は、次の placeholder だけを置換します。元の Markdown ファイルは変更しません。
+MdClip は Raycast Dynamic Placeholders と同じ `{placeholder}` 形式の書き方を使います。`Copy Expanded Content` は、次の MdClip 対応 placeholder だけを置換します。元の Markdown ファイルは変更しません。
 
 | Placeholder   | 置換内容                                      |
 | ------------- | --------------------------------------------- |
@@ -107,7 +107,9 @@ Markdown ファイルを選択した状態で、次の action を使えます。
 | `{uuid}`      | 出現箇所ごとに個別生成する UUID               |
 | `{clipboard}` | 現在の clipboard text                         |
 
-参照: [Raycast Dynamic Placeholders](https://manual.raycast.com/dynamic-placeholders)
+関連する置換方式: [Raycast Dynamic Placeholders](https://manual.raycast.com/dynamic-placeholders)
+
+MdClip の placeholder 展開は、上の表にある対応 placeholder について Raycast Dynamic Placeholders の置換方式に合わせて設計しています。
 
 ## Markdown ファイルの扱い
 
