@@ -6,6 +6,18 @@
   "icon": "icon.png",
   "author": "uchimanajet7",
   "license": "MIT",
+  "packageManager": "npm@11.18.0",
+  "engines": {
+    "node": ">=22.22.2",
+    "npm": ">=11.17.0"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": ">=11.17.0",
+      "onFail": "error"
+    }
+  },
   "platforms": [
     "macOS"
   ],
@@ -143,6 +155,8 @@
   ],
   "scripts": {
     "check": "npm run lint",
+    "check:dependencies": "node scripts/check-dependency-sources.mjs",
+    "check:toolchain": "node scripts/check-toolchain-freshness.mjs",
     "check:type": "tsc -p tsconfig.json --noEmit",
     "check:lint": "eslint src/**",
     "check:format": "node scripts/format.mjs --check",
@@ -154,27 +168,26 @@
     "sync:readme-media": "node scripts/sync-readme-media.mjs",
     "icon:generate": "node scripts/generate-icon.mjs",
     "build": "ray build -e dist",
-    "lint": "npm run check:type && npm run check:lint && npm run check:format && npm run check:local",
+    "lint": "npm run check:dependencies && npm run check:type && npm run check:lint && npm run check:format && npm run check:local",
     "lint:raycast": "ray lint",
     "fix-lint": "eslint src/** --fix && npm run format",
     "migrate": "npx --yes @raycast/migration@latest .",
     "format": "node scripts/format.mjs --write"
   },
   "dependencies": {
-    "@raycast/api": "^1.104.21",
+    "@raycast/api": "^1.104.22",
     "react": "^19.2.7"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.2.0",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "esbuild": "^0.28.1",
-    "eslint": "^10.6.0",
-    "prettier": "^3.9.4",
+    "eslint": "^10.7.0",
+    "prettier": "^3.9.5",
     "typescript": "^6.0.3"
   },
   "allowScripts": {
-    "esbuild@0.27.7": true,
-    "esbuild@0.28.1": true
+    "esbuild": true
   }
 }

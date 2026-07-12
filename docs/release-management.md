@@ -108,10 +108,13 @@ GitHub Release body は、manifest の `githubReleaseChangelogFile` から作成
 
 現在の `Build` workflow は次を実行します。
 
-1. `npm ci`
-2. `npm run build`
-3. `npm run lint`
-4. `npm run lint:raycast`
+1. `.node-version` の Node.js をsetupする。
+2. `package.json#packageManager` のnpmをsetupする。
+3. `npm run check:dependencies`
+4. `npm ci`
+5. `npm run build`
+6. `npm run lint`
+7. `npm run lint:raycast`
 
 ### 7.2 Release
 
@@ -130,6 +133,12 @@ Store publish が re-approved された場合、script は `raycast-publish/READ
 開いている Raycast Pull Request がない場合、script は prepared publish source 上で Raycast の公式 publish command を実行します。開いている Pull Request がある場合は、prepared publish source を `raycast/extensions` fork branch に配置して既存 Pull Request を更新します。
 
 外部 GitHub state を変える作業は、各作業の実施前に別途承認を取ります。
+
+### 7.4 Toolchain freshness
+
+`Toolchain Freshness` workflow は、毎週火曜日09:17（Asia/Tokyo）と手動実行時に、`.node-version` のNode.jsと `package.json#packageManager` のnpmを現在のlatestと比較します。このworkflowは`contents: read`だけを使い、branch、commit、Pull Request、Issueを作成しません。
+
+npm latestのmajorがDependabot Coreの対応majorを超える場合は、互換性保留として理由とupstream sourceを表示します。ただし対応済みmajor内のlatestも別に取得するため、互換性保留中でもminor/patch updateを見逃しません。Dependabotが新majorへ対応した後、または対応major内に新しいversionがある場合は、更新可能なstale toolchainとして失敗し、`npm run update:dependencies`による更新を要求します。
 
 ## 8. Store publish re-approval path
 

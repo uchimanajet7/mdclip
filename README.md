@@ -22,9 +22,12 @@ MdClip does not create, edit, move, rename, or delete your Markdown files.
 For normal use, download `Source code (zip)` from the [latest GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest). The downloaded source archive is tied to the latest release tag.
 
 ```bash
+node scripts/setup-npm.mjs
 npm ci
 npm run dev
 ```
+
+The setup script activates the exact npm version selected in `package.json`. The repository's `.node-version` records the tested Node.js LTS version.
 
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
 

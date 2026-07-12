@@ -22,9 +22,12 @@ MdClip は Markdown ファイルを新規作成、編集、移動、rename、削
 通常利用では、[最新の GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest) から `Source code (zip)` を取得します。取得する source archive は、最新 release tag に紐づくソースです。
 
 ```bash
+node scripts/setup-npm.mjs
 npm ci
 npm run dev
 ```
+
+setup script は `package.json` で選択した正確な npm version を有効化します。repository の `.node-version` には検証対象の Node.js LTS version を記録しています。
 
 `npm run dev` が起動したら、Raycast の extension preferences で少なくとも 1 つの Markdown Source Folder を設定します。
 

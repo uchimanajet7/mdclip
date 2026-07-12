@@ -1,0 +1,30 @@
+name: Toolchain Freshness
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * 2"
+      timezone: "Asia/Tokyo"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check Node.js and npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+
+      - name: Setup npm
+        run: node scripts/setup-npm.mjs
+
+      - name: Check toolchain freshness
+        run: npm run check:toolchain

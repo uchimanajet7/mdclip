@@ -27,8 +27,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: npm
+
+      - name: Setup npm
+        run: node scripts/setup-npm.mjs
+
+      - name: Verify dependency sources
+        run: npm run check:dependencies
 
       - name: Install dependencies
         run: npm ci
@@ -67,8 +73,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: npm
+
+      - name: Setup npm
+        run: node scripts/setup-npm.mjs
+
+      - name: Verify dependency sources
+        run: npm run check:dependencies
 
       - name: Install dependencies
         run: npm ci

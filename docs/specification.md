@@ -212,36 +212,45 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 
 ## 15. Implementation
 
-| Area                    | 方針                                                 |
-| ----------------------- | ---------------------------------------------------- |
-| Framework               | Raycast Extension, TypeScript, React, Raycast API    |
-| File traversal          | Node.js standard library                             |
-| Placeholder replacement | extension 内の明示的な置換処理                       |
-| Preferences type        | Raycast CLI が生成する `raycast-env.d.ts` を信頼する |
-| Runtime source model    | `MarkdownSource*` と `MarkdownFile*`                 |
-| Compatibility migration | 旧 identity 用 migration は追加しない                |
+| Area                      | 方針                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Framework                 | Raycast Extension, TypeScript, React, Raycast API                                                                  |
+| File traversal            | Node.js standard library                                                                                           |
+| Placeholder replacement   | extension 内の明示的な置換処理                                                                                     |
+| Preferences type          | Raycast CLI が生成する `raycast-env.d.ts` を信頼する                                                               |
+| Runtime source model      | `MarkdownSource*` と `MarkdownFile*`                                                                               |
+| Compatibility migration   | 旧 identity 用 migration は追加しない                                                                              |
+| Node.js toolchain         | `.node-version` に検証済みlatest LTSを正確に固定し、`engines.node` はRaycast APIのminimumを宣言する                |
+| npm toolchain             | `packageManager` に検証済みexact versionを固定し、npm 11.17.0以上を必須にする                                      |
+| Toolchain freshness       | weekly read-only workflowでNode.js LTS、npm latest、Dependabot npm major compatibilityを確認する                   |
+| Dependency registry       | registry endpoint は環境設定を使い、lockfile には `integrity` を保持して registry 固有 `resolved` URL を記録しない |
+| Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                          |
+
+npm latestがDependabot Coreの対応majorを超える場合だけ、npm major selectionを互換性holdとして維持します。hold中も対応済みmajor内のlatestを別に検知し、minor/patch updateがあれば `npm run update:dependencies` が `packageManager` を更新します。freshness checkはselected、npm全体のlatest、対応major内のlatest、Dependabot対応major、upstream sourceを毎回表示し、Dependabotが新majorへ対応した後はnpm全体のlatestへ更新します。
 
 ## 16. Project commands
 
-| Command                       | 役割                                                              |
-| ----------------------------- | ----------------------------------------------------------------- |
-| `npm run check`               | `npm run lint` の既存 alias                                       |
-| `npm run lint`                | 開発・メンテナンス時の標準検証                                    |
-| `npm run check:type`          | TypeScript 型検査                                                 |
-| `npm run check:lint`          | Raycast CLI を使わない source ESLint                              |
-| `npm run check:format`        | managed files の format check                                     |
-| `npm run check:local`         | Raycast アプリに依存しない repository 固有 verification           |
-| `npm run lint:raycast`        | Raycast CLI lint                                                  |
-| `npm run build`               | Raycast build validation                                          |
-| `npm run dev`                 | Raycast development mode                                          |
-| `npm run demo:setup`          | demo Markdown Sources 作成                                        |
-| `npm run demo:clean`          | demo Markdown Sources 削除                                        |
-| `npm run sync:readme-media`   | `metadata/mdclip-1.png` から `media/mdclip-1.png` への media sync |
-| `npm run format`              | managed files の write-format                                     |
-| `npm run fix-lint`            | source ESLint 自動修正と write-format                             |
-| `npm run update:dependencies` | dependency update maintainer workflow                             |
-| `npm run migrate`             | Raycast API migration maintainer workflow                         |
-| `npm run icon:generate`       | 確認用 icon 生成                                                  |
+| Command                       | 役割                                                                |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `npm run check`               | `npm run lint` の既存 alias                                         |
+| `npm run lint`                | 開発・メンテナンス時の標準検証                                      |
+| `npm run check:dependencies`  | dependency source、lockfile integrity、install script policy の検証 |
+| `npm run check:toolchain`     | Node.js LTS、npm latest、Dependabot compatibilityのread-only検証    |
+| `npm run check:type`          | TypeScript 型検査                                                   |
+| `npm run check:lint`          | Raycast CLI を使わない source ESLint                                |
+| `npm run check:format`        | managed files の format check                                       |
+| `npm run check:local`         | Raycast アプリに依存しない repository 固有 verification             |
+| `npm run lint:raycast`        | Raycast CLI lint                                                    |
+| `npm run build`               | Raycast build validation                                            |
+| `npm run dev`                 | Raycast development mode                                            |
+| `npm run demo:setup`          | demo Markdown Sources 作成                                          |
+| `npm run demo:clean`          | demo Markdown Sources 削除                                          |
+| `npm run sync:readme-media`   | `metadata/mdclip-1.png` から `media/mdclip-1.png` への media sync   |
+| `npm run format`              | managed files の write-format                                       |
+| `npm run fix-lint`            | source ESLint 自動修正と write-format                               |
+| `npm run update:dependencies` | latest 優先・peer-compatible fallback 付き dependency update        |
+| `npm run migrate`             | Raycast API migration maintainer workflow                           |
+| `npm run icon:generate`       | 確認用 icon 生成                                                    |
 
 `npm run publish` は通常 npm script surface に置きません。
 
@@ -251,6 +260,12 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 
 ```bash
 npm run lint
+```
+
+toolchain freshness validation:
+
+```bash
+npm run check:toolchain
 ```
 
 Raycast CLI validation:
@@ -298,7 +313,9 @@ repository-root
 │   └── workflows
 │       ├── build.yml
 │       ├── publish-release-to-raycast.yml
-│       └── release.yml
+│       ├── release.yml
+│       └── toolchain-freshness.yml
+├── .node-version
 ├── README.md
 ├── README.ja.md
 ├── docs
@@ -321,13 +338,17 @@ repository-root
 │   ├── publish.md
 │   └── screenshots.md
 ├── scripts
+│   ├── check-dependency-sources.mjs
+│   ├── check-toolchain-freshness.mjs
 │   ├── demo-markdown-sources.mjs
 │   ├── format.mjs
 │   ├── generate-icon.mjs
 │   ├── local-verification.mjs
 │   ├── publish-raycast-pr.mjs
 │   ├── release-manifest.mjs
+│   ├── setup-npm.mjs
 │   ├── sync-readme-media.mjs
+│   ├── toolchain.mjs
 │   └── update-dependencies.mjs
 └── src
     ├── markdown-source-1.tsx
