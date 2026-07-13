@@ -17,12 +17,12 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 
 if (status.npmHeldByDependabot) {
   console.warn(
-    `::warning::npm ${status.latest.npmVersion} is available but held because current Dependabot does not support its major version.`,
+    `::warning::npm ${status.latest.npmVersion} is available but held because Dependabot Core main does not support its major version. GitHub hosted Dependabot remains unproven until it runs.`,
   );
 }
 
 if (status.actionable) {
-  console.error("Toolchain update is available. Run npm run update:dependencies and review the resulting changes.");
+  console.error("Toolchain update is available. Run npm run update:toolchain and review the resulting changes.");
   process.exitCode = 1;
 } else {
   console.log("Toolchain freshness check passed.");

@@ -27,7 +27,7 @@ npm ci
 npm run dev
 ```
 
-setup script は `package.json` で選択した正確な npm version を有効化します。repository の `.node-version` には検証対象の Node.js LTS version を記録しています。
+setup script は `package.json` で選択した正確な npm version を有効化します。現在のnpmと異なる場合は、選択中のNode.js installationに属するglobal npmを更新します。repository の `.node-version` には検証対象の Node.js LTS version を記録しています。
 
 `npm run dev` が起動したら、Raycast の extension preferences で少なくとも 1 つの Markdown Source Folder を設定します。
 

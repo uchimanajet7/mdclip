@@ -80,13 +80,13 @@ export function formatToolchainFreshness(status) {
     `Selected npm: ${status.selected.npmVersion}`,
     `Latest npm: ${status.latest.npmVersion}`,
     `Latest npm Node.js range: ${status.latest.npmNodeRange}`,
-    `Dependabot-supported npm majors: ${status.dependabot.supportedNpmMajors.join(", ")}`,
-    `Latest Dependabot-compatible npm: ${status.compatible.npmVersion}`,
+    `Dependabot Core main npm majors: ${status.dependabot.supportedNpmMajors.join(", ")}`,
+    `Latest npm in a Dependabot Core main major: ${status.compatible.npmVersion}`,
   ];
 
   if (status.npmHeldByDependabot) {
     lines.push(
-      `npm status: held at ${status.selected.npmVersion} because Dependabot does not yet support npm ${versionMajor(status.latest.npmVersion)}`,
+      `npm status: held at ${status.selected.npmVersion} because Dependabot Core main does not yet support npm ${versionMajor(status.latest.npmVersion)}; hosted Dependabot still requires execution evidence`,
     );
   }
 

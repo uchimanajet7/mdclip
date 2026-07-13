@@ -221,12 +221,17 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 | Runtime source model      | `MarkdownSource*` と `MarkdownFile*`                                                                               |
 | Compatibility migration   | 旧 identity 用 migration は追加しない                                                                              |
 | Node.js toolchain         | `.node-version` に検証済みlatest LTSを正確に固定し、`engines.node` はRaycast APIのminimumを宣言する                |
-| npm toolchain             | `packageManager` に検証済みexact versionを固定し、npm 11.17.0以上を必須にする                                      |
-| Toolchain freshness       | weekly read-only workflowでNode.js LTS、npm latest、Dependabot npm major compatibilityを確認する                   |
+| npm toolchain             | `packageManager` と `devEngines.packageManager` に検証済みexact versionを固定し、npm 11.17.0以上を必須にする       |
+| npm bootstrap             | repository外でselected npmを導入してから、repository内の最初のnpm commandを実行する                                |
+| Toolchain freshness       | weekly read-only workflowでNode.js LTS、npm latest、Dependabot Core npm major compatibilityを確認する              |
 | Dependency registry       | registry endpoint は環境設定を使い、lockfile には `integrity` を保持して registry 固有 `resolved` URL を記録しない |
 | Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                          |
 
-npm latestがDependabot Coreの対応majorを超える場合だけ、npm major selectionを互換性holdとして維持します。hold中も対応済みmajor内のlatestを別に検知し、minor/patch updateがあれば `npm run update:dependencies` が `packageManager` を更新します。freshness checkはselected、npm全体のlatest、対応major内のlatest、Dependabot対応major、upstream sourceを毎回表示し、Dependabotが新majorへ対応した後はnpm全体のlatestへ更新します。
+npm latestがDependabot Coreの対応majorを超える場合だけ、npm major selectionを明示的な互換性holdとして維持します。hold中も対応済みmajor内のlatestを別に検知し、minor/patch updateを止めません。Dependabot Coreのmain sourceは実装状況の根拠であり、GitHub hosted Dependabotへの配備を証明するものではありません。新しいnpm majorの採用完了には、clean CIとGitHub hosted Dependabotの実行結果が必要です。
+
+`npm run update:dependencies` はapplication dependencyだけを更新し、Node.jsまたはnpmを変更しません。`npm run update:toolchain` は `.node-version`、`packageManager`、`devEngines.packageManager`、lockfile root metadataを一体で更新します。Node.js selectionが変わった場合、更新前のNode.js processで完了を宣言せず、新しいNode.jsとselected npmでbootstrapとverificationをやり直します。
+
+direct dependencyはlatestを最初に試します。latestがstrict peer dependency resolutionで拒否された場合だけ、temporary project上で公開済みstable versionを新しい順に実際のnpm resolverへ渡し、成立する最も新しいversionを選びます。npmのerror message文字列から互換rangeを推測しません。
 
 ## 16. Project commands
 
@@ -249,6 +254,7 @@ npm latestがDependabot Coreの対応majorを超える場合だけ、npm major s
 | `npm run format`              | managed files の write-format                                       |
 | `npm run fix-lint`            | source ESLint 自動修正と write-format                               |
 | `npm run update:dependencies` | latest 優先・peer-compatible fallback 付き dependency update        |
+| `npm run update:toolchain`    | Node.js/npm selectionとlockfile root metadataの一体更新             |
 | `npm run migrate`             | Raycast API migration maintainer workflow                           |
 | `npm run icon:generate`       | 確認用 icon 生成                                                    |
 
@@ -349,7 +355,8 @@ repository-root
 │   ├── setup-npm.mjs
 │   ├── sync-readme-media.mjs
 │   ├── toolchain.mjs
-│   └── update-dependencies.mjs
+│   ├── update-dependencies.mjs
+│   └── update-toolchain.mjs
 └── src
     ├── markdown-source-1.tsx
     ├── markdown-source-2.tsx

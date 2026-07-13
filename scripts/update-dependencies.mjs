@@ -1,8 +1,9 @@
 import { execFile } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { formatToolchainFreshness, getToolchainFreshness } from "./toolchain.mjs";
+import { compareVersions } from "./toolchain.mjs";
 
 const execFileAsync = promisify(execFile);
 const repoRoot = process.cwd();
@@ -14,8 +15,6 @@ const dependencyTargets = [
   ...Object.keys(packageJson.devDependencies ?? {}).map((name) => ({ name, saveFlag: "--save-dev" })),
 ];
 const heldDependencies = [];
-
-await updateProjectToolchain();
 
 if (dependencyTargets.length > 0) {
   await run("npm", ["update", "--save", "--strict-peer-deps"]);
@@ -38,46 +37,6 @@ if (heldDependencies.length > 0) {
 
 console.log("Dependencies updated.");
 
-async function updateProjectToolchain() {
-  const status = await getToolchainFreshness(repoRoot);
-
-  for (const line of formatToolchainFreshness(status)) {
-    console.log(line);
-  }
-
-  if (status.nodeUpdateAvailable) {
-    await writeFile(path.join(repoRoot, ".node-version"), `${status.latest.nodeVersion}\n`);
-    console.log(`Updated .node-version to the latest Node.js LTS ${status.latest.nodeVersion}.`);
-  }
-
-  if (status.npmHeldByDependabot) {
-    console.warn(
-      `npm ${status.latest.npmVersion} is held because current Dependabot does not support npm ${status.latest.npmVersion.split(".")[0]}.`,
-    );
-  }
-
-  if (!status.compatibleNpmUpdateAvailable) {
-    return;
-  }
-
-  const packageJsonBefore = await readFile(packageJsonPath, "utf8");
-  const updatedPackageJson = JSON.parse(packageJsonBefore);
-  updatedPackageJson.packageManager = `npm@${status.compatible.npmVersion}`;
-  await writeFile(packageJsonPath, `${JSON.stringify(updatedPackageJson, null, 2)}\n`);
-
-  try {
-    await run("node", ["scripts/setup-npm.mjs"]);
-  } catch (error) {
-    await writeFile(packageJsonPath, packageJsonBefore);
-    await run("node", ["scripts/setup-npm.mjs"]);
-    throw new Error(`Unable to adopt npm ${status.compatible.npmVersion}; restored the previous npm selection`, {
-      cause: error,
-    });
-  }
-
-  console.log(`Updated packageManager to npm@${status.compatible.npmVersion}.`);
-}
-
 async function updateDirectDependenciesToLatest(targets) {
   const latestVersions = new Map(
     await Promise.all(targets.map(async (target) => [target.name, await getLatestVersion(target.name)])),
@@ -88,8 +47,6 @@ async function updateDirectDependenciesToLatest(targets) {
   let pendingTargets = targets.filter(
     (target) => baselineVersions.get(target.name) !== latestVersions.get(target.name),
   );
-  const peerConflicts = new Map();
-
   while (pendingTargets.length > 0) {
     const deferredTargets = [];
     let updatedCount = 0;
@@ -101,14 +58,13 @@ async function updateDirectDependenciesToLatest(targets) {
         continue;
       }
 
-      const result = await tryInstallVersion(target, latestVersion);
+      const result = await tryResolveVersion(target, latestVersion);
 
-      if (result.status === "updated") {
+      if (result.status === "compatible") {
+        await installVersion(target, latestVersion);
         updatedCount += 1;
-        peerConflicts.delete(target.name);
       } else {
         deferredTargets.push(target);
-        peerConflicts.set(target.name, result);
       }
     }
 
@@ -122,28 +78,17 @@ async function updateDirectDependenciesToLatest(targets) {
   for (const target of pendingTargets) {
     const latestVersion = latestVersions.get(target.name);
     const baselineVersion = baselineVersions.get(target.name);
-    const peerConflict = peerConflicts.get(target.name);
-    const compatibleVersion = await getNewestPeerCompatibleVersion(target.name, baselineVersion, peerConflict.output);
+    const compatibleVersion = await getNewestPeerCompatibleVersion(target, baselineVersion, latestVersion);
 
     if (compatibleVersion !== baselineVersion) {
-      const result = await tryInstallVersion(target, compatibleVersion);
-
-      if (result.status === "updated") {
-        heldDependencies.push({
-          name: target.name,
-          currentVersion: compatibleVersion,
-          latestVersion,
-          reason: formatPeerConflictReason(peerConflict.output, target.name),
-        });
-        continue;
-      }
+      await installVersion(target, compatibleVersion);
     }
 
     heldDependencies.push({
       name: target.name,
       currentVersion: await getInstalledVersion(target.name),
       latestVersion,
-      reason: formatPeerConflictReason(peerConflict.output, target.name),
+      reason: "latest is rejected by strict peer dependency resolution",
     });
   }
 }
@@ -164,75 +109,60 @@ async function getInstalledVersion(packageName) {
   return version;
 }
 
-async function getNewestPeerCompatibleVersion(packageName, baselineVersion, errorOutput) {
-  const peerRanges = extractPeerRanges(errorOutput, packageName);
+async function getNewestPeerCompatibleVersion(target, baselineVersion, latestVersion) {
+  const { stdout } = await runQuiet("npm", ["view", target.name, "versions", "--json"]);
+  const candidates = parseNpmViewVersions(stdout)
+    .filter((version) => /^\d+\.\d+\.\d+$/.test(version))
+    .filter((version) => compareVersions(version, baselineVersion) > 0 && compareVersions(version, latestVersion) < 0)
+    .sort((left, right) => compareVersions(right, left));
 
-  if (peerRanges.length === 0) {
-    return baselineVersion;
+  for (const candidate of candidates) {
+    const result = await tryResolveVersion(target, candidate);
+
+    if (result.status === "compatible") {
+      return candidate;
+    }
   }
 
-  const matchingVersionLists = await Promise.all(
-    peerRanges.map(async (peerRange) => {
-      const { stdout } = await runQuiet("npm", ["view", `${packageName}@${peerRange}`, "version", "--json"]);
-      return parseNpmViewVersions(stdout);
-    }),
-  );
-  const matchingVersions = matchingVersionLists.reduce(
-    (intersection, versions) => intersection.filter((version) => versions.includes(version)),
-    matchingVersionLists[0],
-  );
-
-  if (!matchingVersions.includes(baselineVersion)) {
-    return baselineVersion;
-  }
-
-  return matchingVersions.at(-1) ?? baselineVersion;
+  return baselineVersion;
 }
 
-async function tryInstallVersion(target, version) {
+async function tryResolveVersion(target, version) {
   const args = ["install", `${target.name}@${version}`, target.saveFlag, "--strict-peer-deps"];
-  const packageJsonBefore = await readFile(packageJsonPath, "utf8");
-  const packageLockBefore = await readFile(packageLockPath, "utf8");
-
-  console.log(`> npm ${args.join(" ")}`);
+  const temporaryProject = await mkdtemp(path.join(os.tmpdir(), "mdclip-dependency-resolution-"));
 
   try {
-    const result = await execFileAsync("npm", args, commandOptions());
-    writeCommandOutput(result);
-    return { status: "updated" };
-  } catch (error) {
-    const output = `${error.stdout ?? ""}\n${error.stderr ?? ""}`;
+    await Promise.all([
+      copyFile(packageJsonPath, path.join(temporaryProject, "package.json")),
+      copyFile(packageLockPath, path.join(temporaryProject, "package-lock.json")),
+      copyFile(path.join(repoRoot, ".npmrc"), path.join(temporaryProject, ".npmrc")),
+    ]);
 
-    if (!isPeerDependencyConflict(output)) {
-      writeCommandOutput(error);
-      throw error;
+    try {
+      await execFileAsync(
+        "npm",
+        [...args, "--package-lock-only", "--ignore-scripts"],
+        commandOptions(temporaryProject),
+      );
+      return { status: "compatible" };
+    } catch (error) {
+      const output = `${error.stdout ?? ""}\n${error.stderr ?? ""}`;
+
+      if (!isPeerDependencyConflict(output)) {
+        writeCommandOutput(error);
+        throw error;
+      }
+
+      return { status: "peer-conflict" };
     }
-
-    const packageJsonAfter = await readFile(packageJsonPath, "utf8");
-    const packageLockAfter = await readFile(packageLockPath, "utf8");
-
-    if (packageJsonAfter !== packageJsonBefore || packageLockAfter !== packageLockBefore) {
-      throw new Error(`npm changed dependency metadata while rejecting ${target.name}@${version}`);
-    }
-
-    return { status: "peer-conflict", output };
+  } finally {
+    await rm(temporaryProject, { recursive: true, force: true });
   }
 }
 
-function extractPeerRanges(errorOutput, packageName) {
-  const escapedPackageName = packageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const peerRangePattern = new RegExp(`peer(?:Optional)? ${escapedPackageName}@"([^"]+)"`, "g");
-  return [...new Set([...errorOutput.matchAll(peerRangePattern)].map((match) => match[1]))];
-}
-
-function formatPeerConflictReason(errorOutput, packageName) {
-  const peerRanges = extractPeerRanges(errorOutput, packageName);
-
-  if (peerRanges.length > 0) {
-    return `required peer range${peerRanges.length === 1 ? "" : "s"}: ${peerRanges.join(", ")}`;
-  }
-
-  return "the current dependency tree rejected the latest version with ERESOLVE";
+async function installVersion(target, version) {
+  const args = ["install", `${target.name}@${version}`, target.saveFlag, "--strict-peer-deps"];
+  await run("npm", args);
 }
 
 function isPeerDependencyConflict(output) {
@@ -263,13 +193,13 @@ async function run(command, args) {
   }
 }
 
-async function runQuiet(command, args) {
-  return await execFileAsync(command, args, commandOptions());
+async function runQuiet(command, args, cwd = repoRoot) {
+  return await execFileAsync(command, args, commandOptions(cwd));
 }
 
-function commandOptions() {
+function commandOptions(cwd = repoRoot) {
   return {
-    cwd: repoRoot,
+    cwd,
     maxBuffer: 1024 * 1024 * 20,
   };
 }

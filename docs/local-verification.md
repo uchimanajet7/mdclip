@@ -25,9 +25,9 @@ node scripts/setup-npm.mjs
 npm ci
 ```
 
-setup scriptは `package.json#packageManager` に固定された検証済みnpmを有効化し、実際のnpm versionが一致することを確認します。`npm ci` は、初回セットアップ、`package-lock.json` 変更後、依存関係を入れ直す場合に実行します。
+setup scriptは `package.json#packageManager` に固定された検証済みnpmを有効化し、実際のnpm versionが一致することを確認します。現在のnpmと異なる場合は、選択中のNode.js installationに属するglobal npmを更新します。旧npmによる導入処理はrepository外で実行し、repositoryの`devEngines`を評価する前にselected npmを有効化します。`npm ci` は、初回セットアップ、`package-lock.json` 変更後、依存関係を入れ直す場合に実行します。
 
-install-script policyの完全なhardeningを含むnpm 11.17.0以上が必要です。`package.json` の `engines.npm`、`devEngines.packageManager`、project `.npmrc` の `engine-strict=true` により、policyを満たさないnpmでのsource operationとinstallを停止します。[npm `devEngines`](https://docs.npmjs.com/cli/v12/configuring-npm/package-json/#devengines) はsource codeを扱う環境を `install`、`ci`、`run` の前に検査し、[`engine-strict`](https://docs.npmjs.com/cli/v12/using-npm/config/#engine-strict) はengine不一致をinstall errorにします。
+install-script policyの完全なhardeningを含むnpm 11.17.0以上が必要です。`package.json` の `engines.npm`、exact `devEngines.packageManager`、project `.npmrc` の `engine-strict=true` により、policy minimumを満たさないinstallとselected npm以外のsource operationを停止します。[npm `devEngines`](https://docs.npmjs.com/cli/v12/configuring-npm/package-json/#devengines) はsource codeを扱う環境を `install`、`ci`、`run` の前に検査し、[`engine-strict`](https://docs.npmjs.com/cli/v12/using-npm/config/#engine-strict) はengine不一致をinstall errorにします。
 
 `.node-version` は検証対象のNode.js LTSを正確に固定します。`engines.node` はRaycast APIが要求するminimumを表し、`.node-version` のselected versionとは役割が異なります。現在のNode.js 24.18.0 LTSはnpm 11.16.0を同梱するため、Node.jsを揃えただけではnpm minimumを満たさず、setup scriptが必要です。[Node.js 24.18.0 archive](https://nodejs.org/en/download/archive/v24.18.0)
 
@@ -50,13 +50,16 @@ install-script policyの完全なhardeningを含むnpm 11.17.0以上が必要で
 | `npm run demo:clean`          | `node scripts/demo-markdown-sources.mjs clean`                       | ローカル確認用の demo Markdown Source folders を削除                |
 | `npm run format`              | `node scripts/format.mjs --write`                                    | 明示対象ファイルの Prettier 整形                                    |
 | `npm run fix-lint`            | `eslint src/** --fix && npm run format`                              | source ESLint 自動修正と write-format                               |
-| `npm run update:dependencies` | `node scripts/update-dependencies.mjs`                               | 依存 package と Raycast API の一括更新                              |
+| `npm run update:dependencies` | `node scripts/update-dependencies.mjs`                               | latest優先でapplication dependencyを更新                            |
+| `npm run update:toolchain`    | `node scripts/update-toolchain.mjs`                                  | Node.js/npm selectionとlockfile metadataを一体更新                  |
 | `npm run migrate`             | `npx --yes @raycast/migration@latest .`                              | Raycast API 更新時の migration                                      |
 | `npm run icon:generate`       | `node scripts/generate-icon.mjs`                                     | 確認用 icon 生成                                                    |
 
-`npm run format`、`npm run fix-lint`、`npm run migrate`、`npm run update:dependencies`、`npm run icon:generate`、`npm run demo:setup`、`npm run demo:clean` はファイルを書き換える可能性があります。目的が明確な場合だけ実行します。
+`npm run format`、`npm run fix-lint`、`npm run migrate`、`npm run update:dependencies`、`npm run update:toolchain`、`npm run icon:generate`、`npm run demo:setup`、`npm run demo:clean` はファイルを書き換える可能性があります。目的が明確な場合だけ実行します。
 
-`npm run update:dependencies` は、最初にNode.js LTS、npm全体のlatest、Dependabot対応major内のlatestを確認します。新しいNode.js LTSがある場合は `.node-version` を更新します。npm全体のlatest majorをDependabot Coreもサポートしている場合はそのlatestへ更新し、未対応の場合も対応済みmajor内に新しいversionがあればそのlatestへ `packageManager` を更新してselected npmをsetupします。したがってmajor互換性hold中も、利用可能なminor/patch updateは止まりません。その後、現在のsemver範囲内を更新し、各direct dependencyの `latest` を試します。`latest` がpeer dependency条件を満たさない場合だけ、公開済みversionのうちpeer条件を満たす最も新しいversionを維持または選択します。npmのpeer overrideは許可せず、peer dependency以外の更新失敗も無視せずに処理を停止します。
+`npm run update:dependencies` はNode.jsとnpmを変更しません。現在のsemver範囲内を更新してから、各direct dependencyの `latest` を試します。`latest` がpeer dependency条件を満たさない場合だけ、temporary project上で公開済みstable versionを新しい順に実際のnpm resolverへ渡し、成立する最も新しいversionを維持または選択します。npm error messageの文字列から互換rangeを推測せず、peer overrideも許可しません。peer dependency以外の更新失敗は無視せずに処理を停止します。
+
+`npm run update:toolchain` はNode.js latest LTSと、承認済みnpm policyで採用可能なlatestを確認し、`.node-version`、`packageManager`、`devEngines.packageManager`、lockfile metadataを一体で更新します。selected Node.jsが変わった場合は更新前のNode.js processで完了扱いにせず、exit status 2で終了します。新しいNode.jsへ切り替え、npm setup、`npm ci`、lint、Raycast lint、buildを実行した後に完了を判断します。
 
 `npm run check:toolchain` はファイルを変更しません。npm全体のlatestとDependabot対応major内のlatestは実行環境のconfigured registryから取得し、Node.js latest LTSはNode.js公式release index、Dependabot対応npm majorはDependabot Coreのcurrent sourceから取得します。通常のlint/buildへnetwork freshnessを混ぜず、定期workflowと明示実行だけで使います。[Dependabot npm package-manager source](https://github.com/dependabot/dependabot-core/blob/main/npm_and_yarn/lib/dependabot/npm_and_yarn/npm_package_manager.rb)
 
@@ -164,7 +167,7 @@ npm run lint:raycast -- --relaxed
 6. `npm run lint`
 7. `npm run lint:raycast`
 
-Node.jsとnpmのexact versionはworkflowへ重複記述せず、`.node-version` と `package.json#packageManager` をsource of truthにします。`Build` と `Release` のすべての独立したinstall経路でsetup、dependency policy check、`npm ci` の順序を強制し、通常のローカル検証とRaycast CLI lintは別stepとして扱います。
+Node.jsとnpmのexact versionはworkflowへ重複記述せず、`.node-version` と `package.json#packageManager` をsource of truthにします。すべての`setup-node` pathはnpm cacheを無効化し、external actionはfull commit SHAへ固定します。`Build` が通常CIとReleaseで共有する唯一のdependency installを担当します。Release metadata jobsはNode.js standard libraryだけを使うためnpm setupと`npm ci`を実行しません。Raycast Publishはscript内部に`npm ci`と`npx`があるため、`release-source/.node-version`とrelease sourceの`packageManager`をsetupしてからpublish scriptを実行します。
 
 `Toolchain Freshness` workflowは毎週火曜日09:17（Asia/Tokyo）と手動実行時に `npm run check:toolchain` を実行します。GitHub Actionsのscheduled workflowは毎時0分付近に遅延しやすいため17分にずらし、通常buildやPull Requestを最新releaseの発生だけで失敗させないよう別workflowにしています。[GitHub Actions `schedule`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 

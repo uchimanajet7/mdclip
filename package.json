@@ -14,7 +14,7 @@
   "devEngines": {
     "packageManager": {
       "name": "npm",
-      "version": ">=11.17.0",
+      "version": "11.18.0",
       "onFail": "error"
     }
   },
@@ -162,6 +162,7 @@
     "check:format": "node scripts/format.mjs --check",
     "check:local": "node scripts/local-verification.mjs",
     "update:dependencies": "node scripts/update-dependencies.mjs",
+    "update:toolchain": "node scripts/update-toolchain.mjs",
     "dev": "ray develop",
     "demo:setup": "node scripts/demo-markdown-sources.mjs setup",
     "demo:clean": "node scripts/demo-markdown-sources.mjs clean",

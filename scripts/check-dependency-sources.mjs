@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import { compareVersions, parseMinimumNpmVersion, parseNpmPackageManager } from "./toolchain.mjs";
 
@@ -17,15 +17,11 @@ const expectedNpmrcLines = [
   "strict-allow-scripts=true",
   "engine-strict=true",
 ];
-const installWorkflowSetupCounts = new Map([
-  [".github/workflows/build.yml", 1],
-  [".github/workflows/release.yml", 2],
-]);
-const nodeWorkflowSetupCounts = new Map([
-  [".github/workflows/build.yml", 1],
-  [".github/workflows/release.yml", 2],
-  [".github/workflows/publish-release-to-raycast.yml", 1],
-  [".github/workflows/toolchain-freshness.yml", 1],
+const nodeWorkflowVersionFiles = new Map([
+  [".github/workflows/build.yml", [".node-version"]],
+  [".github/workflows/release.yml", [".node-version", ".node-version"]],
+  [".github/workflows/publish-release-to-raycast.yml", ["release-source/.node-version"]],
+  [".github/workflows/toolchain-freshness.yml", [".node-version"]],
 ]);
 const forbiddenRegistryHost = ["npm", "flatt", "tech"].join(".");
 
@@ -63,13 +59,18 @@ assert.equal(
 );
 assert.deepEqual(
   packageJson.devEngines?.packageManager,
-  { name: "npm", version: minimumNpmVersion, onFail: "error" },
-  `${packageJsonPath} devEngines must fail source operations that use an npm version below the policy minimum`,
+  { name: "npm", version: selectedNpmVersion, onFail: "error" },
+  `${packageJsonPath} devEngines must enforce the exact selected npm version`,
 );
 assert.equal(
   packageJson.scripts?.["check:toolchain"],
   "node scripts/check-toolchain-freshness.mjs",
   `${packageJsonPath} must expose the read-only toolchain freshness check`,
+);
+assert.equal(
+  packageJson.scripts?.["update:toolchain"],
+  "node scripts/update-toolchain.mjs",
+  `${packageJsonPath} must separate toolchain updates from dependency updates`,
 );
 
 const packageLock = JSON.parse(await readFile(packageLockPath, "utf8"));
@@ -119,54 +120,140 @@ assert.deepEqual(
 );
 assert.deepEqual(invalidInstallScriptPolicyValues, [], `${packageJsonPath} allowScripts decisions must be boolean`);
 
-const setupNpmCommand = "run: node scripts/setup-npm.mjs";
-const dependencyCheckCommand = "run: npm run check:dependencies";
-const installCommand = "run: npm ci";
+const setupNpmScript = await readFile("scripts/setup-npm.mjs", "utf8");
+assert.equal(
+  setupNpmScript.includes('readStringOption("--repo-root")') &&
+    setupNpmScript.includes("mkdtempSync") &&
+    setupNpmScript.includes("cwd: bootstrapRoot"),
+  true,
+  "npm bootstrap must support artifact roots and run the old npm outside the guarded repository",
+);
 
-for (const [workflowPath, expectedSetupCount] of installWorkflowSetupCounts) {
-  const workflow = await readFile(workflowPath, "utf8");
-  const setupCommandIndices = findAllIndices(workflow, setupNpmCommand);
-  const dependencyCheckCommandIndices = findAllIndices(workflow, dependencyCheckCommand);
-  const installCommandIndices = findAllIndices(workflow, installCommand);
+const dependencyUpdater = await readFile("scripts/update-dependencies.mjs", "utf8");
+assert.equal(
+  dependencyUpdater.includes("getToolchainFreshness") ||
+    dependencyUpdater.includes('writeFile(path.join(repoRoot, ".node-version")'),
+  false,
+  "dependency updates must not change the selected Node.js or npm toolchain",
+);
+assert.equal(
+  dependencyUpdater.includes("mdclip-dependency-resolution-") &&
+    dependencyUpdater.includes("--package-lock-only") &&
+    dependencyUpdater.includes("--ignore-scripts"),
+  true,
+  "peer-compatible fallback must use isolated npm resolution instead of parsing an error range",
+);
 
-  assert.equal(
-    setupCommandIndices.length,
-    expectedSetupCount,
-    `${workflowPath} must set up package.json#packageManager for every install path`,
-  );
-  assert.equal(
-    dependencyCheckCommandIndices.length,
-    expectedSetupCount,
-    `${workflowPath} must verify dependency policy for every install path`,
-  );
-  assert.equal(installCommandIndices.length, expectedSetupCount, `${workflowPath} must use the expected install paths`);
+const workflowPaths = (await readdir(".github/workflows"))
+  .filter((fileName) => /\.ya?ml$/.test(fileName))
+  .map((fileName) => `.github/workflows/${fileName}`)
+  .sort();
+const workflowContents = new Map(
+  await Promise.all(workflowPaths.map(async (workflowPath) => [workflowPath, await readFile(workflowPath, "utf8")])),
+);
+const setupNodeWorkflowPaths = workflowPaths.filter((workflowPath) =>
+  workflowContents.get(workflowPath).includes("uses: actions/setup-node@"),
+);
 
-  for (let installIndex = 0; installIndex < expectedSetupCount; installIndex += 1) {
-    assert.equal(
-      setupCommandIndices[installIndex] < dependencyCheckCommandIndices[installIndex] &&
-        dependencyCheckCommandIndices[installIndex] < installCommandIndices[installIndex],
-      true,
-      `${workflowPath} must set up selected npm and verify dependency policy before each npm ci`,
+assert.deepEqual(
+  setupNodeWorkflowPaths,
+  [...nodeWorkflowVersionFiles.keys()].sort(),
+  "every workflow that uses setup-node must have an explicit bootstrap classification",
+);
+
+for (const [workflowPath, workflow] of workflowContents) {
+  assert.equal(/^[ \t]+cache:\s*["']?npm["']?\s*$/m.test(workflow), false, `${workflowPath} must not cache npm`);
+
+  for (const match of workflow.matchAll(/^\s*uses:\s+([^\s#]+)(?:\s+#.*)?$/gm)) {
+    const actionReference = match[1];
+
+    if (actionReference.startsWith("./")) {
+      continue;
+    }
+
+    assert.match(
+      actionReference,
+      /^[^@]+@[0-9a-f]{40}$/,
+      `${workflowPath} external actions must use immutable full commit SHAs`,
     );
   }
 }
 
-for (const [workflowPath, expectedSetupCount] of nodeWorkflowSetupCounts) {
-  const workflow = await readFile(workflowPath, "utf8");
+for (const [workflowPath, expectedVersionFiles] of nodeWorkflowVersionFiles) {
+  const workflow = workflowContents.get(workflowPath);
 
   assert.equal(
-    findAllIndices(workflow, "node-version-file: .node-version").length,
-    expectedSetupCount,
-    `${workflowPath} must use .node-version for every Node.js setup path`,
+    findAllIndices(workflow, "uses: actions/setup-node@").length,
+    expectedVersionFiles.length,
+    `${workflowPath} must have the expected Node.js setup paths`,
+  );
+  assert.equal(
+    findAllIndices(workflow, "package-manager-cache: false").length,
+    expectedVersionFiles.length,
+    `${workflowPath} must disable every setup-node npm cache before npm bootstrap`,
   );
   assert.equal(
     /^\s*node-version:/m.test(workflow),
     false,
     `${workflowPath} must not duplicate a literal Node.js version`,
   );
+
+  const configuredVersionFiles = [...workflow.matchAll(/^\s*node-version-file:\s*(\S+)\s*$/gm)].map(
+    (match) => match[1],
+  );
+  assert.deepEqual(
+    configuredVersionFiles,
+    expectedVersionFiles,
+    `${workflowPath} must derive every Node.js setup from the expected source artifact`,
+  );
 }
 
-const freshnessWorkflow = await readFile(".github/workflows/toolchain-freshness.yml", "utf8");
+const setupNpmCommand = "run: node scripts/setup-npm.mjs";
+const dependencyCheckCommand = "run: npm run check:dependencies";
+const installCommand = "run: npm ci";
+const buildWorkflow = workflowContents.get(".github/workflows/build.yml");
+const buildSetupIndex = buildWorkflow.indexOf(setupNpmCommand);
+const buildCheckIndex = buildWorkflow.indexOf(dependencyCheckCommand);
+const buildInstallIndex = buildWorkflow.indexOf(installCommand);
+
+assert.equal(
+  buildSetupIndex !== -1 && buildSetupIndex < buildCheckIndex && buildCheckIndex < buildInstallIndex,
+  true,
+  "build workflow must bootstrap selected npm and verify policy before its only npm ci",
+);
+assert.equal(findAllIndices(buildWorkflow, installCommand).length, 1, "build workflow must own one dependency install");
+
+const releaseWorkflow = workflowContents.get(".github/workflows/release.yml");
+assert.equal(
+  releaseWorkflow.includes("uses: ./.github/workflows/build.yml"),
+  true,
+  "release workflow must reuse the verified build workflow",
+);
+assert.equal(releaseWorkflow.includes(setupNpmCommand), false, "release metadata jobs must not bootstrap unused npm");
+assert.equal(releaseWorkflow.includes(installCommand), false, "release metadata jobs must not reinstall dependencies");
+
+const publishWorkflow = workflowContents.get(".github/workflows/publish-release-to-raycast.yml");
+const publishCheckoutIndex = publishWorkflow.indexOf("path: release-source");
+const publishNodeIndex = publishWorkflow.indexOf("node-version-file: release-source/.node-version");
+const publishNpmIndex = publishWorkflow.indexOf("run: node scripts/setup-npm.mjs --repo-root release-source");
+const publishCommandIndex = publishWorkflow.indexOf("run: node scripts/publish-raycast-pr.mjs");
+
+assert.equal(
+  publishCheckoutIndex < publishNodeIndex &&
+    publishNodeIndex < publishNpmIndex &&
+    publishNpmIndex < publishCommandIndex,
+  true,
+  "Raycast publish must select the release artifact Node.js and npm before the nested install path",
+);
+
+const publishScript = await readFile("scripts/publish-raycast-pr.mjs", "utf8");
+assert.equal(
+  publishScript.includes('runCommand("npm", ["ci"]') && publishScript.includes('runCommand("npx",'),
+  true,
+  "Raycast publish nested npm and npx commands must remain classified as an install path",
+);
+
+const freshnessWorkflow = workflowContents.get(".github/workflows/toolchain-freshness.yml");
 assert.equal(
   freshnessWorkflow.includes("permissions:\n  contents: read"),
   true,
@@ -178,9 +265,9 @@ assert.equal(
   "toolchain freshness workflow must run weekly away from the start of the hour",
 );
 assert.equal(
-  freshnessWorkflow.includes("run: npm run check:toolchain"),
+  freshnessWorkflow.indexOf(setupNpmCommand) < freshnessWorkflow.indexOf("run: npm run check:toolchain"),
   true,
-  "toolchain freshness workflow must run the project freshness check",
+  "toolchain freshness workflow must bootstrap npm before the project freshness check",
 );
 
 const { stdout: repositoryFilesOutput } = await execFileAsync(

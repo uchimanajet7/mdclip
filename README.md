@@ -27,7 +27,7 @@ npm ci
 npm run dev
 ```
 
-The setup script activates the exact npm version selected in `package.json`. The repository's `.node-version` records the tested Node.js LTS version.
+The setup script activates the exact npm version selected in `package.json`. When the active npm differs, it updates the global npm belonging to the currently selected Node.js installation. The repository's `.node-version` records the tested Node.js LTS version.
 
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
 

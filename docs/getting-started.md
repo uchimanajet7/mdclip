@@ -54,7 +54,7 @@ node scripts/setup-npm.mjs
 npm ci
 ```
 
-`node scripts/setup-npm.mjs` は `package.json` の `packageManager` を読み、選択されたnpmをglobal npmとして有効化して、実際のversionが一致することを確認します。`npm ci` はそのnpmで `package-lock.json` に記録された依存関係を `node_modules` にinstallします。
+`node scripts/setup-npm.mjs` は `package.json` の `packageManager` を読み、選択されたnpmをglobal npmとして有効化して、実際のversionが一致することを確認します。現在のnpmと異なる場合は、選択中のNode.js installationに属するglobal npmを更新します。bootstrap中の旧npmはsource folder外で実行するため、source folderの`devEngines`が旧npm自身の更新を先に拒否することはありません。`npm ci` は選択されたnpmで `package-lock.json` に記録された依存関係を `node_modules` にinstallします。
 
 完了確認:
 

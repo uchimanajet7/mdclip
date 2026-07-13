@@ -116,17 +116,23 @@ GitHub Release body は、manifest の `githubReleaseChangelogFile` から作成
 6. `npm run lint`
 7. `npm run lint:raycast`
 
+すべてのexternal actionはfull commit SHAへ固定し、DependabotのGitHub Actions updateで新しいreleaseを検知します。`setup-node`のnpm cacheはbootstrap前にnpmを実行するため無効化し、selected npmのsetup後にproject commandを開始します。
+
 ### 7.2 Release
 
 `Release` workflow は、GitHub tag と GitHub Release を作成する workflow です。
 
 `Release` workflow は Raycast Store publish を呼び出しません。`publish_to_raycast` input も持ちません。
 
+dependency installと検証はreusable `Build` jobだけが担当します。`prepare-tag`と`github-release`はNode.js standard libraryだけを使うrelease manifest処理なので、npm setupと`npm ci`を重複実行しません。
+
 ### 7.3 Store publish re-approval workflow
 
 `.github/workflows/publish-release-to-raycast.yml` と `scripts/publish-raycast-pr.mjs` は、Store publish re-approval path に属します。
 
 Repository variable `MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED` が `true` の場合だけ、Store publish path として扱います。
+
+再承認後のpublish jobは、default branchではなく指定された`release-source/.node-version`とrelease sourceの`packageManager`をsetupします。publish script内部の`npm ci`と`npx`は、そのrelease artifactに記録されたtoolchainで実行します。
 
 Store publish が re-approved された場合、script は `raycast-publish/README.md` と `raycast-publish/CHANGELOG.md` を publish source の root `README.md` / `CHANGELOG.md` として使います。source-use root の `README.md`、`README.ja.md`、`docs/`、root `CHANGELOG.md`、`.github/`、`_local/`、`raycast-publish/` は publish source から除外します。
 
@@ -138,7 +144,7 @@ Store publish が re-approved された場合、script は `raycast-publish/READ
 
 `Toolchain Freshness` workflow は、毎週火曜日09:17（Asia/Tokyo）と手動実行時に、`.node-version` のNode.jsと `package.json#packageManager` のnpmを現在のlatestと比較します。このworkflowは`contents: read`だけを使い、branch、commit、Pull Request、Issueを作成しません。
 
-npm latestのmajorがDependabot Coreの対応majorを超える場合は、互換性保留として理由とupstream sourceを表示します。ただし対応済みmajor内のlatestも別に取得するため、互換性保留中でもminor/patch updateを見逃しません。Dependabotが新majorへ対応した後、または対応major内に新しいversionがある場合は、更新可能なstale toolchainとして失敗し、`npm run update:dependencies`による更新を要求します。
+npm latestのmajorがDependabot Coreの対応majorを超える場合は、互換性保留として理由とupstream sourceを表示します。ただし対応済みmajor内のlatestも別に取得するため、互換性保留中でもminor/patch updateを見逃しません。Dependabot Core main sourceはGitHub hosted serviceへの配備証明ではありません。採用するmajorの変更にはclean CIとGitHub hosted Dependabotの実行証拠が必要です。更新可能なstale toolchainは`npm run update:toolchain`による更新を要求します。
 
 ## 8. Store publish re-approval path
 
