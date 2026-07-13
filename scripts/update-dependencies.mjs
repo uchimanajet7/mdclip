@@ -3,6 +3,7 @@ import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { findPeerDependencyBlockers, formatHeldDependency } from "./peer-dependency-report.mjs";
 import { compareVersions } from "./toolchain.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -29,9 +30,9 @@ if (heldDependencies.length > 0) {
   console.warn("Latest versions blocked by peer dependencies:");
 
   for (const dependency of heldDependencies) {
-    console.warn(
-      `- ${dependency.name}: kept ${dependency.currentVersion}; latest is ${dependency.latestVersion}; ${dependency.reason}`,
-    );
+    for (const line of formatHeldDependency(dependency)) {
+      console.warn(line);
+    }
   }
 }
 
@@ -47,6 +48,7 @@ async function updateDirectDependenciesToLatest(targets) {
   let pendingTargets = targets.filter(
     (target) => baselineVersions.get(target.name) !== latestVersions.get(target.name),
   );
+  const latestPeerConflicts = new Map();
   while (pendingTargets.length > 0) {
     const deferredTargets = [];
     let updatedCount = 0;
@@ -61,9 +63,11 @@ async function updateDirectDependenciesToLatest(targets) {
       const result = await tryResolveVersion(target, latestVersion);
 
       if (result.status === "compatible") {
+        latestPeerConflicts.delete(target.name);
         await installVersion(target, latestVersion);
         updatedCount += 1;
       } else {
+        latestPeerConflicts.set(target.name, result.output);
         deferredTargets.push(target);
       }
     }
@@ -88,7 +92,8 @@ async function updateDirectDependenciesToLatest(targets) {
       name: target.name,
       currentVersion: await getInstalledVersion(target.name),
       latestVersion,
-      reason: "latest is rejected by strict peer dependency resolution",
+      blockers: await findPeerDependencyBlockers(target.name, latestVersion, repoRoot),
+      resolverOutput: latestPeerConflicts.get(target.name),
     });
   }
 }
@@ -153,7 +158,7 @@ async function tryResolveVersion(target, version) {
         throw error;
       }
 
-      return { status: "peer-conflict" };
+      return { status: "peer-conflict", output: output.trim() };
     }
   } finally {
     await rm(temporaryProject, { recursive: true, force: true });
