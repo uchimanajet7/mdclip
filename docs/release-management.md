@@ -79,7 +79,47 @@ Store publish state は GitHub Release 作成 manifest には含めません。S
 
 1 つの GitHub Release tag に対して 1 file 作成します。file name の `vX.Y.Z` は、対応する GitHub Release tag と一致させます。
 
-既存 tag の release body file は履歴として残します。たとえば `.github/release-changelog/v0.1.4.md` は Local Copy Blocks history であり、MdClip transition release body ではありません。
+将来作成する release body は、次の固定書式を使います。
+
+```markdown
+## What changes for you
+
+- <この Release で利用者が見える・できることの変化と、その意味>
+
+## Install or update
+
+- <この Release を取得・更新・移行して使うために利用者が行うこと>
+```
+
+書式には次の規則を適用します。
+
+- `## What changes for you`、`## Install or update` の 2 見出しだけを、この順番で使う。
+- 前置き、body 内の version 見出し、空 section、追加見出しを置かない。
+- 各 section に `- ` で始まる空ではない list item を 1 つ以上置く。
+- `What changes for you` には、利用者が見える・できることの変化、利用条件、安全性、互換性、または制限の意味を書く。
+- `Install or update` には、その Release を取得、install、update、移行、または安全に利用するために利用者が行うことを書く。
+- 利用者の理解、判断、操作を変えない CI、検証、workflow、公開経路の内部状態、保守用 file、将来検討は掲載せず、この文書などの maintainer 向け surface で管理する。
+
+`scripts/release-manifest.mjs validate` と同 script の `body` / `outputs` 経路は、future release body の見出し、順序、前置き、list、Correction 表記を検証します。`npm run check:release` はこの契約の正常系、拒否系、legacy 境界、回復を Node.js 標準 test で確認し、`npm run lint` の一部として実行します。意味上の掲載可否は keyword や classifier では判定せず、release owner / maintainer が上記の 2 つの利用者タスクに照らして判断します。
+
+次の 6 file だけを、固定書式導入前に公開済みの closed legacy set とします。
+
+- `.github/release-changelog/v0.1.0.md`
+- `.github/release-changelog/v0.1.1.md`
+- `.github/release-changelog/v0.1.2.md`
+- `.github/release-changelog/v0.1.3.md`
+- `.github/release-changelog/v0.1.4.md`
+- `.github/release-changelog/v0.2.0.md`
+
+この set に新しい path を追加しません。上記以外の release body file は version 番号にかかわらず固定書式を通します。既存 tag の release body file と公開済み GitHub Release は、固定書式へ合わせるだけの一括編集を行わず、履歴として残します。
+
+公開済み body に、誤った install、update、移行、安全、互換性、または利用判断を招く重大な虚偽、誤解、欠落が見つかった場合だけ訂正します。
+
+- future 固定書式では、該当 section の先頭へ `- **Correction (YYYY-MM-DD):** <訂正内容>` を追加する。
+- legacy body では、既存の version 見出しまたは前置きの後にある body list の先頭へ同じ表記を追加する。
+- Correction item は通常 item より前に置き、実在する日付を `YYYY-MM-DD` で記録する。
+- current branch の release body file と公開済み GitHub Release notes を同じ内容へ更新し、tag は移動しない。
+- GitHub Release notes の外部更新は、実施前に別途承認を取る。
 
 ## 6. Release 作成手順
 
@@ -87,7 +127,7 @@ GitHub Release を作成する場合は、次を行います。
 
 1. 最後に作成済みの GitHub Release tag を確認する。
 2. 今回作成する GitHub Release tag を決める。
-3. `.github/release-changelog/vX.Y.Z.md` を作成または更新する。
+3. [GitHub Release 用 changelog](#5-github-release-用-changelog) の固定書式で `.github/release-changelog/vX.Y.Z.md` を作成または更新する。
 4. `.github/release-manifest.json` を更新する。
 5. `npm run lint` を実行する。
 6. 必要に応じて `npm run lint:raycast` を実行する。
