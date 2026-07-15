@@ -29,8 +29,8 @@ jobs:
       - name: Explain inactive Store publish path
         run: |
           echo "Raycast Store publishing is inactive for MdClip."
-          echo "This workflow is retained as a guarded publish path that uses raycast-publish resources only after re-approval."
-          echo "Set repository variable MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED=true only after the Store path is explicitly re-approved."
+          echo "Complete the Store publication prerequisites in raycast-publish/publish.md before enabling this workflow."
+          echo "Set repository variable MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED=true only when the prerequisites are complete and Store publication is intentionally started."
           exit 1
 
   publish:

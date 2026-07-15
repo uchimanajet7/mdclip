@@ -6,7 +6,7 @@ This document defines how to create and verify current MdClip UI evidence for RE
 
 Use this procedure when refreshing `metadata/mdclip-*.png`, syncing `media/mdclip-1.png`, or confirming that current screenshots represent the active MdClip UI.
 
-Store publication uses the separate re-approval path described in [Store publish re-approval path](#11-store-publish-re-approval-path).
+Before using these images for Raycast Store publication, complete the [Store publication prerequisites](#10-store-publication-prerequisites).
 
 ## 2. Source Of Truth
 
@@ -28,24 +28,7 @@ Relevant official references:
 - GitHub README relative image paths:
   https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes
 
-## 3. Execution Ownership
-
-| Work area                                             | Owner                                               | Notes                                                                                   |
-| ----------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Update this procedure                                 | Agent-executable after exact-path approval          | This B5-B1 batch covers the procedure and sync path only                                |
-| Update `scripts/sync-readme-media.mjs`                | Agent-executable after exact-path approval          | The script must use current `mdclip` image names                                        |
-| Run `npm run demo:setup`                              | Agent-executable or human-executable after approval | It writes local demo output under `demo/markdown-sources/`                              |
-| Run `npm run dev`                                     | Human/Raycast GUI/manual                            | It opens MdClip through Raycast development mode                                        |
-| Configure Raycast Extension Preferences               | Human/Raycast GUI/manual                            | Requires the Raycast app UI                                                             |
-| Configure Raycast Window Capture                      | Human/Raycast GUI/manual                            | Requires Raycast Settings                                                               |
-| Capture screenshots                                   | Human/Raycast GUI/manual                            | Use Raycast Window Capture, not generated mockups                                       |
-| Review image quality and sensitive data               | User review                                         | The user must approve current visual evidence before old images are archived or deleted |
-| Verify file names, dimensions, hashes, and Git status | Agent-executable after screenshots exist            | This does not replace human visual review                                               |
-| GitHub About/topics update                            | GitHub Web UI or approved external action           | Not part of screenshot capture                                                          |
-
-Do not replace Raycast GUI/manual work with generated images, ad hoc conversion, or inferred automation unless that exact substitution is separately approved.
-
-## 4. Reused And Changed Pieces
+## 3. Reused And Changed Pieces
 
 Reusable from the old Store-oriented procedure:
 
@@ -66,7 +49,7 @@ Changed for MdClip:
 - `metadata/local-copy-blocks-*.png` and `media/local-copy-blocks-1.png` are historical old UI evidence file names only.
 - README/GitHub media is source-use evidence, not Store submission material.
 
-## 5. Managed Files And Roles
+## 4. Managed Files And Roles
 
 | Path                               | Role                                                    | Current status                        |
 | ---------------------------------- | ------------------------------------------------------- | ------------------------------------- |
@@ -81,9 +64,9 @@ Changed for MdClip:
 
 `assets/` is for runtime extension assets such as icons. It is not the screenshot evidence folder.
 
-## 6. Capture Preparation
+## 5. Capture Preparation
 
-### 6.1 Demo Data
+### 5.1 Demo Data
 
 Use current MdClip demo data.
 
@@ -110,7 +93,7 @@ Do not include:
 - unpublished project names
 - real work documents
 
-### 6.2 Raycast Preferences
+### 5.2 Raycast Preferences
 
 Open MdClip extension preferences in Raycast and configure:
 
@@ -130,7 +113,7 @@ Open MdClip extension preferences in Raycast and configure:
 
 Leave `Editor` unset unless the capture specifically needs `Open in Editor`.
 
-### 6.3 Raycast Development Mode
+### 5.3 Raycast Development Mode
 
 Start the extension from the repository root:
 
@@ -140,7 +123,7 @@ npm run dev
 
 Wait until the extension is built and Raycast can open the MdClip commands.
 
-### 6.4 Window Capture Settings
+### 5.4 Window Capture Settings
 
 In Raycast Settings:
 
@@ -154,13 +137,13 @@ In Raycast Settings:
    - If this is only a test, cancel the capture instead of saving a file.
 4. Set `Custom Wallpaper` to `docs/assets/autumnal-peach.png`.
 5. Use the same background for every screenshot.
-6. Use one theme unless a later approved capture plan explicitly requires showing a theme difference.
+6. Use one theme for the screenshot set. If a capture target requires a theme difference, document that requirement in the target table.
 
 Reference:
 
 - Raycast documents Window Capture under `Prepare an Extension for Store` and shows the same example hotkey: https://developers.raycast.com/basics/prepare-an-extension-for-store
 
-## 7. Capture Targets
+## 6. Capture Targets
 
 Use or refresh these three current MdClip screenshots when screenshot evidence is regenerated.
 
@@ -182,7 +165,9 @@ Expected current UI wording includes:
 
 The screenshots must not show old active wording such as `Block Set`, `All Block Sets`, `local-copy-blocks`, or `Local Copy Blocks`.
 
-## 8. Capture Steps
+## 7. Capture Steps
+
+Perform capture in the Raycast app with Raycast Window Capture. Do not substitute generated images, ad hoc conversion, or inferred automation for the Raycast GUI capture.
 
 For each target:
 
@@ -194,11 +179,11 @@ For each target:
 6. Confirm the screenshot shows only Raycast and the MdClip UI.
 7. Confirm there is no sensitive information.
 
-Do not manually crop, resize, composite, or retouch the screenshot unless a later approved procedure explicitly changes this rule.
+Do not manually crop, resize, composite, or retouch the screenshot.
 
-## 9. README Media Sync
+## 8. README Media Sync
 
-After `metadata/mdclip-1.png` exists and has passed review, sync the README/GitHub media image:
+After `metadata/mdclip-1.png` exists and has passed the verification in this file, sync the README/GitHub media image:
 
 ```sh
 npm run sync:readme-media
@@ -212,9 +197,9 @@ metadata/mdclip-1.png -> media/mdclip-1.png
 
 Do not sync old `local-copy-blocks` images into `media/`.
 
-README insertion is a separate repository documentation change and requires exact-path approval for README files.
+README insertion is outside this media-sync procedure.
 
-## 10. Verification
+## 9. Verification
 
 After capture and sync, verify file dimensions:
 
@@ -238,12 +223,12 @@ Also verify:
 - consistent theme
 - list and preview panes are visible where required
 - Action Panel screenshot shows action icons consistently
-- `git status --short` shows only approved media changes
+- `git status --short` shows only the intended media changes
 
-Human visual review is required before current screenshot or README media files are replaced, archived, or deleted.
+Complete the manual visual checks before current screenshot or README media files are replaced, archived, or deleted.
 
-## 11. Store publish re-approval path
+## 10. Store publication prerequisites
 
-Raycast Store publication has its own screenshot and metadata requirements. When Store publication is re-approved, use `raycast-publish/screenshots.md` together with current Raycast Store documentation.
+Raycast Store publication has its own screenshot and metadata requirements. Before using current UI evidence for Store publication, use `raycast-publish/screenshots.md` together with current Raycast Store documentation and complete its Store-specific checks.
 
 Start from current MdClip UI evidence, then complete Store-specific screenshot review as part of the coordinated publish resource set.

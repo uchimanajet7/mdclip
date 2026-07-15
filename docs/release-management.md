@@ -4,12 +4,12 @@
 
 この文書は、MdClip の release owner / maintainer が GitHub Release 作成、release manifest、release body、検証、workflow 実行順を管理するための手順を定義します。
 
-| 項目             | 位置づけ                                                                                                              |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Audience         | MdClip の release owner / maintainer                                                                                  |
-| Scope            | GitHub Release 作成、release manifest、release body、検証、workflow 実行順、Store publish re-approval path            |
-| Active user path | 利用者向けの導入と更新は [MdClip を使い始める](getting-started.md) を正とする                                         |
-| Store path       | Store publish の再開判断と必要 resource は [Store publish re-approval path](#8-store-publish-re-approval-path) で扱う |
+| 項目             | 位置づけ                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Audience         | MdClip の release owner / maintainer                                                                                    |
+| Scope            | GitHub Release 作成、release manifest、release body、検証、workflow 実行順、Store publication prerequisites             |
+| Active user path | 利用者向けの導入と更新は [MdClip を使い始める](getting-started.md) を正とする                                           |
+| Store path       | Store publish の必要 resource と開始条件は [Store publication prerequisites](#8-store-publication-prerequisites) で扱う |
 
 MdClip の active release path は GitHub Release です。release owner / maintainer は、latest release tag に紐づく source archive が利用者向け取得導線になることを前提に release を管理します。
 
@@ -60,7 +60,7 @@ MdClip の active release path は GitHub Release です。release owner / maint
 | `previousGitHubReleaseTag`   | 最後に作成済みの GitHub Release tag                  |
 | `githubReleaseChangelogFile` | 今回の GitHub Release body として使う changelog file |
 
-Store publish state は GitHub Release 作成 manifest には含めません。Store publish 再開時の管理対象は [Store publish re-approval path](#8-store-publish-re-approval-path) で扱います。
+Store publish state は GitHub Release 作成 manifest には含めません。Store publish の管理対象は [Store publication prerequisites](#8-store-publication-prerequisites) で扱います。
 
 現在の manifest は次を指します。
 
@@ -119,7 +119,7 @@ Store publish state は GitHub Release 作成 manifest には含めません。S
 - legacy body では、既存の version 見出しまたは前置きの後にある body list の先頭へ同じ表記を追加する。
 - Correction item は通常 item より前に置き、実在する日付を `YYYY-MM-DD` で記録する。
 - current branch の release body file と公開済み GitHub Release notes を同じ内容へ更新し、tag は移動しない。
-- GitHub Release notes の外部更新は、実施前に別途承認を取る。
+- GitHub Release notes を外部更新する前に、訂正内容、対象 Release、current branch の release body file との一致を確認する。
 
 ## 6. Release 作成手順
 
@@ -132,7 +132,7 @@ GitHub Release を作成する場合は、次を行います。
 5. `npm run lint` を実行する。
 6. 必要に応じて `npm run lint:raycast` を実行する。
 7. 必要に応じて `npm run build` を実行する。
-8. README や GitHub Release で current UI evidence を扱う場合は、`docs/screenshot-media.md` に従って画像を作成し、user review を完了する。
+8. README や GitHub Release で current UI evidence を扱う場合は、`docs/screenshot-media.md` に従って画像を作成し、manual visual checks を完了する。
 9. 変更を commit / push する。
 10. GitHub Actions の `Release` workflow を手動実行する。
 
@@ -166,19 +166,19 @@ GitHub Release body は、manifest の `githubReleaseChangelogFile` から作成
 
 dependency installと検証はreusable `Build` jobだけが担当します。`prepare-tag`と`github-release`はNode.js standard libraryだけを使うrelease manifest処理なので、npm setupと`npm ci`を重複実行しません。
 
-### 7.3 Store publish re-approval workflow
+### 7.3 Store publication workflow
 
-`.github/workflows/publish-release-to-raycast.yml` と `scripts/publish-raycast-pr.mjs` は、Store publish re-approval path に属します。
+`.github/workflows/publish-release-to-raycast.yml` と `scripts/publish-raycast-pr.mjs` は、Store publication path に属します。
 
 Repository variable `MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED` が `true` の場合だけ、Store publish path として扱います。
 
-再承認後のpublish jobは、default branchではなく指定された`release-source/.node-version`とrelease sourceの`packageManager`をsetupします。publish script内部の`npm ci`と`npx`は、そのrelease artifactに記録されたtoolchainで実行します。
+publish jobは、default branchではなく指定された`release-source/.node-version`とrelease sourceの`packageManager`をsetupします。publish script内部の`npm ci`と`npx`は、そのrelease artifactに記録されたtoolchainで実行します。
 
-Store publish が re-approved された場合、script は `raycast-publish/README.md` と `raycast-publish/CHANGELOG.md` を publish source の root `README.md` / `CHANGELOG.md` として使います。source-use root の `README.md`、`README.ja.md`、`docs/`、root `CHANGELOG.md`、`.github/`、`_local/`、`raycast-publish/` は publish source から除外します。
+Store publish を開始すると、script は `raycast-publish/README.md` と `raycast-publish/CHANGELOG.md` を publish source の root `README.md` / `CHANGELOG.md` として使います。source-use root の `README.md`、`README.ja.md`、`docs/`、root `CHANGELOG.md`、`.github/`、`_local/`、`raycast-publish/` は publish source から除外します。
 
 開いている Raycast Pull Request がない場合、script は prepared publish source 上で Raycast の公式 publish command を実行します。開いている Pull Request がある場合は、prepared publish source を `raycast/extensions` fork branch に配置して既存 Pull Request を更新します。
 
-外部 GitHub state を変える作業は、各作業の実施前に別途承認を取ります。
+外部 GitHub state を変える前に、[Store publication prerequisites](#8-store-publication-prerequisites) がすべて完了していることと、対象とする外部 state を確認します。
 
 ### 7.4 Toolchain freshness
 
@@ -186,9 +186,9 @@ Store publish が re-approved された場合、script は `raycast-publish/READ
 
 npm latestのmajorがDependabot Coreの対応majorを超える場合は、互換性保留として理由とupstream sourceを表示します。ただし対応済みmajor内のlatestも別に取得するため、互換性保留中でもminor/patch updateを見逃しません。Dependabot Core main sourceはGitHub hosted serviceへの配備証明ではありません。採用するmajorの変更にはclean CIとGitHub hosted Dependabotの実行証拠が必要です。更新可能なstale toolchainは`npm run update:toolchain`による更新を要求します。
 
-## 8. Store publish re-approval path
+## 8. Store publication prerequisites
 
-Raycast Store publish を再開する場合は、Store-facing resource と GitHub/Raycast 外部 state を一括で再承認します。
+Raycast Store publish を開始する前に、Store-facing resource と GitHub/Raycast 外部 state を一つの publication path として確認します。
 
 Raycast Store publish に関係する公式情報は次です。
 
@@ -197,7 +197,7 @@ Raycast Store publish に関係する公式情報は次です。
 - Raycast Store の準備では、README、metadata screenshots、Version History 用 changelog などの Store-facing resource が必要です。
   - https://developers.raycast.com/basics/prepare-an-extension-for-store
 
-再承認対象は少なくとも次です。
+確認対象は少なくとも次です。
 
 - product direction と distribution model
 - Store 公開用 publish source
@@ -214,4 +214,4 @@ Raycast Store publish に関係する公式情報は次です。
 
 Store publish source では `raycast-publish/README.md` と `raycast-publish/CHANGELOG.md` を root 相当として使います。source-use root に root `CHANGELOG.md` を復帰する場合は、root surface の意味と README / GitHub Release / Store Version History の整合性を別途判断します。
 
-GitHub Actions UI の workflow disable、repository secret の削除、GitHub Release publishing、Raycast Store publish、`raycast/extensions` Pull Request 作成または更新は、外部 state を変える作業として個別承認を取ります。
+GitHub Actions UI の workflow disable、repository secret の削除、GitHub Release publishing、Raycast Store publish、`raycast/extensions` Pull Request 作成または更新では、各操作の直前に対象と変更内容を確認して実行します。

@@ -13,7 +13,7 @@ const publishResourceDirectory = "raycast-publish";
 
 if (process.env.MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED !== "true") {
   throw new Error(
-    "Raycast Store publishing is inactive for MdClip. Set MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED=true only after explicit Store-path re-approval.",
+    "Raycast Store publishing is inactive for MdClip. Complete the prerequisites in raycast-publish/publish.md, then set MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED=true when starting Store publication.",
   );
 }
 

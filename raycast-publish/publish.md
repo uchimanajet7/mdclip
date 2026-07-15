@@ -1,15 +1,15 @@
-# MdClip Store Publish Re-Approval Resources
+# MdClip Store Publication Resources
 
 ## Purpose
 
-This directory is the Store publish re-approval resource set for MdClip.
+This directory is the resource set for preparing and publishing MdClip to the Raycast Store.
 
-| Item             | Current role                                                                 |
-| ---------------- | ---------------------------------------------------------------------------- |
-| Audience         | Maintainers reviewing a future Raycast Store publish path                    |
-| Current status   | Store publication requires explicit re-approval before use                   |
-| Active user path | GitHub Release `Source code (zip)` and local Raycast development mode        |
-| Entry point      | Start here, then use the Store-facing files in this directory after approval |
+| Item             | Current role                                                                    |
+| ---------------- | ------------------------------------------------------------------------------- |
+| Audience         | Maintainers preparing a Raycast Store publication path                          |
+| Current status   | Store publication is inactive                                                   |
+| Active user path | GitHub Release `Source code (zip)` and local Raycast development mode           |
+| Entry point      | Complete the prerequisites below before enabling the Store publication workflow |
 
 The files in this directory keep the Store-facing README, Store Version History, screenshot procedure, and publish background together so the Store publication path can be reviewed as one coordinated path.
 
@@ -31,34 +31,34 @@ For that reason, the active repository path is now:
 - local Raycast development mode
 - GitHub Releases as the release unit
 
-The Store publication path is preserved here as a reusable resource set for future coordinated re-approval.
+The Store publication resources are kept together so the full publication path can be evaluated and prepared as one coordinated unit.
 
 ## Files In This Directory
 
-| File             | Role                                                                                             |
-| ---------------- | ------------------------------------------------------------------------------------------------ |
-| `publish.md`     | Entry point, background, re-approval checklist, and Store publication procedure                  |
-| `README.md`      | Store-facing README source to use as root `README.md` in a prepared publish source               |
-| `CHANGELOG.md`   | Store Version History source to use as root `CHANGELOG.md` in a prepared publish source          |
-| `screenshots.md` | Store screenshot and metadata procedure to use after Store publication is explicitly re-approved |
+| File             | Role                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `publish.md`     | Entry point, background, prerequisites, and Store publication procedure                 |
+| `README.md`      | Store-facing README source to use as root `README.md` in a prepared publish source      |
+| `CHANGELOG.md`   | Store Version History source to use as root `CHANGELOG.md` in a prepared publish source |
+| `screenshots.md` | Store screenshot and metadata procedure to complete before Store publication            |
 
 ## Active Root Versus Publish Source
 
 The repository root is source-use oriented. Keep Store-only content in `raycast-publish/` during normal development.
 
-| Surface                          | Normal repository role            | Store publish-source role                                                                    |
-| -------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------- |
-| Root `README.md`                 | GitHub/source-use README          | Replace with `raycast-publish/README.md` only inside a prepared publish source               |
-| Root `README.ja.md`              | GitHub/source-use Japanese README | Exclude from the prepared publish source unless Store publication is re-approved in Japanese |
-| Root `CHANGELOG.md`              | Not active in the source-use root | Restore from `raycast-publish/CHANGELOG.md` only inside a prepared publish source            |
-| `docs/`                          | Source-use and maintainer docs    | Exclude from the prepared publish source                                                     |
-| `metadata/mdclip-*.png`          | Current MdClip UI evidence        | Store screenshots when Store publication is re-approved                                      |
-| `media/mdclip-1.png`             | GitHub README media               | README media for the publish source                                                          |
-| `.github/release-changelog/*.md` | GitHub Release bodies             | Not Raycast Store Version History                                                            |
+| Surface                          | Normal repository role            | Store publish-source role                                                          |
+| -------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------- |
+| Root `README.md`                 | GitHub/source-use README          | Replace with `raycast-publish/README.md` only inside a prepared publish source     |
+| Root `README.ja.md`              | GitHub/source-use Japanese README | Exclude unless Japanese Store publication is part of the selected publication plan |
+| Root `CHANGELOG.md`              | Not active in the source-use root | Restore from `raycast-publish/CHANGELOG.md` only inside a prepared publish source  |
+| `docs/`                          | Source-use and maintainer docs    | Exclude from the prepared publish source                                           |
+| `metadata/mdclip-*.png`          | Current MdClip UI evidence        | Store screenshots after the Store-specific checks pass                             |
+| `media/mdclip-1.png`             | GitHub README media               | README media for the publish source                                                |
+| `.github/release-changelog/*.md` | GitHub Release bodies             | Not Raycast Store Version History                                                  |
 
-## Store Re-Approval Checklist
+## Store Publication Prerequisites
 
-Before Store publication is resumed, explicitly re-approve all of the following as one coordinated Store path:
+Before Store publication, confirm all of the following as one coordinated Store path:
 
 - product direction and Store publication intent
 - package metadata and categories
@@ -71,9 +71,9 @@ Before Store publication is resumed, explicitly re-approve all of the following 
 - target GitHub Release tag
 - whether the existing Raycast review history should be referenced in any new PR comment
 
-Do not enable the workflow, add secrets, publish a GitHub Release to Raycast, or create/update a `raycast/extensions` pull request without explicit approval.
+Keep the workflow disabled and do not add secrets or create or update a `raycast/extensions` pull request until every prerequisite is complete and Store publication is intentionally started.
 
-## Store Publish Procedure After Re-Approval
+## Publish Procedure
 
 1. Re-check current Raycast documentation.
    - Prepare an Extension for Store: https://developers.raycast.com/basics/prepare-an-extension-for-store
@@ -86,14 +86,14 @@ Do not enable the workflow, add secrets, publish a GitHub Release to Raycast, or
 6. Confirm `raycast-publish/CHANGELOG.md` is the Store Version History source.
 7. Confirm the GitHub Release tag exists and points to the source state to publish.
 8. Set repository variable `MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED` to `true`.
-9. Set repository secret `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` with the approved token.
-10. Run the guarded Raycast publish workflow for the approved release tag.
+9. Set repository secret `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC` with the configured token.
+10. Run the guarded Raycast publish workflow for the selected release tag.
 11. Review the created or updated `raycast/extensions` pull request.
 12. After publication work is complete or stopped, set `MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED` back to `false` or remove it.
 
-## Human-Owned External Steps
+## External GitHub and Raycast Steps
 
-The following steps are external GitHub/Raycast actions and must be performed by the user or separately approved for automation:
+The following steps change external GitHub or Raycast state. Perform them deliberately after every Store publication prerequisite is complete:
 
 - enabling or disabling GitHub Actions workflows
 - adding, changing, or deleting GitHub Actions secrets
@@ -102,4 +102,4 @@ The following steps are external GitHub/Raycast actions and must be performed by
 - creating or updating GitHub Releases
 - responding to Raycast review comments
 
-Human-facing instructions for these steps must include what to do, why it is needed, where to do it, how completion is confirmed, and what result to return.
+For each external step, record what was changed, why it was needed, where it was performed, and how completion was confirmed.
