@@ -199,6 +199,10 @@ MdClip は Raycast Dynamic Placeholders と同じ `{placeholder}` 形式の記�
 
 `{clipboard}` は、copy 対象 Markdown 本文内に `{clipboard}` が存在する場合だけ読み取ります。
 
+Clipboard text を取得できた場合は、その text で `{clipboard}` を置換します。Clipboard に text がなく `Clipboard.readText()` が `undefined` を返した場合は、Raycast Dynamic Placeholders と同様に `{clipboard}` を削除して copy を続行します。
+
+Clipboard text の読み取りが error になった場合、`Copy Expanded Content` は placeholder 展開を中止します。Clipboard への書き込みと success HUD は実行せず、既存の copy failure handler が Failure Toast を表示します。error は空の Clipboard text として扱いません。
+
 Related replacement model: https://manual.raycast.com/dynamic-placeholders
 
 MdClip の placeholder 展開は、上の表にある対応 placeholder について Raycast Dynamic Placeholders の置換方式に合わせて設計しています。
@@ -212,6 +216,7 @@ MdClip の placeholder 展開は、上の表にある対応 placeholder につ�
 | configured path is not a directory           | 読み込み失敗画面と `Open Extension Preferences`                                    |
 | no Markdown files                            | empty state、source folder を開く primary action、`Open Extension Preferences`     |
 | partial load failure in All Markdown Sources | 読み込める files を表示し、失敗 source を `Could Not Load` section と Toast で表示 |
+| clipboard read failure during expanded copy  | copy を開始せず、success HUD を表示せず、Failure Toast を表示                      |
 | copy failure                                 | failure Toast                                                                      |
 
 ## 14. Security and data handling

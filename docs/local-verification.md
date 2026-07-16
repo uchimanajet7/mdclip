@@ -146,6 +146,9 @@ npm run dev
 - `{date}`、`{time}`、`{datetime}`、`{day}`、`{timezone}`、`{now}`、`{uuid}`、`{clipboard}` を置換できること
 - 複数の `{uuid}` を出現箇所ごとに別々の UUID へ置換できること
 - `{clipboard}` を含まない Markdown 本文では clipboard を読み取らないこと
+- clipboard text がない場合は `{clipboard}` を削除し、expanded content の copy と success HUD を完了できること
+- clipboard text の読み取りが error になった場合は error を伝播し、Clipboard への書き込みと success HUD を実行しないこと
+- `Copy Raw Content` は clipboard text を読み取らず、元の `{clipboard}` を変更せずに copy できること
 
 この単体確認は `local-verification/local-verification-fixtures` と `local-verification/local-verification-dist` を作成または更新します。
 

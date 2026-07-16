@@ -18,11 +18,7 @@ export async function expandDynamicPlaceholders(content: string): Promise<string
 }
 
 async function readClipboardText(): Promise<string> {
-  try {
-    return (await Clipboard.readText()) ?? "";
-  } catch {
-    return "";
-  }
+  return (await Clipboard.readText()) ?? "";
 }
 
 function formatDate(date: Date): string {

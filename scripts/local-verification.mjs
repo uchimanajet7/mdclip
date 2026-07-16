@@ -221,40 +221,31 @@ async function verifyPreview() {
 }
 
 async function verifyDynamicPlaceholdersExpansion() {
-  const outputFile = path.join(distRoot, "dynamicPlaceholders.mjs");
+  const dynamicPlaceholdersOutputFile = path.join(distRoot, "dynamicPlaceholders.mjs");
+  const clipboardOutputFile = path.join(distRoot, "clipboard.mjs");
 
   await build({
     entryPoints: [path.join(repoRoot, "src", "services", "dynamicPlaceholders.ts")],
     bundle: true,
     platform: "node",
     format: "esm",
-    outfile: outputFile,
-    plugins: [
-      {
-        name: "raycast-api-stub",
-        setup(pluginBuild) {
-          pluginBuild.onResolve({ filter: /^@raycast\/api$/ }, () => ({
-            path: "raycast-api-stub",
-            namespace: "raycast-api-stub",
-          }));
-          pluginBuild.onLoad({ filter: /.*/, namespace: "raycast-api-stub" }, () => ({
-            contents: `
-globalThis.__mdclipClipboardReadCount = 0;
-export const Clipboard = {
-  readText: async () => {
-    globalThis.__mdclipClipboardReadCount += 1;
-    return "CLIPBOARD_TEXT";
-  },
-};
-`,
-            loader: "js",
-          }));
-        },
-      },
-    ],
+    outfile: dynamicPlaceholdersOutputFile,
+    plugins: [createRaycastApiStubPlugin()],
   });
 
-  const { expandDynamicPlaceholders } = await import(pathToFileURL(outputFile));
+  await build({
+    entryPoints: [path.join(repoRoot, "src", "services", "clipboard.ts")],
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    outfile: clipboardOutputFile,
+    plugins: [createRaycastApiStubPlugin()],
+  });
+
+  const { expandDynamicPlaceholders } = await import(pathToFileURL(dynamicPlaceholdersOutputFile));
+  const { copyMarkdownFile } = await import(pathToFileURL(clipboardOutputFile));
+
+  resetRaycastApiStub("text");
   const expanded = await expandDynamicPlaceholders(
     "date={date}\ntime={time}\ndatetime={datetime}\nday={day}\ntimezone={timezone}\nnow={now}\nuuid_one={uuid}\nuuid_two={uuid}\nclipboard={clipboard}",
   );
@@ -276,9 +267,90 @@ export const Clipboard = {
   assert(!expanded.includes("{clipboard}"));
   assert.equal(globalThis.__mdclipClipboardReadCount, 1);
 
-  globalThis.__mdclipClipboardReadCount = 0;
+  resetRaycastApiStub("empty");
+  assert.equal(await expandDynamicPlaceholders("before{clipboard}after"), "beforeafter");
+  assert.equal(globalThis.__mdclipClipboardReadCount, 1);
+
+  resetRaycastApiStub("error");
+  await assert.rejects(expandDynamicPlaceholders("clipboard={clipboard}"), /CLIPBOARD_READ_FAILED/);
+  assert.equal(globalThis.__mdclipClipboardReadCount, 1);
+
+  resetRaycastApiStub("error");
   await expandDynamicPlaceholders("date={date}\ntimezone={timezone}");
   assert.equal(globalThis.__mdclipClipboardReadCount, 0);
+
+  const copyFilePath = path.join(fixtureRoot, "copy.md");
+  const markdownFile = { name: "copy.md", path: copyFilePath };
+  await writeFile(copyFilePath, "clipboard={clipboard}");
+
+  resetRaycastApiStub("text");
+  await copyMarkdownFile(markdownFile, { expand: true });
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, ["clipboard=CLIPBOARD_TEXT"]);
+  assert.deepEqual(globalThis.__mdclipHudMessages, ["Copied Expanded Content: copy.md"]);
+
+  resetRaycastApiStub("empty");
+  await copyMarkdownFile(markdownFile, { expand: true });
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, ["clipboard="]);
+  assert.deepEqual(globalThis.__mdclipHudMessages, ["Copied Expanded Content: copy.md"]);
+
+  resetRaycastApiStub("error");
+  await assert.rejects(copyMarkdownFile(markdownFile, { expand: true }), /CLIPBOARD_READ_FAILED/);
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, []);
+  assert.deepEqual(globalThis.__mdclipHudMessages, []);
+
+  resetRaycastApiStub("error");
+  await copyMarkdownFile(markdownFile, { expand: false });
+  assert.equal(globalThis.__mdclipClipboardReadCount, 0);
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, ["clipboard={clipboard}"]);
+  assert.deepEqual(globalThis.__mdclipHudMessages, ["Copied Raw Content: copy.md"]);
+}
+
+function createRaycastApiStubPlugin() {
+  return {
+    name: "raycast-api-stub",
+    setup(pluginBuild) {
+      pluginBuild.onResolve({ filter: /^@raycast\/api$/ }, () => ({
+        path: "raycast-api-stub",
+        namespace: "raycast-api-stub",
+      }));
+      pluginBuild.onLoad({ filter: /.*/, namespace: "raycast-api-stub" }, () => ({
+        contents: `
+globalThis.__mdclipClipboardReadCount ??= 0;
+globalThis.__mdclipClipboardReadMode ??= "text";
+globalThis.__mdclipClipboardCopies ??= [];
+globalThis.__mdclipHudMessages ??= [];
+
+export const Clipboard = {
+  readText: async () => {
+    globalThis.__mdclipClipboardReadCount += 1;
+    if (globalThis.__mdclipClipboardReadMode === "error") {
+      throw new Error("CLIPBOARD_READ_FAILED");
+    }
+    if (globalThis.__mdclipClipboardReadMode === "empty") {
+      return undefined;
+    }
+    return "CLIPBOARD_TEXT";
+  },
+  copy: async (content) => {
+    globalThis.__mdclipClipboardCopies.push(content);
+  },
+};
+
+export async function showHUD(message) {
+  globalThis.__mdclipHudMessages.push(message);
+}
+`,
+        loader: "js",
+      }));
+    },
+  };
+}
+
+function resetRaycastApiStub(readMode) {
+  globalThis.__mdclipClipboardReadCount = 0;
+  globalThis.__mdclipClipboardReadMode = readMode;
+  globalThis.__mdclipClipboardCopies = [];
+  globalThis.__mdclipHudMessages = [];
 }
 
 async function readText(relativePath) {
