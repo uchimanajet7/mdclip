@@ -76,7 +76,9 @@ async function verifyMarkdownFileListing() {
     outfile: outputFile,
   });
 
-  const { listMarkdownFiles, listMarkdownFilesFromMarkdownSources } = await import(pathToFileURL(outputFile));
+  const { getMarkdownFileSearchFields, listMarkdownFiles, listMarkdownFilesFromMarkdownSources } = await import(
+    pathToFileURL(outputFile)
+  );
   const markdownSourceRoot = path.join(fixtureRoot, "markdown-source");
   const secondMarkdownSourceRoot = path.join(fixtureRoot, "second-markdown-source");
   const missingMarkdownSourceRoot = path.join(fixtureRoot, "missing-markdown-source");
@@ -107,6 +109,15 @@ async function verifyMarkdownFileListing() {
   assert(files.every((file) => file.markdownSource.displayName === "Fixture"));
   assert(files.every((file) => file.size > 0));
   assert(files.every((file) => file.updatedAt instanceof Date));
+
+  const nestedFile = files.find((file) => file.relativePath === path.join("nested", "b.MD"));
+  assert(nestedFile);
+
+  const searchFields = getMarkdownFileSearchFields(nestedFile);
+  assert.equal(searchFields.title, "b.MD");
+  assert.deepEqual(searchFields.keywords, [path.join("nested", "b.MD"), "nested", "Fixture"]);
+  assert(!searchFields.keywords.includes(nestedFile.path));
+  assert(!searchFields.keywords.some((keyword) => keyword.includes("# B")));
 
   const combinedResult = await listMarkdownFilesFromMarkdownSources([
     {

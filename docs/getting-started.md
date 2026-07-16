@@ -100,7 +100,9 @@ Select a Markdown file and confirm the following behavior.
 - `Copy Raw Content` copies the Markdown file contents without changes.
 - `Copy Expanded Content` expands the supported Dynamic Placeholders and copies the result.
 - The preview pane shows the beginning of the Markdown file.
-- `All Markdown Sources` searches across all enabled sources.
+- An individual Markdown Source command finds files by file name or relative path.
+- `All Markdown Sources` also finds files by Markdown Source name across all enabled sources.
+- A term that appears only inside a Markdown file does not match the file.
 
 For details about Dynamic Placeholders, see [README](../README.md#dynamic-placeholders).
 

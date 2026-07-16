@@ -14,7 +14,7 @@ MdClip は、再利用する本文を Markdown ファイルで管理し、その
 
 - 再利用したい本文を通常の `.md` ファイルとして管理する
 - それらのファイルを最大 3 つの Markdown Source に分ける
-- Raycast から Markdown Source コマンドを開き、検索、プレビュー、コピーを行う
+- Raycast から Markdown Source コマンドを開き、ファイル名または相対パスでファイルを探し、プレビューしてコピーする
 - ファイル本文をそのままコピーするか、対応するプレースホルダーをコピー時に展開してコピーする
 
 MdClip は Markdown ファイルを新規作成、編集、移動、名前変更、削除しません。
@@ -35,14 +35,16 @@ npm run dev
 
 ## コマンド
 
-| コマンド             | 用途                                                        |
-| -------------------- | ----------------------------------------------------------- |
-| Markdown Source 1    | Markdown Source 1 の Markdown ファイルを表示                |
-| Markdown Source 2    | Markdown Source 2 の Markdown ファイルを表示                |
-| Markdown Source 3    | Markdown Source 3 の Markdown ファイルを表示                |
-| All Markdown Sources | 有効なすべての Markdown Source から Markdown ファイルを検索 |
+| コマンド             | 用途                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| Markdown Source 1    | Markdown Source 1 からファイル名または相対パスで Markdown ファイルを探す           |
+| Markdown Source 2    | Markdown Source 2 からファイル名または相対パスで Markdown ファイルを探す           |
+| Markdown Source 3    | Markdown Source 3 からファイル名または相対パスで Markdown ファイルを探す           |
+| All Markdown Sources | すべての Source からファイル名、相対パス、Markdown Source の表示名でファイルを探す |
 
 対象フォルダが決まっている場合は個別の Markdown Source コマンドを使い、場所が曖昧な場合は All Markdown Sources を使います。
+
+検索対象は、ファイル名と Markdown Source フォルダからの相対パスです。`All Markdown Sources` では、Markdown Source の表示名も検索できます。Markdown ファイルの本文は検索しません。
 
 Raycast Root Search のコマンド順は利用状況に応じて変わります。順序が意図どおりでない場合は、対象コマンドを選択し、`⌘ K` で Action Panel を開いて `Reset Ranking` を実行してください。詳しくは [Raycast Search Bar manual](https://manual.raycast.com/search-bar) を参照してください。
 

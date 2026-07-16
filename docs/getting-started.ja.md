@@ -100,7 +100,9 @@ Markdown ファイルを選択し、次を確認します。
 - `Copy Raw Content` で Markdown ファイルの本文をそのままコピーできる。
 - `Copy Expanded Content` で対応する Dynamic Placeholders を展開してコピーできる。
 - プレビューペインで Markdown ファイルの冒頭を確認できる。
-- `All Markdown Sources` で有効な Markdown Source を横断検索できる。
+- 個別の Markdown Source コマンドで、ファイル名または相対パスからファイルを探せる。
+- `All Markdown Sources` では、有効なすべての Source から Markdown Source の表示名でもファイルを探せる。
+- Markdown ファイルの本文だけに含まれる語句では、そのファイルが検索結果に表示されない。
 
 Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders) を参照してください。
 

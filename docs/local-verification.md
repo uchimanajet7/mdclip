@@ -138,6 +138,8 @@ npm run dev
 - `.git`、`node_modules`、隠し directory、`.md` ではない file を除外できること
 - directory ではない path を error にできること
 - 横断検索で一部 source の読み込み失敗と成功分の Markdown files を分けて返せること
+- 検索 field が file name を title、relative path とその directory segment および Markdown Source 表示名を keywords として返すこと
+- 検索 keywords に absolute path と Markdown file content が含まれないこと
 - preview が指定行数と最大文字数に従って冒頭 preview を返せること
 - `{date}`、`{time}`、`{datetime}`、`{day}`、`{timezone}`、`{now}`、`{uuid}`、`{clipboard}` を置換できること
 - 複数の `{uuid}` を出現箇所ごとに別々の UUID へ置換できること

@@ -14,7 +14,7 @@ MdClip treats your Markdown files as the source of truth.
 
 - You keep reusable text in normal `.md` files.
 - You group those files into up to three Markdown Sources.
-- You open a Markdown Source command in Raycast, search the files, preview the selected file, and copy its contents.
+- You open a Markdown Source command in Raycast, find a file by its name or relative path, preview it, and copy its contents.
 - You can copy the raw file contents or copy an expanded version where supported placeholders are replaced at copy time.
 
 MdClip does not create, edit, move, rename, or delete your Markdown files.
@@ -35,14 +35,16 @@ After `npm run dev` starts, open Raycast and configure at least one Markdown Sou
 
 ## Commands
 
-| Command              | Purpose                                                   |
-| -------------------- | --------------------------------------------------------- |
-| Markdown Source 1    | Browse Markdown files from Markdown Source 1              |
-| Markdown Source 2    | Browse Markdown files from Markdown Source 2              |
-| Markdown Source 3    | Browse Markdown files from Markdown Source 3              |
-| All Markdown Sources | Search Markdown files across all enabled Markdown Sources |
+| Command              | Purpose                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| Markdown Source 1    | Find Markdown files by file name or relative path in Markdown Source 1             |
+| Markdown Source 2    | Find Markdown files by file name or relative path in Markdown Source 2             |
+| Markdown Source 3    | Find Markdown files by file name or relative path in Markdown Source 3             |
+| All Markdown Sources | Find files by file name, relative path, or Markdown Source name across all sources |
 
 Use individual Markdown Source commands when you know which folder contains the file. Use All Markdown Sources when you want to search every enabled source at once.
+
+Search matches file names and paths relative to their Markdown Source folders. `All Markdown Sources` also matches Markdown Source names. MdClip does not search inside Markdown file contents.
 
 Raycast Root Search learns from your usage, so command order can change. If the order feels wrong, select the command, open the Action Panel with `⌘ K`, and run `Reset Ranking`. See the [Raycast Search Bar manual](https://manual.raycast.com/search-bar).
 

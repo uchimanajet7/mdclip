@@ -37,25 +37,25 @@
     {
       "name": "markdown-source-1",
       "title": "Markdown Source 1",
-      "description": "Browse Markdown files from Markdown Source 1.",
+      "description": "Find Markdown files by file name or relative path in Markdown Source 1.",
       "mode": "view"
     },
     {
       "name": "markdown-source-2",
       "title": "Markdown Source 2",
-      "description": "Browse Markdown files from Markdown Source 2.",
+      "description": "Find Markdown files by file name or relative path in Markdown Source 2.",
       "mode": "view"
     },
     {
       "name": "markdown-source-3",
       "title": "Markdown Source 3",
-      "description": "Browse Markdown files from Markdown Source 3.",
+      "description": "Find Markdown files by file name or relative path in Markdown Source 3.",
       "mode": "view"
     },
     {
       "name": "all-markdown-sources",
       "title": "All Markdown Sources",
-      "description": "Search Markdown files across all enabled Markdown Sources.",
+      "description": "Find files by file name, relative path, or Markdown Source name across all enabled sources.",
       "mode": "view"
     }
   ],

@@ -13,7 +13,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { ConfiguredMarkdownSource, MarkdownFile, MarkdownSourceLoadFailure } from "../types";
 import { copyMarkdownFile } from "../services/clipboard";
-import { listMarkdownFilesFromMarkdownSources } from "../services/markdownFiles";
+import { getMarkdownFileSearchFields, listMarkdownFilesFromMarkdownSources } from "../services/markdownFiles";
 import { readMarkdownPreview } from "../services/preview";
 
 type Props = {
@@ -234,11 +234,13 @@ function MarkdownFileListItem({
   previewOptions: PreviewOptions;
 }) {
   const isPreviewEnabled = previewOptions.isEnabled;
+  const searchFields = getMarkdownFileSearchFields(file);
 
   return (
     <List.Item
       id={file.path}
-      title={file.name}
+      title={searchFields.title}
+      keywords={searchFields.keywords}
       subtitle={getListItemSubtitle(file)}
       accessories={isPreviewEnabled ? undefined : getListItemAccessories(file)}
       detail={isPreviewEnabled ? <MarkdownFilePreviewDetail file={file} previewOptions={previewOptions} /> : undefined}

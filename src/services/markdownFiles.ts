@@ -9,6 +9,17 @@ import type {
 
 const EXCLUDED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
 
+export function getMarkdownFileSearchFields(file: MarkdownFile): { title: string; keywords: string[] } {
+  const parentDirectory = path.dirname(file.relativePath);
+  const parentDirectorySegments =
+    parentDirectory === "." ? [] : parentDirectory.split(path.sep).filter((segment) => segment.length > 0);
+
+  return {
+    title: file.name,
+    keywords: Array.from(new Set([file.relativePath, ...parentDirectorySegments, file.markdownSource.displayName])),
+  };
+}
+
 export async function listMarkdownFiles(markdownSource: ConfiguredMarkdownSource): Promise<MarkdownFile[]> {
   const rootPath = path.resolve(markdownSource.directory);
   const rootStat = await fs.stat(rootPath);

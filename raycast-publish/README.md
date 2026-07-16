@@ -9,7 +9,7 @@ Your Markdown files remain the source of truth. MdClip adds a fast Raycast workf
 ## What It Does
 
 - Browse local Markdown files from up to three configured Markdown Sources.
-- Search across all enabled Markdown Sources from one command.
+- Find Markdown files by file name or relative path, and search across all enabled Markdown Sources from one command.
 - Preview Markdown file contents before copying.
 - Copy raw Markdown file contents.
 - Copy expanded contents with supported placeholders replaced at copy time.
@@ -19,14 +19,16 @@ MdClip does not create, edit, move, rename, or delete your Markdown files.
 
 ## Commands
 
-| Command              | Purpose                                                   |
-| -------------------- | --------------------------------------------------------- |
-| Markdown Source 1    | Browse Markdown files from Markdown Source 1              |
-| Markdown Source 2    | Browse Markdown files from Markdown Source 2              |
-| Markdown Source 3    | Browse Markdown files from Markdown Source 3              |
-| All Markdown Sources | Search Markdown files across all enabled Markdown Sources |
+| Command              | Purpose                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| Markdown Source 1    | Find Markdown files by file name or relative path in Markdown Source 1             |
+| Markdown Source 2    | Find Markdown files by file name or relative path in Markdown Source 2             |
+| Markdown Source 3    | Find Markdown files by file name or relative path in Markdown Source 3             |
+| All Markdown Sources | Find files by file name, relative path, or Markdown Source name across all sources |
 
 Use individual Markdown Source commands when you know which folder contains the file. Use All Markdown Sources when you want to search every enabled source at once.
+
+Search matches file names and paths relative to their Markdown Source folders. `All Markdown Sources` also matches Markdown Source names. MdClip does not search inside Markdown file contents.
 
 ## Preferences
 

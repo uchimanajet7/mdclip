@@ -119,6 +119,15 @@ symbolic link は辿りません。
 - subtitle: Markdown Source Folder からの relative parent path がある場合だけ表示
 - accessories: preview 非表示時に updated time と file size を表示
 
+一覧検索には Raycast List の標準 filtering を使います。各 item の検索 field は次のとおりです。
+
+- title: file name
+- keywords: Markdown Source Folder からの relative path、relative parent path の各 segment、Markdown Source の表示名
+
+個別の Markdown Source command では file name または relative path から file を探します。All Markdown Sources では、これらに加えて Markdown Source の表示名からも file を探します。
+
+Markdown file content は検索対象にしません。一覧検索のために content を読み込まず、選択中 file の preview または copy action が必要とする場合だけ読み込みます。
+
 preview 表示中は detail pane に情報を集約し、一覧側の過密表示を避けます。
 
 All Markdown Sources では、Markdown Source ごとの section を維持します。読み込めない source がある場合は、読み込める source の files を表示し、失敗 source を `Could Not Load` section と Toast で通知します。
