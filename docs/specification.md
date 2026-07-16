@@ -153,27 +153,32 @@ preview 表示中は、選択中 file の冒頭を Raycast detail pane に表示
 
 preview は `Preview Line Count` と `Preview Max Characters` の小さい方の制限に従って切り詰めます。設定値が正の整数として読めない場合、または `1` 未満の場合は default を使います。上限を超える場合は上限値を使います。
 
+制限によって表示されない content が実際に残る場合だけ、preview の末尾に `Preview truncated at the configured line or character limit. Open the file to view the full content.` と表示します。file 全体が制限内に収まる場合、制限位置で file が終了する場合、または empty file の場合は表示しません。
+
 preview visibility は Raycast Cache に `mdclip.preview.enabled` として保存します。旧 key の migration は行いません。
 
 ## 11. Actions
 
 選択した Markdown file に対して次の actions を提供します。
 
-| Action                     | icon               | 説明                                           |
-| -------------------------- | ------------------ | ---------------------------------------------- |
-| Copy Raw Content           | `Icon.Clipboard`   | file content を変更せずに clipboard へコピー   |
-| Copy Expanded Content      | `Icon.Replace`     | 対応 placeholder を置換して clipboard へコピー |
-| Show Preview               | `Icon.Eye`         | preview pane を表示                            |
-| Hide Preview               | `Icon.EyeDisabled` | preview pane を非表示                          |
-| Open in Editor             | `Icon.Pencil`      | configured editor で file を開く               |
-| Open                       | `Icon.Document`    | default app で file を開く                     |
-| Open with...               | Raycast default    | compatible app で file を開く                  |
-| Show in Finder             | Raycast default    | Finder で file を表示                          |
-| Open Extension Preferences | `Icon.Gear`        | 設定が必要な状態で preferences を開く          |
+| Action                      | icon               | 説明                                           |
+| --------------------------- | ------------------ | ---------------------------------------------- |
+| Copy Raw Content            | `Icon.Clipboard`   | file content を変更せずに clipboard へコピー   |
+| Copy Expanded Content       | `Icon.Replace`     | 対応 placeholder を置換して clipboard へコピー |
+| Show Preview                | `Icon.Eye`         | preview pane を表示                            |
+| Hide Preview                | `Icon.EyeDisabled` | preview pane を非表示                          |
+| Open in Editor              | `Icon.Pencil`      | configured editor で file を開く               |
+| Open                        | `Icon.Document`    | default app で file を開く                     |
+| Open with...                | Raycast default    | compatible app で file を開く                  |
+| Show in Finder              | Raycast default    | Finder で file を表示                          |
+| Open Markdown Source Folder | `Icon.Folder`      | file がない個別 source の folder を開く        |
+| Open Extension Preferences  | `Icon.Gear`        | 設定が必要な状態で preferences を開く          |
 
 `Copy Raw Content` を primary action とします。
 
 `Open in Editor` と `Open` は同時に表示しません。Editor preference が設定済みの場合は `Open in Editor`、未設定の場合は `Open` を表示します。
+
+設定済み source に Markdown files がない場合、個別 command は `Open Markdown Source Folder` を primary action とします。All Markdown Sources は source ごとに `Open <Source Name> Folder` を表示します。folder の設定先を変更する場合に備えて、`Open Extension Preferences` も secondary action として表示します。source disabled、source folder unset、または configured path が directory ではない場合は folder を開く action を表示せず、`Open Extension Preferences` を復旧経路とします。
 
 ## 12. Dynamic Placeholders
 
@@ -205,7 +210,7 @@ MdClip の placeholder 展開は、上の表にある対応 placeholder につ�
 | source disabled                              | 設定確認画面と `Open Extension Preferences`                                        |
 | source folder unset                          | 設定確認画面と `Open Extension Preferences`                                        |
 | configured path is not a directory           | 読み込み失敗画面と `Open Extension Preferences`                                    |
-| no Markdown files                            | empty state と `Open Extension Preferences`                                        |
+| no Markdown files                            | empty state、source folder を開く primary action、`Open Extension Preferences`     |
 | partial load failure in All Markdown Sources | 読み込める files を表示し、失敗 source を `Could Not Load` section と Toast で表示 |
 | copy failure                                 | failure Toast                                                                      |
 

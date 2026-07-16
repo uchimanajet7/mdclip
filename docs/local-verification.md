@@ -140,7 +140,9 @@ npm run dev
 - 横断検索で一部 source の読み込み失敗と成功分の Markdown files を分けて返せること
 - 検索 field が file name を title、relative path とその directory segment および Markdown Source 表示名を keywords として返すこと
 - 検索 keywords に absolute path と Markdown file content が含まれないこと
-- preview が指定行数と最大文字数に従って冒頭 preview を返せること
+- preview が指定行数と最大文字数に従って冒頭 content と省略有無を返せること
+- 行数または文字数の制限より後ろに content がある場合だけ preview を省略扱いにし、制限位置で終了する file、short file、empty file を省略扱いにしないこと
+- CRLF を含む file でも preview content と省略有無を正しく判定できること
 - `{date}`、`{time}`、`{datetime}`、`{day}`、`{timezone}`、`{now}`、`{uuid}`、`{clipboard}` を置換できること
 - 複数の `{uuid}` を出現箇所ごとに別々の UUID へ置換できること
 - `{clipboard}` を含まない Markdown 本文では clipboard を読み取らないこと
@@ -193,6 +195,10 @@ Raycast アプリ上では、以下を人間が操作して確認します。
 - Raw content copy が動作すること
 - Expanded content copy で Dynamic Placeholders が展開されること
 - Preview と editor 起動が期待通りに動くこと
+- 設定済みの empty Markdown Source では個別 command からその folder を開けること
+- すべての設定済み source が empty の場合、All Markdown Sources から source ごとの folder を区別して開けること
+- configured path の読み込み失敗時は folder を開く action ではなく `Open Extension Preferences` が表示されること
+- 実際に省略された preview だけに省略案内が表示され、short file と empty file には表示されないこと
 - 無効な source、未設定 folder、読み込み失敗時の状態が理解できること
 
 Current MdClip UI evidence を作成する場合は、[Screenshot and Media Procedure](screenshot-media.md) を使います。これは Raycast GUI/manual work と manual visual checks を含むため、通常の `npm run lint` には含めません。

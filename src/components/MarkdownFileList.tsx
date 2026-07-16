@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ConfiguredMarkdownSource, MarkdownFile, MarkdownSourceLoadFailure } from "../types";
 import { copyMarkdownFile } from "../services/clipboard";
 import { getMarkdownFileSearchFields, listMarkdownFilesFromMarkdownSources } from "../services/markdownFiles";
-import { readMarkdownPreview } from "../services/preview";
+import { readMarkdownPreview, type MarkdownPreview } from "../services/preview";
 
 type Props = {
   markdownSources: ConfiguredMarkdownSource[];
@@ -44,6 +44,8 @@ const DEFAULT_SORT_MODE: SortMode = "updated-desc";
 const MAX_PREVIEW_LINE_COUNT = 100;
 const MAX_PREVIEW_CHARACTERS = 20000;
 const PREVIEW_ENABLED_CACHE_KEY = "mdclip.preview.enabled";
+const PREVIEW_TRUNCATION_NOTICE =
+  "Preview truncated at the configured line or character limit. Open the file to view the full content.";
 const previewVisibilityCache = new Cache();
 
 export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyTitle }: Props) {
@@ -157,12 +159,12 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
       ) : fileCount === 0 && failures.length === 0 && !state.isLoading ? (
         <List.EmptyView
           title={emptyTitle}
-          description="No .md files were found in the enabled Markdown Source folders."
-          actions={
-            <ActionPanel>
-              <Action icon={Icon.Gear} title="Open Extension Preferences" onAction={openExtensionPreferences} />
-            </ActionPanel>
+          description={
+            markdownSources.length === 1
+              ? "Add a .md file to this Markdown Source folder."
+              : "Add a .md file to an enabled Markdown Source folder."
           }
+          actions={<MarkdownSourceEmptyActions markdownSources={markdownSources} />}
         />
       ) : markdownSources.length > 1 ? (
         <>
@@ -203,6 +205,24 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
         )
       )}
     </List>
+  );
+}
+
+function MarkdownSourceEmptyActions({ markdownSources }: { markdownSources: ConfiguredMarkdownSource[] }) {
+  const isSingleMarkdownSource = markdownSources.length === 1;
+
+  return (
+    <ActionPanel>
+      {markdownSources.map((markdownSource) => (
+        <Action.Open
+          key={markdownSource.id}
+          icon={Icon.Folder}
+          title={isSingleMarkdownSource ? "Open Markdown Source Folder" : `Open ${markdownSource.displayName} Folder`}
+          target={markdownSource.directory}
+        />
+      ))}
+      <Action icon={Icon.Gear} title="Open Extension Preferences" onAction={openExtensionPreferences} />
+    </ActionPanel>
   );
 }
 
@@ -454,12 +474,17 @@ function readInitialPreviewVisibility(): boolean {
   return DEFAULT_PREVIEW_ENABLED;
 }
 
-function formatPreviewMarkdown(file: MarkdownFile, preview: string): string {
-  const previewContent = preview.trimEnd() || "(Empty file)";
+function formatPreviewMarkdown(file: MarkdownFile, preview: MarkdownPreview): string {
+  const previewContent = preview.content.trimEnd() || "(Empty file)";
   const indentedPreview = previewContent
     .split("\n")
     .map((line) => `    ${line}`)
     .join("\n");
+  const sections = [`# ${file.name}`, "", indentedPreview];
 
-  return [`# ${file.name}`, "", indentedPreview].join("\n");
+  if (preview.isTruncated) {
+    sections.push("", `> ${PREVIEW_TRUNCATION_NOTICE}`);
+  }
+
+  return sections.join("\n");
 }

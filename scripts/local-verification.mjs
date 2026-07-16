@@ -180,8 +180,44 @@ async function verifyPreview() {
   const previewFilePath = path.join(fixtureRoot, "preview.md");
   await writeFile(previewFilePath, ["line1", "line2", "line3", "line4"].join("\n"));
 
-  assert.equal(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), "line1\nline2");
-  assert.equal(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 8 }), "line1\nli");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), {
+    content: "line1\nline2",
+    isTruncated: true,
+  });
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 8 }), {
+    content: "line1\nli",
+    isTruncated: true,
+  });
+
+  await writeFile(previewFilePath, "line1\nline2");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), {
+    content: "line1\nline2",
+    isTruncated: false,
+  });
+
+  await writeFile(previewFilePath, "12345678");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 8 }), {
+    content: "12345678",
+    isTruncated: false,
+  });
+
+  await writeFile(previewFilePath, "");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1000 }), {
+    content: "",
+    isTruncated: false,
+  });
+
+  await writeFile(previewFilePath, "line1\r\nline2\r\nline3");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), {
+    content: "line1\nline2",
+    isTruncated: true,
+  });
+
+  await writeFile(previewFilePath, "line1\r\nline2");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), {
+    content: "line1\nline2",
+    isTruncated: false,
+  });
 }
 
 async function verifyDynamicPlaceholdersExpansion() {
