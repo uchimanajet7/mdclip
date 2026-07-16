@@ -26,7 +26,7 @@ npm -v
 
 この手順では、現在の MdClip の依存関係に合わせて Node.js `22.22.2` 以上が使える状態を前提にします。リポジトリの `.node-version` には、検証済みの最新 Node.js LTS バージョンを記録しています。Node.js が未導入、またはバージョンが古い場合は、[Node.js 公式ダウンロードページ](https://nodejs.org/en/download) から LTS バージョンをインストールします。
 
-npm は、`package.json` の `packageManager` に記録された検証済みのバージョンを使います。Node.js に同梱された npm がそのバージョンと異なる場合があるため、依存関係をインストールする前にプロジェクトのセットアップスクリプトで揃えます。
+MdClip のセットアップコマンドは、このリリースで検証された npm バージョンを選択します。現在の npm バージョンが異なる場合、このコマンドは、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更します。
 
 Git は必須ではありません。通常利用では、最新の GitHub Release にある `Source code (zip)` を利用できます。
 
@@ -56,7 +56,7 @@ node scripts/setup-npm.mjs
 npm ci
 ```
 
-`node scripts/setup-npm.mjs` は `package.json` の `packageManager` を読み、選択された npm をグローバル npm として有効にして、実際のバージョンが一致することを確認します。現在の npm と異なる場合は、選択中の Node.js 環境に属するグローバル npm を更新します。初期設定中の古い npm はソースフォルダの外で実行するため、ソースフォルダの `devEngines` が古い npm 自身の更新を先に拒否することはありません。`npm ci` は、選択された npm を使って `package-lock.json` に記録された依存関係を `node_modules` にインストールします。
+`node scripts/setup-npm.mjs` は、この MdClip リリースで検証された npm バージョンを選択します。現在の npm バージョンが異なる場合、このコマンドは、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更します。`npm ci` は、展開したソースフォルダに MdClip の依存関係をインストールします。
 
 完了確認:
 

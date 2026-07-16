@@ -26,7 +26,7 @@ npm -v
 
 The current MdClip dependencies require Node.js `22.22.2` or later. The repository's `.node-version` records the latest verified Node.js LTS version. If Node.js is not installed or the version is too old, install an LTS version from the [official Node.js download page](https://nodejs.org/en/download).
 
-Use the verified npm version recorded in the `packageManager` field of `package.json`. Because the npm bundled with Node.js may be a different version, align it with the project setup script before installing dependencies.
+MdClip's setup command selects the npm version tested with this release. If your current npm version is different, the command changes the global npm version used by your currently selected Node.js installation.
 
 Git is not required. For normal use, you can use `Source code (zip)` from the latest GitHub Release.
 
@@ -56,7 +56,7 @@ node scripts/setup-npm.mjs
 npm ci
 ```
 
-`node scripts/setup-npm.mjs` reads the `packageManager` field in `package.json`, activates the selected npm version as the global npm, and confirms that the actual version matches. When the current npm version differs, it updates the global npm that belongs to the selected Node.js installation. The older npm used during bootstrap runs outside the source folder, so the source folder's `devEngines` does not reject that npm before it can update itself. `npm ci` then uses the selected npm to install the dependencies recorded in `package-lock.json` into `node_modules`.
+`node scripts/setup-npm.mjs` selects the npm version tested with this MdClip release. If your current npm version is different, the command changes the global npm version used by your currently selected Node.js installation. `npm ci` installs MdClip's dependencies in the extracted source folder.
 
 Completion checks:
 

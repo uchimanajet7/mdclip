@@ -29,11 +29,9 @@ npm ci
 npm run dev
 ```
 
-The setup script activates the exact npm version selected in `package.json`. When the active npm differs, it updates the global npm belonging to the currently selected Node.js installation. The repository's `.node-version` records the tested Node.js LTS version.
+`node scripts/setup-npm.mjs` may change the global npm version used by your currently selected Node.js installation. See [Getting Started](docs/getting-started.md) for the complete setup, update, removal, and side-effect details.
 
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
-
-For the full setup, update, and removal steps, see [Getting Started](docs/getting-started.md).
 
 ## Commands
 
@@ -46,7 +44,7 @@ For the full setup, update, and removal steps, see [Getting Started](docs/gettin
 
 Use individual Markdown Source commands when you know which folder contains the file. Use All Markdown Sources when you want to search every enabled source at once.
 
-Raycast Root Search may show these commands in a different order from this table or from the `package.json` command array. MdClip declares the commands as Markdown Source 1, 2, 3, then All Markdown Sources, but Raycast ranks Root Search results with its own ranking data. If a command appears too high or too low in Root Search, use Raycast's Reset Ranking action. See Raycast's [Search Bar manual](https://manual.raycast.com/search-bar) and [Manifest command properties](https://developers.raycast.com/information/manifest).
+Raycast Root Search learns from your usage, so command order can change. If the order feels wrong, select the command, open the Action Panel with `⌘ K`, and run `Reset Ranking`. See the [Raycast Search Bar manual](https://manual.raycast.com/search-bar).
 
 ## Preferences
 
@@ -134,6 +132,12 @@ MdClip reads Markdown files only from folders you configure as enabled Markdown 
 Markdown contents are sent to the clipboard only when you run a copy action. The current clipboard text is read only when `Copy Expanded Content` processes a Markdown file containing `{clipboard}`.
 
 MdClip does not make network requests during normal extension use.
+
+## Help
+
+For setup, update, and removal instructions, see [Getting Started](docs/getting-started.md). If an MdClip problem remains, check the [existing issues](https://github.com/uchimanajet7/mdclip/issues). If it has not been reported, sign in to GitHub and open a new issue.
+
+Include the reproduction steps, the actual and expected results, and the MdClip, Raycast, and macOS versions. Do not include private Markdown content, clipboard content, or other sensitive data.
 
 ## Development And Maintenance
 

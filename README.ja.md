@@ -29,11 +29,9 @@ npm ci
 npm run dev
 ```
 
-セットアップスクリプトは、`package.json` で選択した正確な npm バージョンを有効にします。現在の npm と異なる場合は、選択中の Node.js 環境に属するグローバル npm を更新します。リポジトリの `.node-version` には、検証対象の Node.js LTS バージョンを記録しています。
+`node scripts/setup-npm.mjs` は、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更する場合があります。導入、更新、削除、副作用の詳細は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
 `npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source Folder を設定します。
-
-詳しい導入、更新、削除手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
 ## コマンド
 
@@ -46,7 +44,7 @@ npm run dev
 
 対象フォルダが決まっている場合は個別の Markdown Source コマンドを使い、場所が曖昧な場合は All Markdown Sources を使います。
 
-Raycast の Root Search では、この表や `package.json` のコマンド配列と異なる順序でコマンドが表示されることがあります。MdClip のマニフェストでは Markdown Source 1、2、3、All Markdown Sources の順で定義していますが、Root Search の結果は Raycast 側のランキングデータによって並び替わります。表示順が気になる場合は、Raycast の Reset Ranking アクションを使ってください。参照: Raycast の [Search Bar manual](https://manual.raycast.com/search-bar) と [Manifest command properties](https://developers.raycast.com/information/manifest)。
+Raycast Root Search のコマンド順は利用状況に応じて変わります。順序が意図どおりでない場合は、対象コマンドを選択し、`⌘ K` で Action Panel を開いて `Reset Ranking` を実行してください。詳しくは [Raycast Search Bar manual](https://manual.raycast.com/search-bar) を参照してください。
 
 ## 設定
 
@@ -136,6 +134,12 @@ MdClip は、利用者が有効化して設定した Markdown Source Folder 配�
 Markdown 本文は、利用者がコピーアクションを実行した場合だけクリップボードに渡します。現在のクリップボードのテキストは、`Copy Expanded Content` が `{clipboard}` を含む Markdown ファイルを処理する場合だけ読み取ります。
 
 通常利用中に MdClip 自体がネットワークリクエストを行うことはありません。
+
+## ヘルプ
+
+導入、更新、削除については [使い始める手順](docs/getting-started.ja.md) を参照してください。MdClip の問題が解決しない場合は、[既存の Issues](https://github.com/uchimanajet7/mdclip/issues) を確認してください。未報告であれば、GitHub にサインインして新しい Issue を作成してください。
+
+再現手順、実際の結果、期待する結果、MdClip、Raycast、macOS のバージョンを記載してください。非公開の Markdown 本文、クリップボードの内容、その他の機密情報は記載しないでください。
 
 ## 開発とメンテナンス
 
