@@ -78,16 +78,18 @@ MdClip Preferences
     └── Preview Max Characters
 ```
 
-| Preference               | Type      | Required | Default | 説明                                                                                                                                      |
-| ------------------------ | --------- | -------: | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Enable Markdown Source N | checkbox  |       no | `true`  | 対象 source を個別 command と All Markdown Sources に含める                                                                               |
-| Markdown Source N Folder | directory |       no | none    | 対象 source が読む Markdown folder                                                                                                        |
-| Markdown Source N Name   | textfield |       no | none    | MdClip 内の一覧、section、metadata で使う source 表示名。Raycast Root Search の command title は変更しない。空の場合は folder name を使う |
-| Editor                   | appPicker |       no | none    | Open in Editor で使う editor                                                                                                              |
-| Preview Line Count       | textfield |       no | `10`    | preview に表示する冒頭行数。上限は `100`                                                                                                  |
-| Preview Max Characters   | textfield |       no | `4000`  | preview の最大文字数。上限は `20000`                                                                                                      |
+| Preference               | Type      | Raycast required | Default | 説明                                                                                                                                      |
+| ------------------------ | --------- | ---------------: | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Enable Markdown Source N | checkbox  |               no | `true`  | folder 設定済みの対象 source を個別 command と All Markdown Sources に含める                                                              |
+| Markdown Source N Folder | directory |               no | none    | 対象 source を使うために必要な Markdown folder                                                                                            |
+| Markdown Source N Name   | textfield |               no | none    | MdClip 内の一覧、section、metadata で使う source 表示名。Raycast Root Search の command title は変更しない。空の場合は folder name を使う |
+| Editor                   | appPicker |               no | none    | Open in Editor で使う editor                                                                                                              |
+| Preview Line Count       | textfield |               no | `10`    | preview に表示する冒頭行数。上限は `100`                                                                                                  |
+| Preview Max Characters   | textfield |               no | `4000`  | preview の最大文字数。上限は `20000`                                                                                                      |
 
-Markdown Source Folder は optional です。source を使うには、その source が enabled で folder が設定されている必要があります。
+`Raycast required` は、値が未入力のときに Raycast が command を開く前に設定を要求するかを表します。README と Store README の `When needed` / `必要になる条件` は、利用者が MdClip の機能を使うための条件を表します。この 2 つを同じ「必須 / 任意」として扱いません。
+
+3 つの Markdown Source Folder は、どれも `Raycast required: no` です。MdClip を利用するには設定済みの source が少なくとも 1 つ必要ですが、3 つすべての folder は必要ありません。使用する source は enabled にして folder を設定します。使用しない source には folder を設定する必要はありません。
 
 ## 7. Markdown file listing
 

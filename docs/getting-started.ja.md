@@ -79,7 +79,7 @@ npm run dev
 
 Raycast の `Settings` または `Preferences` で `Extensions` を開き、MdClip を選択します。
 
-最初は次だけで始められます。
+最初は Markdown Source 1 だけで始められます。MdClip を利用するには、設定済みの Markdown Source が少なくとも 1 つ必要です。追加の Markdown Source を使う場合は、その Markdown Source にもフォルダを設定してください。使わない Markdown Source にはフォルダを設定する必要はありません。
 
 ```text
 Enable Markdown Source 1:

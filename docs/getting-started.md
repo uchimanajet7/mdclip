@@ -79,7 +79,7 @@ When `ready - built extension successfully` appears, you can open the MdClip com
 
 Open `Extensions` in Raycast Settings or Preferences, then select MdClip.
 
-You can start with only the following settings.
+You can start with Markdown Source 1. MdClip needs at least one configured source. Set a folder for each additional source you use; unused sources do not need a folder.
 
 ```text
 Enable Markdown Source 1:

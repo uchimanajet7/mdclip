@@ -64,7 +64,7 @@
       "name": "folder1Enabled",
       "title": "Markdown Source 1",
       "label": "Enable Markdown Source 1",
-      "description": "Include Markdown Source 1 in its command and All Markdown Sources.",
+      "description": "Allow Markdown Source 1 to load files in its command and All Markdown Sources after its folder is set.",
       "type": "checkbox",
       "required": false,
       "default": true
@@ -72,7 +72,7 @@
     {
       "name": "folder1Directory",
       "title": "Markdown Source 1 Folder",
-      "description": "Folder that Markdown Source 1 reads Markdown files from.",
+      "description": "Required to use Markdown Source 1. Select the folder containing its Markdown files.",
       "type": "directory",
       "required": false
     },
@@ -87,7 +87,7 @@
       "name": "folder2Enabled",
       "title": "Markdown Source 2",
       "label": "Enable Markdown Source 2",
-      "description": "Include Markdown Source 2 in its command and All Markdown Sources.",
+      "description": "Allow Markdown Source 2 to load files in its command and All Markdown Sources after its folder is set.",
       "type": "checkbox",
       "required": false,
       "default": true
@@ -95,7 +95,7 @@
     {
       "name": "folder2Directory",
       "title": "Markdown Source 2 Folder",
-      "description": "Folder that Markdown Source 2 reads Markdown files from.",
+      "description": "Required to use Markdown Source 2. Select the folder containing its Markdown files.",
       "type": "directory",
       "required": false
     },
@@ -110,7 +110,7 @@
       "name": "folder3Enabled",
       "title": "Markdown Source 3",
       "label": "Enable Markdown Source 3",
-      "description": "Include Markdown Source 3 in its command and All Markdown Sources.",
+      "description": "Allow Markdown Source 3 to load files in its command and All Markdown Sources after its folder is set.",
       "type": "checkbox",
       "required": false,
       "default": true
@@ -118,7 +118,7 @@
     {
       "name": "folder3Directory",
       "title": "Markdown Source 3 Folder",
-      "description": "Folder that Markdown Source 3 reads Markdown files from.",
+      "description": "Required to use Markdown Source 3. Select the folder containing its Markdown files.",
       "type": "directory",
       "required": false
     },
