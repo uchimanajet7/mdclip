@@ -32,7 +32,7 @@ Git は必須ではありません。通常利用では、最新の GitHub Relea
 
 ## 3. ソースコードを取得する
 
-GitHub のウェブ画面と Finder だけで取得できます。
+GitHub のリリースページからダウンロードし、Finder で展開できます。
 
 1. ウェブブラウザで `https://github.com/uchimanajet7/mdclip/releases/latest` を開く。
 2. 表示された最新リリースの `Source code (zip)` をダウンロードする。
@@ -73,7 +73,7 @@ npm run dev
 
 `ready - built extension successfully` が表示されたら、Raycast から MdClip のコマンドを開けます。
 
-`npm run dev` は MdClip を Raycast に読み込み、開発モードで起動します。初めて読み込んだ後は、ターミナルで `Control + C` を押して `npm run dev` を止めても MdClip は Raycast に残ります。変更を反映したい場合や、開発モードのログやホットリロードが必要な場合は、同じフォルダで `npm run dev` を再実行します。
+`npm run dev` は MdClip を Raycast に読み込み、開発モードで起動します。初めて読み込んだ後は、ターミナルで `Control + C` を押して `npm run dev` を止めても MdClip は Raycast に残ります。変更を反映したい場合や、開発モードのログや変更の自動反映が必要な場合は、同じフォルダで `npm run dev` を再実行します。
 
 ## 6. Markdown Source を設定する
 
@@ -106,7 +106,7 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 
 ## 8. 更新する
 
-1. GitHub のウェブ画面で `https://github.com/uchimanajet7/mdclip/releases/latest` を開く。
+1. ウェブブラウザで `https://github.com/uchimanajet7/mdclip/releases/latest` を開く。
 2. 表示された最新リリースの `Source code (zip)` をダウンロードする。
 3. Finder で展開する。
 4. 必要なら古い `mdclip` フォルダと入れ替える。
@@ -125,13 +125,13 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 
 削除対象は、Raycast に読み込んだ MdClip 拡張機能、取得したソースコード、必要に応じて追加したツールです。
 
-### 9.1 Raycast から外す
+### 9.1 Raycast から MdClip を削除する
 
 1. Raycast で `Manage Extensions` を開く。
 2. MdClip を選択する。
 3. アンインストールまたは削除のアクションを実行する。
 
-Raycast 上で外せない場合は、Raycast を終了してから Finder で次のフォルダを確認します。
+Raycast 上で削除できない場合は、Raycast を終了してから Finder で次のフォルダを確認します。
 
 ```text
 ~/.config/raycast/extensions/mdclip
@@ -145,7 +145,7 @@ Finder で展開した `mdclip` フォルダを削除します。
 
 ソースコードのフォルダを削除すると、`npm ci` で作成された `node_modules` も一緒に削除されます。
 
-## 10. 戻せたことを確認する
+## 10. MdClip を削除できたことを確認する
 
 導入前の状態に戻す場合は、次を確認します。
 

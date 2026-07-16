@@ -313,11 +313,11 @@ MdClip の public source-use documentation は英語をprimary languageとし、
 - repository内の相互linkとpaired documentへの参照にはrelative pathを使う。
 - English reader向けsurfaceは英語のGetting Started、日本語reader向けsurfaceは日本語のGetting Startedを参照する。
 
-Getting Started の両言語は、必要環境、source code取得、dependency setup、Raycast起動、Markdown Source設定、動作確認、update、removal、completion checksの同じuser taskを扱います。見出し文言、段落数、行数、逐語訳の一致は要求せず、それぞれの言語で自然かつ正確な説明を使います。
+Getting Started の両言語は、必要環境、source code取得、dependency setup、Raycast起動、Markdown Source設定、動作確認、update、removal、completion checksの同じuser taskを扱います。見出し文言、段落数、行数、逐語訳の一致は要求せず、それぞれの言語で自然かつ正確な説明を使います。日本語の利用者向け文書では一般説明を自然な日本語で記述し、UIラベル、コマンド、パス、ファイル名、製品名、コード識別子は、利用者が実際の画面やターミナルと照合できる表記を使います。
 
 `scripts/check-documentation-language-contract.mjs` は、宣言済みfamilyの存在、canonical path、H1直後の相互language link、paired documentを参照する全Markdown linkの登録とtargetを検査します。正常、欠落、旧pathによる迂回、未登録参照、部分migration、recoveryは `scripts/check-documentation-language-contract.test.mjs` で検証し、`npm run check:docs`を`npm run lint`に含めます。
 
-翻訳内容の意味は自動生成やclassifierで判定しません。利用者向けtaskを変更する場合は両言語を同じ変更単位で更新し、maintainerがtask coverageをmanual reviewします。
+翻訳内容の意味や日本語の自然さは自動生成やclassifierで判定しません。利用者向けtaskを変更する場合は両言語を同じ変更単位で更新し、maintainerがtask coverage、日本語の一般説明、実際のUIラベルやコマンドとの一致をmanual reviewします。
 
 `docs/local-verification.md`、`docs/release-management.md`、`docs/specification.md`、`docs/screenshot-media.md`は、英日対応のpublic user document familyではなく、用途と言語が固定されたspecialized maintainer documentです。これらに対応文書の新規作成やlanguage suffixを要求しません。ただし、paired documentへの参照は上記contractに従います。
 

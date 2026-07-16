@@ -10,7 +10,7 @@ MdClip は、ローカルの Markdown ファイルを Raycast から探し、フ
 
 ## 何ができるか
 
-MdClip は、Markdown ファイルそのものを情報の正本として扱います。
+MdClip は、再利用する本文を Markdown ファイルで管理し、その内容をそのまま使います。
 
 - 再利用したい本文を通常の `.md` ファイルとして管理する
 - それらのファイルを最大 3 つの Markdown Source に分ける
@@ -29,9 +29,9 @@ npm ci
 npm run dev
 ```
 
-`node scripts/setup-npm.mjs` は、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更する場合があります。導入、更新、削除、副作用の詳細は [使い始める手順](docs/getting-started.ja.md) を参照してください。
+`node scripts/setup-npm.mjs` は、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更する場合があります。導入、更新、削除、利用環境への影響の詳細は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
-`npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source Folder を設定します。
+`npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source にフォルダを設定します。
 
 ## コマンド
 
@@ -48,7 +48,7 @@ Raycast Root Search のコマンド順は利用状況に応じて変わります
 
 ## 設定
 
-利用前に、有効な Markdown Source Folder を少なくとも 1 つ設定してください。Raycast の設定では各フォルダは個別に任意なので、使わない Markdown Source は空のままで構いません。
+利用前に、使用する Markdown Source のフォルダを少なくとも 1 つ設定してください。Raycast の設定では各フォルダは個別に任意なので、使わない Markdown Source は空のままで構いません。
 
 ```text
 MdClip Preferences
@@ -129,7 +129,7 @@ MdClip は、拡張子 `.md` のファイルを大文字小文字を区別せず
 
 ## データの扱い
 
-MdClip は、利用者が有効化して設定した Markdown Source Folder 配下の Markdown ファイルだけを読み取ります。
+MdClip は、利用者が有効化した Markdown Source に設定したフォルダ内の Markdown ファイルだけを読み取ります。
 
 Markdown 本文は、利用者がコピーアクションを実行した場合だけクリップボードに渡します。現在のクリップボードのテキストは、`Copy Expanded Content` が `{clipboard}` を含む Markdown ファイルを処理する場合だけ読み取ります。
 

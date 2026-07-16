@@ -125,13 +125,13 @@ Store publish state は GitHub Release 作成 manifest には含めません。S
 
 GitHub Release を作成する場合は、次を行います。
 
-導入、更新、削除、完了確認に関する利用者向け手順を変更した場合は、英語の `docs/getting-started.md` と日本語の `docs/getting-started.ja.md` を同じ変更単位で確認します。見出し文言や段落数の一致ではなく、両言語で同じ利用者taskを完了できることをmanual reviewします。`npm run check:docs` は文書pair、相互言語link、canonical path、登録済み参照を検査しますが、翻訳内容の意味は判定しません。
+導入、更新、削除、完了確認に関する利用者向け手順を変更した場合は、英語の `docs/getting-started.md` と日本語の `docs/getting-started.ja.md` を同じ変更単位で確認します。見出し文言や段落数の一致ではなく、両言語で同じ利用者taskを完了できること、日本語の一般説明が自然であること、UIラベル、コマンド、パス、ファイル名、製品名、コード識別子が実際の画面やターミナルと照合できる表記であることをmanual reviewします。`npm run check:docs` は文書pair、相互言語link、canonical path、登録済み参照を検査しますが、翻訳内容の意味や日本語の自然さは判定しません。
 
 1. 最後に作成済みの GitHub Release tag を確認する。
 2. 今回作成する GitHub Release tag を決める。
 3. [GitHub Release 用 changelog](#5-github-release-用-changelog) の固定書式で `.github/release-changelog/vX.Y.Z.md` を作成または更新する。
 4. `.github/release-manifest.json` を更新する。
-5. 利用者向け導入、更新、削除手順を変更した場合は、英語版と日本語版のtask coverageをmanual reviewする。
+5. 利用者向け導入、更新、削除手順を変更した場合は、英語版と日本語版のtask coverage、日本語の一般説明、実際のUIラベルやコマンドとの一致をmanual reviewする。
 6. `npm run lint` を実行する。
 7. 必要に応じて `npm run lint:raycast` を実行する。
 8. 必要に応じて `npm run build` を実行する。
