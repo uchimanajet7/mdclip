@@ -1,154 +1,156 @@
-# MdClip を使い始める
+# Getting Started with MdClip
 
-## 1. 目的
+English | [日本語](getting-started.ja.md)
 
-この手順では、最新 GitHub Release の `Source code (zip)` を取得し、Mac 上で依存関係を入れて、Raycast development mode から MdClip を使い始めます。
+## 1. Purpose
 
-取得した source archive は release tag に対応する固定のソースです。新しい version を使う場合は、最新 GitHub Release の `Source code (zip)` を取得し直し、projectのnpmをsetupしてから、必要に応じて `npm ci` と `npm run dev` を再実行します。
+This guide explains how to download `Source code (zip)` from the latest GitHub Release, install the dependencies on a Mac, and start using MdClip through Raycast development mode.
 
-## 2. 必要なもの
+The downloaded source archive contains the source fixed to its release tag. To use a newer version, download `Source code (zip)` again from the latest GitHub Release, set up the project's npm version, and rerun `npm ci` and `npm run dev` as needed.
 
-| 必要なもの                                   | 用途                                              |
-| -------------------------------------------- | ------------------------------------------------- |
-| macOS                                        | Raycast と MdClip を実行する                      |
-| Raycast                                      | MdClip を起動する                                 |
-| Node.js と npm                               | 依存関係の install と development mode 起動に使う |
-| 最新 GitHub Release から取得した source code | MdClip 本体                                       |
+## 2. Requirements
 
-Node.js と npm が使える状態か確認します。
+| Requirement                                           | Purpose                                         |
+| ----------------------------------------------------- | ----------------------------------------------- |
+| macOS                                                 | Run Raycast and MdClip                          |
+| Raycast                                               | Open MdClip                                     |
+| Node.js and npm                                       | Install dependencies and start development mode |
+| Source code downloaded from the latest GitHub Release | Provide the MdClip extension source             |
+
+Confirm that Node.js and npm are available.
 
 ```bash
 node -v
 npm -v
 ```
 
-この手順では、現在の MdClip 依存関係に合わせて Node.js `22.22.2` 以上が使える状態を前提にします。repository の `.node-version` は検証済みの最新 Node.js LTS を記録しています。Node.js が未導入、または version が古い場合は [Node.js 公式 download page](https://nodejs.org/en/download) から LTS version を install します。
+The current MdClip dependencies require Node.js `22.22.2` or later. The repository's `.node-version` records the latest verified Node.js LTS version. If Node.js is not installed or the version is too old, install an LTS version from the [official Node.js download page](https://nodejs.org/en/download).
 
-npm は `package.json` の `packageManager` に記録された検証済みversionを使います。Node.js同梱npmがそのversionと異なる場合があるため、次の依存関係install前にprojectのsetup scriptで揃えます。
+Use the verified npm version recorded in the `packageManager` field of `package.json`. Because the npm bundled with Node.js may be a different version, align it with the project setup script before installing dependencies.
 
-Git は必須ではありません。通常利用では、最新 GitHub Release の `Source code (zip)` を利用できます。
+Git is not required. For normal use, you can use `Source code (zip)` from the latest GitHub Release.
 
-## 3. Source code を取得する
+## 3. Download the Source Code
 
-GitHub Web UI と Finder だけで取得できます。
+You can complete the download with the GitHub Web UI and Finder.
 
-1. Web browser で `https://github.com/uchimanajet7/mdclip/releases/latest` を開く。
-2. 表示された latest release の `Source code (zip)` を download する。
-3. Finder で download した ZIP file を開いて展開する。
-4. 展開された `mdclip` folder を、自分で管理しやすい場所へ移動する。
+1. Open `https://github.com/uchimanajet7/mdclip/releases/latest` in a web browser.
+2. Download `Source code (zip)` from the displayed latest release.
+3. Open the downloaded ZIP file in Finder to extract it.
+4. Move the extracted `mdclip` folder to a location you can manage easily.
 
-完了確認:
+Completion checks:
 
-- download した ZIP file が latest release page の `Source code (zip)` である。
-- Finder で `mdclip` folder を開ける。
-- その folder の中に `package.json` がある。
+- The downloaded ZIP file is `Source code (zip)` from the latest release page.
+- You can open the `mdclip` folder in Finder.
+- The folder contains `package.json`.
 
-## 4. 依存関係を入れる
+## 4. Install the Dependencies
 
-Finder で `mdclip` folder を開き、folder を右クリックして `フォルダに新規ターミナル` を選びます。
+Open the `mdclip` folder in Finder, right-click the folder, and select `New Terminal at Folder`.
 
-開いた terminal で次を実行します。
+Run the following commands in the terminal.
 
 ```bash
 node scripts/setup-npm.mjs
 npm ci
 ```
 
-`node scripts/setup-npm.mjs` は `package.json` の `packageManager` を読み、選択されたnpmをglobal npmとして有効化して、実際のversionが一致することを確認します。現在のnpmと異なる場合は、選択中のNode.js installationに属するglobal npmを更新します。bootstrap中の旧npmはsource folder外で実行するため、source folderの`devEngines`が旧npm自身の更新を先に拒否することはありません。`npm ci` は選択されたnpmで `package-lock.json` に記録された依存関係を `node_modules` にinstallします。
+`node scripts/setup-npm.mjs` reads the `packageManager` field in `package.json`, activates the selected npm version as the global npm, and confirms that the actual version matches. When the current npm version differs, it updates the global npm that belongs to the selected Node.js installation. The older npm used during bootstrap runs outside the source folder, so the source folder's `devEngines` does not reject that npm before it can update itself. `npm ci` then uses the selected npm to install the dependencies recorded in `package-lock.json` into `node_modules`.
 
-完了確認:
+Completion checks:
 
-- command が失敗せずに終了する。
-- `mdclip/node_modules` folder が作成される。
+- Both commands finish without errors.
+- The `mdclip/node_modules` folder is created.
 
-## 5. Raycast development mode で起動する
+## 5. Start in Raycast Development Mode
 
-同じ `mdclip` folder の terminal で次を実行します。
+Run the following command in the same `mdclip` folder.
 
 ```bash
 npm run dev
 ```
 
-`ready - built extension successfully` が表示されたら、Raycast から MdClip の commands を開けます。
+When `ready - built extension successfully` appears, you can open the MdClip commands from Raycast.
 
-`npm run dev` は MdClip を Raycast に import し、development mode で起動します。初回 import 後は、terminal で `Control + C` を押して `npm run dev` を止めても MdClip は Raycast に残ります。変更を反映したい場合や development mode の logs / hot reload が必要な場合は、同じ folder で `npm run dev` を再実行します。
+`npm run dev` imports MdClip into Raycast and starts it in development mode. After the first import, MdClip remains available in Raycast even if you press `Control + C` in the terminal to stop `npm run dev`. Run `npm run dev` again from the same folder when you want to apply changes or use development-mode logs and hot reload.
 
-## 6. Markdown Source を設定する
+## 6. Configure a Markdown Source
 
-Raycast の Settings または Preferences で `Extensions` を開き、MdClip を選択します。
+Open `Extensions` in Raycast Settings or Preferences, then select MdClip.
 
-最初は次だけで始められます。
+You can start with only the following settings.
 
 ```text
 Enable Markdown Source 1:
 on
 
 Markdown Source 1 Folder:
-再利用したい Markdown ファイルを含む folder
+folder containing the Markdown files you want to reuse
 ```
 
-`Markdown Source 1 Folder` には、実際に `.md` files を置いている folder を指定します。
+For `Markdown Source 1 Folder`, select the folder that actually contains your `.md` files.
 
-設定後、Raycast で `Markdown Source 1` command を開き、Markdown files が表示されることを確認します。
+After configuring it, open the `Markdown Source 1` command in Raycast and confirm that your Markdown files appear.
 
-## 7. 動作確認する
+## 7. Verify the Behavior
 
-Markdown file を選択し、次を確認します。
+Select a Markdown file and confirm the following behavior.
 
-- `Copy Raw Content` で Markdown file の本文をそのままコピーできる。
-- `Copy Expanded Content` で対応する Dynamic Placeholders を展開してコピーできる。
-- preview pane で Markdown file の冒頭を確認できる。
-- `All Markdown Sources` で有効な source を横断検索できる。
+- `Copy Raw Content` copies the Markdown file contents without changes.
+- `Copy Expanded Content` expands the supported Dynamic Placeholders and copies the result.
+- The preview pane shows the beginning of the Markdown file.
+- `All Markdown Sources` searches across all enabled sources.
 
-Dynamic Placeholders の詳細は [README.ja](../README.ja.md#dynamic-placeholders) を参照してください。
+For details about Dynamic Placeholders, see [README](../README.md#dynamic-placeholders).
 
-## 8. 更新する
+## 8. Update MdClip
 
-1. GitHub Web UI で `https://github.com/uchimanajet7/mdclip/releases/latest` を開く。
-2. 表示された latest release の `Source code (zip)` を download する。
-3. Finder で展開する。
-4. 必要なら古い `mdclip` folder と入れ替える。
-5. 新しい `mdclip` folder で `node scripts/setup-npm.mjs` を実行する。
-6. `npm ci` を実行する。
-7. `npm run dev` を実行する。
+1. Open `https://github.com/uchimanajet7/mdclip/releases/latest` in the GitHub Web UI.
+2. Download `Source code (zip)` from the displayed latest release.
+3. Extract the ZIP file in Finder.
+4. Replace the old `mdclip` folder if needed.
+5. Run `node scripts/setup-npm.mjs` in the new `mdclip` folder.
+6. Run `npm ci`.
+7. Run `npm run dev`.
 
-完了確認:
+Completion checks:
 
-- download した ZIP file が latest release page の `Source code (zip)` である。
-- 新しい `mdclip` folder で選択されたnpm versionが有効になっている。
-- 新しい `mdclip` folder で `npm ci` が失敗せずに終了する。
-- 新しい `mdclip` folder で `npm run dev` を実行し、Raycast から MdClip の commands を開ける。
+- The downloaded ZIP file is `Source code (zip)` from the latest release page.
+- The selected npm version is active in the new `mdclip` folder.
+- `npm ci` finishes without errors in the new `mdclip` folder.
+- After running `npm run dev` in the new `mdclip` folder, you can open the MdClip commands from Raycast.
 
-## 9. 使うのをやめる
+## 9. Stop Using MdClip
 
-削除対象は、Raycast に読み込んだ MdClip extension、取得した source code、必要に応じて追加した tool です。
+Remove the MdClip extension imported into Raycast, the downloaded source code, and any additional tools you installed only if you no longer need them.
 
-### 9.1 Raycast から外す
+### 9.1 Remove MdClip from Raycast
 
-1. Raycast で `Manage Extensions` を開く。
-2. MdClip を選択する。
-3. uninstall または remove の action を実行する。
+1. Open `Manage Extensions` in Raycast.
+2. Select MdClip.
+3. Run the uninstall or remove action.
 
-Raycast 上で外せない場合は、Raycast を終了してから Finder で次の folder を確認します。
+If you cannot remove MdClip from Raycast, quit Raycast and check the following folder in Finder.
 
 ```text
 ~/.config/raycast/extensions/mdclip
 ```
 
-存在する場合は、この `mdclip` folder だけを削除します。`~/.config/raycast/extensions` には他の local extension が入っている場合があります。
+If it exists, delete only this `mdclip` folder. The `~/.config/raycast/extensions` folder may contain other local extensions.
 
-### 9.2 Source code を削除する
+### 9.2 Delete the Source Code
 
-Finder で展開した `mdclip` folder を削除します。
+Delete the extracted `mdclip` folder in Finder.
 
-source code folder を削除すると、`npm ci` で作成された `node_modules` も一緒に削除されます。
+Deleting the source-code folder also removes the `node_modules` folder created by `npm ci`.
 
-## 10. 戻せたことを確認する
+## 10. Confirm Removal
 
-導入前の状態に戻す場合は、次を確認します。
+To confirm that your Mac has returned to its state before MdClip was installed, check the following.
 
-- Raycast で MdClip の command が表示されない。
-- `~/.config/raycast/extensions/mdclip` が存在しない。
-- download して展開した `mdclip` folder が残っていない。
+- The MdClip commands no longer appear in Raycast.
+- `~/.config/raycast/extensions/mdclip` does not exist.
+- The downloaded and extracted `mdclip` folder no longer exists.
 
-Node.js、npm、Raycast を他の用途でも使う場合は、それらの tool 自体は削除せず、MdClip の extension と source code だけを削除してください。
+If you use Node.js, npm, or Raycast for other purposes, keep those tools installed and remove only the MdClip extension and source code.

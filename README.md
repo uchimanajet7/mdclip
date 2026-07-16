@@ -1,5 +1,7 @@
 # MdClip
 
+English | [日本語](README.ja.md)
+
 MdClip is a personal/local Raycast extension for finding local Markdown files and copying their contents from Raycast.
 
 Use MdClip when you keep reusable text in Markdown files and want to search, preview, and copy those files from Raycast without changing the originals. Start with the Get Started section below to run the extension locally.

@@ -295,9 +295,41 @@ npm run dev
 
 manual UI verification では、command names、preferences、list behavior、copy actions、preview、editor actions、error states が MdClip / Markdown Source model と一致することを確認します。current UI evidence と README media の確認は `docs/screenshot-media.md` の `MdClip UI Evidence and README Media Procedure` に従います。
 
-## 18. Release path and Store publication prerequisites
+## 18. Documentation language contract
 
-Active public release unit は GitHub Release です。通常利用者の導入、更新、削除は `docs/getting-started.md` を正とし、latest GitHub Release の `Source code (zip)` を取得します。
+MdClip の public source-use documentation は英語をprimary languageとし、英語と日本語の対応文書を次のfamilyとして管理します。
+
+| Family          | English canonical path    | Japanese sibling path        |
+| --------------- | ------------------------- | ---------------------------- |
+| README          | `README.md`               | `README.ja.md`               |
+| Getting Started | `docs/getting-started.md` | `docs/getting-started.ja.md` |
+
+宣言済みfamilyには次のcontractを適用します。
+
+- 英語のcanonical documentはlanguage suffixを付けない。
+- 日本語のsibling documentはlowercaseの`.ja.md` suffixを使う。日本語のlanguage tagは`ja`であり、country codeの`JP`をlanguage suffixとして使わない。
+- `.en.md`のalias、`.jp.md`のalias、language選択専用page、locale directoryを追加しない。
+- 各documentはH1直後に相互language linkを置く。英語側は`English | [日本語](...)`、日本語側は`[English](...) | 日本語`を使う。
+- repository内の相互linkとpaired documentへの参照にはrelative pathを使う。
+- English reader向けsurfaceは英語のGetting Started、日本語reader向けsurfaceは日本語のGetting Startedを参照する。
+
+Getting Started の両言語は、必要環境、source code取得、dependency setup、Raycast起動、Markdown Source設定、動作確認、update、removal、completion checksの同じuser taskを扱います。見出し文言、段落数、行数、逐語訳の一致は要求せず、それぞれの言語で自然かつ正確な説明を使います。
+
+`scripts/check-documentation-language-contract.mjs` は、宣言済みfamilyの存在、canonical path、H1直後の相互language link、paired documentを参照する全Markdown linkの登録とtargetを検査します。正常、欠落、旧pathによる迂回、未登録参照、部分migration、recoveryは `scripts/check-documentation-language-contract.test.mjs` で検証し、`npm run check:docs`を`npm run lint`に含めます。
+
+翻訳内容の意味は自動生成やclassifierで判定しません。利用者向けtaskを変更する場合は両言語を同じ変更単位で更新し、maintainerがtask coverageをmanual reviewします。
+
+`docs/local-verification.md`、`docs/release-management.md`、`docs/specification.md`、`docs/screenshot-media.md`は、英日対応のpublic user document familyではなく、用途と言語が固定されたspecialized maintainer documentです。これらに対応文書の新規作成やlanguage suffixを要求しません。ただし、paired documentへの参照は上記contractに従います。
+
+Reference:
+
+- W3C language tag guidance: https://www.w3.org/International/articles/language-tags/index.en
+- W3C localized navigation guidance: https://www.w3.org/International/questions/qa-navigation-select
+- GitHub relative link guidance: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes
+
+## 19. Release path and Store publication prerequisites
+
+Active public release unit は GitHub Release です。通常利用者の導入、更新、削除は、英語では `docs/getting-started.md`、日本語では `docs/getting-started.ja.md` を正とし、latest GitHub Release の `Source code (zip)` を取得します。
 
 Release owner / maintainer の GitHub Release 管理は `docs/release-management.md` を正とします。Release manifest は `.github/release-manifest.json`、GitHub Release body は `.github/release-changelog/*.md` を使います。
 
@@ -307,7 +339,7 @@ Store publish を行う前に、product direction、workflow、script、secret�
 
 `raycast-publish/` は Store publication resource set です。Store publish 用の README、Version History、screenshot 手順、背景説明をまとめます。Store publication 前の Store screenshot / metadata procedure は `raycast-publish/screenshots.md` を正とします。root `CHANGELOG.md` を source-use root に復帰する場合は、root surface の意味と README / GitHub Release / Store Version History の整合性を別途判断します。
 
-## 19. Repository structure
+## 20. Repository structure
 
 主要 file structure:
 
@@ -329,6 +361,7 @@ repository-root
 │   ├── assets
 │   │   └── autumnal-peach.png
 │   ├── getting-started.md
+│   ├── getting-started.ja.md
 │   ├── local-verification.md
 │   ├── release-management.md
 │   ├── screenshot-media.md
@@ -346,6 +379,8 @@ repository-root
 │   └── screenshots.md
 ├── scripts
 │   ├── check-dependency-sources.mjs
+│   ├── check-documentation-language-contract.mjs
+│   ├── check-documentation-language-contract.test.mjs
 │   ├── check-toolchain-freshness.mjs
 │   ├── demo-markdown-sources.mjs
 │   ├── format.mjs
@@ -379,15 +414,16 @@ repository-root
 
 主要 documentation roles:
 
-| Path                         | Role                                               |
-| ---------------------------- | -------------------------------------------------- |
-| `README.md`                  | GitHub/source-use English README                   |
-| `README.ja.md`               | GitHub/source-use Japanese README                  |
-| `docs/getting-started.md`    | Normal user onboarding, update, and removal guide  |
-| `docs/local-verification.md` | Development and maintenance verification guide     |
-| `docs/release-management.md` | Release owner / maintainer release operation guide |
-| `docs/screenshot-media.md`   | Current UI evidence and README/GitHub media guide  |
-| `raycast-publish/`           | Store publication resource set                     |
+| Path                         | Role                                                |
+| ---------------------------- | --------------------------------------------------- |
+| `README.md`                  | GitHub/source-use English README                    |
+| `README.ja.md`               | GitHub/source-use Japanese README                   |
+| `docs/getting-started.md`    | English user onboarding, update, and removal guide  |
+| `docs/getting-started.ja.md` | Japanese user onboarding, update, and removal guide |
+| `docs/local-verification.md` | Development and maintenance verification guide      |
+| `docs/release-management.md` | Release owner / maintainer release operation guide  |
+| `docs/screenshot-media.md`   | Current UI evidence and README/GitHub media guide   |
+| `raycast-publish/`           | Store publication resource set                      |
 
 Generated or local-only paths include:
 
@@ -400,7 +436,7 @@ demo/markdown-sources/
 assets/icon.generated.png
 ```
 
-## 20. Media and metadata
+## 21. Media and metadata
 
 Current UI evidence and README media handling is defined in `docs/screenshot-media.md`.
 
