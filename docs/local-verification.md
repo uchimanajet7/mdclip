@@ -122,7 +122,7 @@ npm run dev
 - `package.json` の format script で明示指定した管理対象ファイルの整形状態
 - package manifest と command entry point の整合性
 - Markdown Source preferences の構造
-- Preview preferences の構造
+- Preview preferences の type、required、default、利用者向け description
 - Raycast に依存しない Markdown file listing、preview、Dynamic Placeholders の動作
 
 ## 7. `npm run check:local` の確認内容
@@ -133,7 +133,10 @@ npm run dev
 
 - `package.json` の command 定義に対応する `src/*.tsx` entry point が存在すること
 - Markdown Source preferences が期待する構造を持つこと
-- Preview preferences が期待する構造を持つこと
+- Preview preferences が期待する type、required、default、利用者向け description を持つこと
+- Preview preferences が前後空白を除去し、ASCII 数字だけの範囲内整数と先頭ゼロ付き整数を受理すること
+- Preview preferences が未設定、空文字、`0`、負数、`+` 記号付き、小数、指数表記、数字以外を含む値、途中に空白がある値を既定値へ戻すこと
+- Preview preferences が上限超過値と JavaScript の数値範囲を超える数字列を上限値へ丸めること
 - `.md` file を大文字小文字を区別せずに再帰的に検出できること
 - `.git`、`node_modules`、隠し directory、`.md` ではない file を除外できること
 - directory ではない path を error にできること

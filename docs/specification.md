@@ -84,8 +84,8 @@ MdClip Preferences
 | Markdown Source N Folder | directory |               no | none    | 対象 source を使うために必要な Markdown folder                                                                                            |
 | Markdown Source N Name   | textfield |               no | none    | MdClip 内の一覧、section、metadata で使う source 表示名。Raycast Root Search の command title は変更しない。空の場合は folder name を使う |
 | Editor                   | appPicker |               no | none    | Open in Editor で使う editor                                                                                                              |
-| Preview Line Count       | textfield |               no | `10`    | preview に表示する冒頭行数。上限は `100`                                                                                                  |
-| Preview Max Characters   | textfield |               no | `4000`  | preview の最大文字数。上限は `20000`                                                                                                      |
+| Preview Line Count       | textfield |               no | `10`    | 前後空白を除いた `1`〜`100` の ASCII 数字による整数。無効値は `10`、`100` 超は `100`                                                      |
+| Preview Max Characters   | textfield |               no | `4000`  | 前後空白を除いた `1`〜`20000` の ASCII 数字による整数。無効値は `4000`、`20000` 超は `20000`                                              |
 
 `Raycast required` は、値が未入力のときに Raycast が command を開く前に設定を要求するかを表します。README と Store README の `When needed` / `必要になる条件` は、利用者が MdClip の機能を使うための条件を表します。この 2 つを同じ「必須 / 任意」として扱いません。
 
@@ -151,7 +151,9 @@ preview は初回起動時に enabled とします。
 
 preview 表示中は、選択中 file の冒頭を Raycast detail pane に表示します。preview content は一覧作成時には読み込まず、選択中 file で必要になった時点で読み込みます。
 
-preview は `Preview Line Count` と `Preview Max Characters` の小さい方の制限に従って切り詰めます。設定値が正の整数として読めない場合、または `1` 未満の場合は default を使います。上限を超える場合は上限値を使います。
+preview は `Preview Line Count` と `Preview Max Characters` の小さい方の制限に従って切り詰めます。各設定値は前後の空白を除き、残った文字列全体が ASCII 数字 `[0-9]+` だけで構成される場合に整数として扱います。範囲内ならその値を使い、上限を超える場合は上限値を使います。JavaScript の数値範囲を超える長い数字列も上限値を使います。
+
+未設定、空文字、`0`、負数、`+` 記号付き、小数、指数表記、数字以外を含む値、途中に空白がある値は無効です。無効な `Preview Line Count` は `10`、無効な `Preview Max Characters` は `4000` を使います。この補正で toast や追加の設定画面は表示しません。
 
 制限によって表示されない content が実際に残る場合だけ、preview の末尾に `Preview truncated at the configured line or character limit. Open the file to view the full content.` と表示します。file 全体が制限内に収まる場合、制限位置で file が終了する場合、または empty file の場合は表示しません。
 

@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ConfiguredMarkdownSource, MarkdownFile, MarkdownSourceLoadFailure } from "../types";
 import { copyMarkdownFile } from "../services/clipboard";
 import { getMarkdownFileSearchFields, listMarkdownFilesFromMarkdownSources } from "../services/markdownFiles";
-import { readMarkdownPreview, type MarkdownPreview } from "../services/preview";
+import { getPreviewOptions, readMarkdownPreview, type MarkdownPreview, type PreviewOptions } from "../services/preview";
 
 type Props = {
   markdownSources: ConfiguredMarkdownSource[];
@@ -29,20 +29,10 @@ type LoadState = {
   isLoading: boolean;
 };
 
-type PreviewOptions = {
-  isEnabled: boolean;
-  lineCount: number;
-  maxCharacters: number;
-};
-
 type SortMode = "updated-desc" | "updated-asc" | "name-asc" | "path-asc";
 
-const DEFAULT_PREVIEW_LINE_COUNT = 10;
-const DEFAULT_PREVIEW_MAX_CHARACTERS = 4000;
 const DEFAULT_PREVIEW_ENABLED = true;
 const DEFAULT_SORT_MODE: SortMode = "updated-desc";
-const MAX_PREVIEW_LINE_COUNT = 100;
-const MAX_PREVIEW_CHARACTERS = 20000;
 const PREVIEW_ENABLED_CACHE_KEY = "mdclip.preview.enabled";
 const PREVIEW_TRUNCATION_NOTICE =
   "Preview truncated at the configured line or character limit. Open the file to view the full content.";
@@ -437,27 +427,6 @@ function getErrorMessage(error: unknown): string {
   }
 
   return String(error);
-}
-
-function getPreviewOptions(preferences: ExtensionPreferences, isEnabled: boolean): PreviewOptions {
-  return {
-    isEnabled,
-    lineCount: parsePositiveInteger(preferences.previewLineCount, DEFAULT_PREVIEW_LINE_COUNT, MAX_PREVIEW_LINE_COUNT),
-    maxCharacters: parsePositiveInteger(
-      preferences.previewMaxCharacters,
-      DEFAULT_PREVIEW_MAX_CHARACTERS,
-      MAX_PREVIEW_CHARACTERS,
-    ),
-  };
-}
-
-function parsePositiveInteger(value: string | undefined, defaultValue: number, maxValue: number): number {
-  const parsedValue = Number.parseInt(value ?? "", 10);
-  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
-    return defaultValue;
-  }
-
-  return Math.min(parsedValue, maxValue);
 }
 
 function readInitialPreviewVisibility(): boolean {

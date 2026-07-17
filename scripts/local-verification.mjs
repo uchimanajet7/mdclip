@@ -60,9 +60,19 @@ async function verifyPreviewPreferences() {
 
   assert.equal(preferences.showPreview, undefined);
   assert.equal(preferences.previewLineCount.type, "textfield");
+  assert.equal(preferences.previewLineCount.required, false);
   assert.equal(preferences.previewLineCount.default, "10");
+  assert.equal(
+    preferences.previewLineCount.description,
+    "Number of leading preview lines. Enter a whole number from 1 to 100. Invalid values use 10; higher values use 100.",
+  );
   assert.equal(preferences.previewMaxCharacters.type, "textfield");
+  assert.equal(preferences.previewMaxCharacters.required, false);
   assert.equal(preferences.previewMaxCharacters.default, "4000");
+  assert.equal(
+    preferences.previewMaxCharacters.description,
+    "Maximum preview characters. Enter a whole number from 1 to 20000. Invalid values use 4000; higher values use 20000.",
+  );
 }
 
 async function verifyMarkdownFileListing() {
@@ -176,7 +186,85 @@ async function verifyPreview() {
     outfile: outputFile,
   });
 
-  const { readMarkdownPreview } = await import(pathToFileURL(outputFile));
+  const { getPreviewOptions, readMarkdownPreview } = await import(pathToFileURL(outputFile));
+  const preferenceCases = [
+    {
+      name: "uses defaults for missing and empty values",
+      preferences: { previewLineCount: undefined, previewMaxCharacters: "" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "accepts minimum values",
+      preferences: { previewLineCount: "1", previewMaxCharacters: "1" },
+      expected: { lineCount: 1, maxCharacters: 1 },
+    },
+    {
+      name: "accepts maximum values",
+      preferences: { previewLineCount: "100", previewMaxCharacters: "20000" },
+      expected: { lineCount: 100, maxCharacters: 20000 },
+    },
+    {
+      name: "trims surrounding whitespace and accepts leading zeros",
+      preferences: { previewLineCount: " 0042 ", previewMaxCharacters: "\t012000\n" },
+      expected: { lineCount: 42, maxCharacters: 12000 },
+    },
+    {
+      name: "uses defaults for zero",
+      preferences: { previewLineCount: "0", previewMaxCharacters: "000" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "uses defaults for signs",
+      preferences: { previewLineCount: "-1", previewMaxCharacters: "+4000" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "uses defaults for decimals",
+      preferences: { previewLineCount: "10.5", previewMaxCharacters: "4000.0" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "uses defaults for exponent notation",
+      preferences: { previewLineCount: "1e2", previewMaxCharacters: "4e3" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "uses defaults for mixed characters",
+      preferences: { previewLineCount: "20lines", previewMaxCharacters: "4000chars" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "uses defaults for non-ASCII digits",
+      preferences: { previewLineCount: "１２", previewMaxCharacters: "٤٠٠٠" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "uses defaults for internal whitespace",
+      preferences: { previewLineCount: "1 0", previewMaxCharacters: "4 000" },
+      expected: { lineCount: 10, maxCharacters: 4000 },
+    },
+    {
+      name: "caps values above the maximum",
+      preferences: { previewLineCount: "101", previewMaxCharacters: "20001" },
+      expected: { lineCount: 100, maxCharacters: 20000 },
+    },
+    {
+      name: "caps digit strings larger than the JavaScript number range",
+      preferences: { previewLineCount: "9".repeat(400), previewMaxCharacters: "9".repeat(400) },
+      expected: { lineCount: 100, maxCharacters: 20000 },
+    },
+  ];
+
+  for (const preferenceCase of preferenceCases) {
+    assert.deepEqual(
+      getPreviewOptions(preferenceCase.preferences, false),
+      { isEnabled: false, ...preferenceCase.expected },
+      preferenceCase.name,
+    );
+  }
+
+  assert.equal(getPreviewOptions({}, true).isEnabled, true);
+
   const previewFilePath = path.join(fixtureRoot, "preview.md");
   await writeFile(previewFilePath, ["line1", "line2", "line3", "line4"].join("\n"));
 

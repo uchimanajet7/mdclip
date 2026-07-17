@@ -139,7 +139,7 @@
     {
       "name": "previewLineCount",
       "title": "Preview Line Count",
-      "description": "Number of leading lines to show in the preview.",
+      "description": "Number of leading preview lines. Enter a whole number from 1 to 100. Invalid values use 10; higher values use 100.",
       "type": "textfield",
       "required": false,
       "default": "10"
@@ -147,7 +147,7 @@
     {
       "name": "previewMaxCharacters",
       "title": "Preview Max Characters",
-      "description": "Maximum number of characters to show in the preview.",
+      "description": "Maximum preview characters. Enter a whole number from 1 to 20000. Invalid values use 4000; higher values use 20000.",
       "type": "textfield",
       "required": false,
       "default": "4000"
