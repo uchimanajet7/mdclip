@@ -20,7 +20,7 @@ MdClip の active release path は GitHub Release です。release owner / maint
 | GitHub Release                   | latest release tag と source archive の公開単位        | Active public release unit                                          |
 | `Release` workflow               | Git tag と GitHub Release を作成する                   | `.github/release-manifest.json` に従って手動実行する                |
 | `Build` workflow                 | build、local verification、Raycast CLI lint を確認する | branch push、Pull Request、手動実行、または他 workflow から実行する |
-| `.github/release-manifest.json`  | 次に作成する GitHub Release の計画ファイル             | `Release` workflow の入力として管理する                             |
+| `.github/release-manifest.json`  | リリース準備コミットが表す GitHub Release の記述子     | リリース準備時に更新し、`Release` workflow の入力として管理する     |
 | `.github/release-changelog/*.md` | GitHub Release body の source                          | release tag と同じ version 名で作成または更新する                   |
 | `docs/screenshot-media.md`       | README / GitHub / release 用 UI evidence 手順          | current UI evidence を扱う release 前確認で使う                     |
 | `docs/local-verification.md`     | 開発・メンテナンス検証手順                             | release 前の local verification と手動確認の範囲を定義する          |
@@ -38,9 +38,9 @@ MdClip の active release path は GitHub Release です。release owner / maint
 
 ## 4. Release manifest
 
-`.github/release-manifest.json` は、次に作成する GitHub Release の計画ファイルです。
+`.github/release-manifest.json` は、リリース準備コミットが表す GitHub Release の記述子です。次のリリースタグと changelog が確定したリリース準備時だけ更新し、公開後は次のリリース準備まで公開済み Release の値を保持します。未確定の次期バージョンを公開直後に仮設定しません。
 
-現在の MdClip transition release は `v0.2.0` です。`v0.1.4` は既存 tag であり、Local Copy Blocks 時代の release history として扱います。
+現在公開済みの latest GitHub Release は `v0.2.0` です。`v0.1.4` はその直前の既存タグであり、Local Copy Blocks 時代のリリース履歴として扱います。
 
 形式は以下とします。
 
@@ -53,12 +53,12 @@ MdClip の active release path は GitHub Release です。release owner / maint
 }
 ```
 
-| 項目                         | 意味                                                 |
-| ---------------------------- | ---------------------------------------------------- |
-| `tag`                        | 今回作成する GitHub Release tag                      |
-| `title`                      | 今回作成する GitHub Release title                    |
-| `previousGitHubReleaseTag`   | 最後に作成済みの GitHub Release tag                  |
-| `githubReleaseChangelogFile` | 今回の GitHub Release body として使う changelog file |
+| 項目                         | 意味                                                     |
+| ---------------------------- | -------------------------------------------------------- |
+| `tag`                        | 記述対象の GitHub Release tag                            |
+| `title`                      | 記述対象の GitHub Release title                          |
+| `previousGitHubReleaseTag`   | 記述対象の直前に作成済みの GitHub Release tag            |
+| `githubReleaseChangelogFile` | 記述対象の GitHub Release body として使う changelog file |
 
 Store publish state は GitHub Release 作成 manifest には含めません。Store publish の管理対象は [Store publication prerequisites](#8-store-publication-prerequisites) で扱います。
 
@@ -130,7 +130,7 @@ GitHub Release を作成する場合は、次を行います。
 1. 最後に作成済みの GitHub Release tag を確認する。
 2. 今回作成する GitHub Release tag を決める。
 3. [GitHub Release 用 changelog](#5-github-release-用-changelog) の固定書式で `.github/release-changelog/vX.Y.Z.md` を作成または更新する。
-4. `.github/release-manifest.json` を更新する。
+4. `.github/release-manifest.json` の `tag`、`title`、`previousGitHubReleaseTag`、`githubReleaseChangelogFile` を、今回の Release と直前の公開済み Release に合わせて更新する。
 5. 利用者向け導入、更新、削除手順を変更した場合は、英語版と日本語版のtask coverage、日本語の一般説明、実際のUIラベルやコマンドとの一致をmanual reviewする。
 6. `npm run lint` を実行する。
 7. 必要に応じて `npm run lint:raycast` を実行する。
@@ -142,6 +142,12 @@ GitHub Release を作成する場合は、次を行います。
 `Release` workflow は、push 済みの `.github/release-manifest.json` を読み、manifest の `tag` で Git tag と GitHub Release を作成します。
 
 GitHub Release body は、manifest の `githubReleaseChangelogFile` から作成します。
+
+GitHub Release が正常に公開された後は、manifest を未確定の次期バージョンへ進めません。次のリリース内容とバージョンが確定するまで、公開済み Release の値を保持します。
+
+同じ manifest を使って `Release` workflow を新しく開始すると、`prepare-tag` は既存タグを検出して停止します。これは同じ Release の重複作成を防ぐ正常な動作であり、失敗した Release の再開方法ではありません。
+
+`prepare-tag` がタグを作成した後に `github-release` だけが失敗した場合は、新しい workflow run や `Re-run all jobs` を開始せず、同じ workflow run で `Re-run failed jobs` を実行します。GitHub Actions の re-run は元の run と同じ `GITHUB_SHA` と `GITHUB_REF` を使うため、成功済みのタグ作成を繰り返さずに失敗した Release 作成を再実行できます。[GitHub Actions で workflow と job を再実行する](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs)
 
 ## 7. Workflows
 
