@@ -175,9 +175,9 @@ dependency installと検証はreusable `Build` jobだけが担当します。`pr
 
 Repository variable `MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED` が `true` の場合だけ、Store publish path として扱います。
 
-publish jobは、default branchではなく指定された`release-source/.node-version`とrelease sourceの`packageManager`をsetupします。publish script内部の`npm ci`と`npx`は、そのrelease artifactに記録されたtoolchainで実行します。
+publish jobは、default branchではなく指定された`release-source/.node-version`とrelease sourceの`packageManager`をsetupします。publish script内部の`npm ci`と`npx --yes @raycast/api@latest publish`は、そのrelease artifactのtoolchainと実行環境のnpm registry設定で実行します。
 
-Store publish を開始すると、script は `raycast-publish/README.md` と `raycast-publish/CHANGELOG.md` を publish source の root `README.md` / `CHANGELOG.md` として使います。source-use root の `README.md`、`README.ja.md`、`docs/`、root `CHANGELOG.md`、`.github/`、`_local/`、`raycast-publish/` は publish source から除外します。
+Store publish を開始すると、script はrelease sourceでGitに追跡されたfilesだけをcopy候補にし、`raycast-publish/README.md` と `raycast-publish/CHANGELOG.md` を publish source の root `README.md` / `CHANGELOG.md` として使います。source-use root の `README.md`、`README.ja.md`、`docs/`、root `CHANGELOG.md`、`.github/`、`raycast-publish/` は publish source から除外します。
 
 開いている Raycast Pull Request がない場合、script は prepared publish source 上で Raycast の公式 publish command を実行します。開いている Pull Request がある場合は、prepared publish source を `raycast/extensions` fork branch に配置して既存 Pull Request を更新します。
 

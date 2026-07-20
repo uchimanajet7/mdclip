@@ -10,20 +10,25 @@ const execFileAsync = promisify(execFile);
 const repoRoot = process.cwd();
 const packageJsonPath = path.join(repoRoot, "package.json");
 const packageLockPath = path.join(repoRoot, "package-lock.json");
+const heldDependencies = [];
+
+await run("npm", ["run", "check:dependencies"]);
+await run("npm", ["run", "migrate"]);
+await run("npm", ["run", "check:dependencies"]);
+
 const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
 const dependencyTargets = [
   ...Object.keys(packageJson.dependencies ?? {}).map((name) => ({ name, saveFlag: "--save" })),
   ...Object.keys(packageJson.devDependencies ?? {}).map((name) => ({ name, saveFlag: "--save-dev" })),
 ];
-const heldDependencies = [];
 
 if (dependencyTargets.length > 0) {
-  await run("npm", ["update", "--save", "--strict-peer-deps"]);
+  await run("npm", ["update", "--save", "--strict-peer-deps", "--ignore-scripts"]);
   await updateDirectDependenciesToLatest(dependencyTargets);
 }
 
 await run("npm", ["run", "check:dependencies"]);
-await run("npm", ["run", "migrate"]);
+await run("npm", ["ci"]);
 await run("npm", ["run", "check"]);
 
 if (heldDependencies.length > 0) {
@@ -166,7 +171,7 @@ async function tryResolveVersion(target, version) {
 }
 
 async function installVersion(target, version) {
-  const args = ["install", `${target.name}@${version}`, target.saveFlag, "--strict-peer-deps"];
+  const args = ["install", `${target.name}@${version}`, target.saveFlag, "--strict-peer-deps", "--ignore-scripts"];
   await run("npm", args);
 }
 

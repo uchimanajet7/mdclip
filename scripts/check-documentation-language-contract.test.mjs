@@ -32,6 +32,30 @@ test("rejects a noncanonical English-suffixed guide path anywhere in Markdown", 
   );
 });
 
+test("rejects a noncanonical guide path in every product documentation directory", async (t) => {
+  const forbiddenPath = ["getting-started", "en", "md"].join(".");
+
+  for (const relativeDirectory of ["docs", "raycast-publish", ".github/release-changelog"]) {
+    const root = await createFixture(t);
+    await writeFile(path.join(root, relativeDirectory, "extra.md"), `Use [the old guide](${forbiddenPath}).\n`);
+
+    await assert.rejects(
+      () => validateDocumentationLanguageContract({ repoRoot: root }),
+      /contains forbidden noncanonical path/,
+    );
+  }
+});
+
+test("does not inspect Markdown outside the product documentation surface", async (t) => {
+  const root = await createFixture(t);
+  const privateDirectory = path.join(root, "private-work");
+  const forbiddenPath = ["getting-started", "en", "md"].join(".");
+  await mkdir(privateDirectory, { recursive: true });
+  await writeFile(path.join(privateDirectory, "notes.md"), `Use [the old guide](${forbiddenPath}).\n`);
+
+  await assert.doesNotReject(() => validateDocumentationLanguageContract({ repoRoot: root }));
+});
+
 test("rejects a missing or changed reciprocal language selector", async (t) => {
   const root = await createFixture(t);
   await writeFile(path.join(root, "README.ja.md"), "# MdClip\n\n日本語\n");
@@ -69,6 +93,8 @@ async function createFixture(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), "mdclip-document-contract-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(path.join(root, "docs"), { recursive: true });
+  await mkdir(path.join(root, "raycast-publish"), { recursive: true });
+  await mkdir(path.join(root, ".github", "release-changelog"), { recursive: true });
 
   const files = new Map([
     [
@@ -110,6 +136,9 @@ See [README](../README.md).
     ["docs/local-verification.md", "See [使い始める手順](getting-started.ja.md).\n"],
     ["docs/release-management.md", "See [MdClip を使い始める](getting-started.ja.md).\n"],
     ["docs/screenshot-media.md", "See [Getting Started](getting-started.md).\n"],
+    ["raycast-publish/README.md", "# Store README\n"],
+    ["raycast-publish/CHANGELOG.md", "# Store Changelog\n"],
+    [".github/release-changelog/v0.1.0.md", "# Release changelog\n"],
   ]);
 
   for (const [relativePath, content] of files) {

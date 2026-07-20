@@ -221,7 +221,6 @@ function isPublishFile(file) {
     !file.startsWith(".github/") &&
     !file.startsWith("docs/") &&
     !file.startsWith(`${publishResourceDirectory}/`) &&
-    !file.startsWith("_local/") &&
     file !== "README.md" &&
     file !== "README.ja.md" &&
     file !== "CHANGELOG.md" &&

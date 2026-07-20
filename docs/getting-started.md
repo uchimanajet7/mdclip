@@ -17,17 +17,6 @@ The downloaded source archive contains the source fixed to its release tag. To u
 | Node.js and npm                                       | Install dependencies and start development mode |
 | Source code downloaded from the latest GitHub Release | Provide the MdClip extension source             |
 
-Confirm that Node.js and npm are available.
-
-```bash
-node -v
-npm -v
-```
-
-The current MdClip dependencies require Node.js `22.22.2` or later. The repository's `.node-version` records the latest verified Node.js LTS version. If Node.js is not installed or the version is too old, install an LTS version from the [official Node.js download page](https://nodejs.org/en/download).
-
-MdClip's setup command selects the npm version tested with this release. If your current npm version is different, the command changes the global npm version used by your currently selected Node.js installation.
-
 Git is not required. For normal use, you can use `Source code (zip)` from the latest GitHub Release.
 
 ## 3. Download the Source Code
@@ -48,6 +37,16 @@ Completion checks:
 ## 4. Install the Dependencies
 
 Open the `mdclip` folder in Finder, right-click the folder, and select `New Terminal at Folder`.
+
+Before installing the dependencies, check the Node.js version selected for this MdClip release and the Node.js and npm versions currently active on your Mac.
+
+```bash
+cat .node-version
+node -v
+npm -v
+```
+
+Use the Node.js version shown by `cat .node-version`. If Node.js is not installed or `node -v` shows a different version, install or switch to the displayed version using the [Node.js installation page](https://nodejs.org/en/download).
 
 Run the following commands in the terminal.
 
@@ -112,13 +111,13 @@ For details about Dynamic Placeholders, see [README](../README.md#dynamic-placeh
 2. Download `Source code (zip)` from the displayed latest release.
 3. Extract the ZIP file in Finder.
 4. Replace the old `mdclip` folder if needed.
-5. Run `node scripts/setup-npm.mjs` in the new `mdclip` folder.
-6. Run `npm ci`.
-7. Run `npm run dev`.
+5. In the new `mdclip` folder, repeat [4. Install the Dependencies](#4-install-the-dependencies).
+6. Run `npm run dev` in the new `mdclip` folder.
 
 Completion checks:
 
 - The downloaded ZIP file is `Source code (zip)` from the latest release page.
+- The Node.js version shown by `cat .node-version` is active in the new `mdclip` folder.
 - The selected npm version is active in the new `mdclip` folder.
 - `npm ci` finishes without errors in the new `mdclip` folder.
 - After running `npm run dev` in the new `mdclip` folder, you can open the MdClip commands from Raycast.

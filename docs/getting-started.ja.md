@@ -17,17 +17,6 @@
 | Node.js と npm                                 | 依存関係のインストールと開発モードの起動に使う |
 | 最新の GitHub Release から取得したソースコード | MdClip 本体                                    |
 
-Node.js と npm が使える状態か確認します。
-
-```bash
-node -v
-npm -v
-```
-
-この手順では、現在の MdClip の依存関係に合わせて Node.js `22.22.2` 以上が使える状態を前提にします。リポジトリの `.node-version` には、検証済みの最新 Node.js LTS バージョンを記録しています。Node.js が未導入、またはバージョンが古い場合は、[Node.js 公式ダウンロードページ](https://nodejs.org/en/download) から LTS バージョンをインストールします。
-
-MdClip のセットアップコマンドは、このリリースで検証された npm バージョンを選択します。現在の npm バージョンが異なる場合、このコマンドは、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更します。
-
 Git は必須ではありません。通常利用では、最新の GitHub Release にある `Source code (zip)` を利用できます。
 
 ## 3. ソースコードを取得する
@@ -48,6 +37,16 @@ GitHub のリリースページからダウンロードし、Finder で展開で
 ## 4. 依存関係を入れる
 
 Finder で `mdclip` フォルダを開き、フォルダを右クリックして `フォルダに新規ターミナル` を選びます。
+
+依存関係を入れる前に、この MdClip リリースで使用する Node.js バージョンと、Mac で現在選択されている Node.js と npm のバージョンを確認します。
+
+```bash
+cat .node-version
+node -v
+npm -v
+```
+
+`cat .node-version` に表示された Node.js バージョンを使用します。Node.js が未導入の場合、または `node -v` に別のバージョンが表示される場合は、[Node.js のインストール案内](https://nodejs.org/en/download)を使って、表示されたバージョンをインストールまたは切り替えます。
 
 開いたターミナルで次を実行します。
 
@@ -112,13 +111,13 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 2. 表示された最新リリースの `Source code (zip)` をダウンロードする。
 3. Finder で展開する。
 4. 必要なら古い `mdclip` フォルダと入れ替える。
-5. 新しい `mdclip` フォルダで `node scripts/setup-npm.mjs` を実行する。
-6. `npm ci` を実行する。
-7. `npm run dev` を実行する。
+5. 新しい `mdclip` フォルダで、[4. 依存関係を入れる](#4-依存関係を入れる)の手順を実行する。
+6. 新しい `mdclip` フォルダで `npm run dev` を実行する。
 
 完了確認:
 
 - ダウンロードした ZIP ファイルが、最新リリースのページにある `Source code (zip)` である。
+- 新しい `mdclip` フォルダで、`cat .node-version` に表示された Node.js バージョンが有効になっている。
 - 新しい `mdclip` フォルダで、選択された npm バージョンが有効になっている。
 - 新しい `mdclip` フォルダで `npm ci` が失敗せずに終了する。
 - 新しい `mdclip` フォルダで `npm run dev` を実行し、Raycast から MdClip のコマンドを開ける。

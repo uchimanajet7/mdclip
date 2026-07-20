@@ -72,6 +72,22 @@ assert.equal(
   "node scripts/update-toolchain.mjs",
   `${packageJsonPath} must separate toolchain updates from dependency updates`,
 );
+assert.equal(
+  packageJson.scripts?.migrate,
+  "npx --yes @raycast/migration@latest .",
+  `${packageJsonPath} migration must run the latest official Raycast migration package non-interactively`,
+);
+
+const projectDependencyNames = Object.keys({
+  ...(packageJson.dependencies ?? {}),
+  ...(packageJson.devDependencies ?? {}),
+  ...(packageJson.optionalDependencies ?? {}),
+});
+assert.equal(
+  projectDependencyNames.includes("@raycast/migration"),
+  false,
+  `${packageJsonPath} must not pin the on-demand Raycast migration package as a project dependency`,
+);
 
 const packageLock = JSON.parse(await readFile(packageLockPath, "utf8"));
 const rootLockfilePackage = packageLock.packages?.[""];
@@ -124,12 +140,22 @@ const setupNpmScript = await readFile("scripts/setup-npm.mjs", "utf8");
 assert.equal(
   setupNpmScript.includes('readStringOption("--repo-root")') &&
     setupNpmScript.includes("mkdtempSync") &&
-    setupNpmScript.includes("cwd: bootstrapRoot"),
+    setupNpmScript.includes("cwd: bootstrapRoot") &&
+    setupNpmScript.includes("--ignore-scripts"),
   true,
-  "npm bootstrap must support artifact roots and run the old npm outside the guarded repository",
+  "npm bootstrap must support artifact roots and install the selected npm from the configured registry outside the guarded repository without lifecycle scripts",
 );
 
 const dependencyUpdater = await readFile("scripts/update-dependencies.mjs", "utf8");
+const initialDependencyCheckIndex = dependencyUpdater.indexOf('await run("npm", ["run", "check:dependencies"])');
+const migrationCommand = 'await run("npm", ["run", "migrate"])';
+const migrationIndex = dependencyUpdater.indexOf(migrationCommand);
+const dependencyManifestReadIndex = dependencyUpdater.indexOf(
+  'const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"))',
+);
+const dependencyUpdateIndex = dependencyUpdater.indexOf(
+  'await run("npm", ["update", "--save", "--strict-peer-deps", "--ignore-scripts"])',
+);
 assert.equal(
   dependencyUpdater.includes("getToolchainFreshness") ||
     dependencyUpdater.includes('writeFile(path.join(repoRoot, ".node-version")'),
@@ -139,9 +165,23 @@ assert.equal(
 assert.equal(
   dependencyUpdater.includes("mdclip-dependency-resolution-") &&
     dependencyUpdater.includes("--package-lock-only") &&
-    dependencyUpdater.includes("--ignore-scripts"),
+    dependencyUpdater.includes("--ignore-scripts") &&
+    dependencyUpdater.includes('await run("npm", ["ci"])'),
   true,
-  "peer-compatible fallback must use isolated npm resolution instead of parsing an error range",
+  "dependency updates must use isolated npm resolution, suppress lifecycle scripts while changing the lockfile, and then perform one clean install through the configured registry",
+);
+assert.equal(
+  initialDependencyCheckIndex !== -1 &&
+    initialDependencyCheckIndex < migrationIndex &&
+    migrationIndex < dependencyManifestReadIndex &&
+    dependencyManifestReadIndex < dependencyUpdateIndex,
+  true,
+  "dependency updates must verify policy, run the latest Raycast migration through the configured registry, rebuild targets from its result, and only then update dependencies",
+);
+assert.equal(
+  findAllIndices(dependencyUpdater, migrationCommand).length,
+  1,
+  "dependency updates must run Raycast migration exactly once before advancing dependency versions",
 );
 
 const workflowPaths = (await readdir(".github/workflows"))
@@ -222,6 +262,11 @@ assert.equal(
   "build workflow must bootstrap selected npm and verify policy before its only npm ci",
 );
 assert.equal(findAllIndices(buildWorkflow, installCommand).length, 1, "build workflow must own one dependency install");
+assert.equal(
+  /NPM_CONFIG_(?:REGISTRY|USERCONFIG|GLOBALCONFIG)/.test(buildWorkflow),
+  false,
+  "build workflow must leave registry and npm config selection to the execution environment",
+);
 
 const releaseWorkflow = workflowContents.get(".github/workflows/release.yml");
 assert.equal(
@@ -248,9 +293,44 @@ assert.equal(
 
 const publishScript = await readFile("scripts/publish-raycast-pr.mjs", "utf8");
 assert.equal(
-  publishScript.includes('runCommand("npm", ["ci"]') && publishScript.includes('runCommand("npx",'),
+  publishScript.includes('runCommand("npm", ["ci"]') &&
+    publishScript.includes('runCommand("npx", ["--yes", "@raycast/api@latest", "publish"]'),
   true,
-  "Raycast publish nested npm and npx commands must remain classified as an install path",
+  "Raycast publish nested npm and npx commands must use the configured registry and latest official Raycast CLI",
+);
+
+const registryNeutralFiles = [
+  "scripts/setup-npm.mjs",
+  "scripts/toolchain.mjs",
+  "scripts/update-dependencies.mjs",
+  "scripts/update-toolchain.mjs",
+  "scripts/publish-raycast-pr.mjs",
+  ".github/workflows/build.yml",
+];
+const registryOverrideMarkers = [
+  "registry.npmjs.org",
+  "NPM_CONFIG_REGISTRY",
+  "NPM_CONFIG_USERCONFIG",
+  "NPM_CONFIG_GLOBALCONFIG",
+  "npm-registry-policy",
+  "--registry=",
+];
+const registryOverrideLocations = [];
+
+for (const filePath of registryNeutralFiles) {
+  const contents = await readFile(filePath, "utf8");
+
+  for (const marker of registryOverrideMarkers) {
+    if (contents.includes(marker)) {
+      registryOverrideLocations.push(`${filePath}: ${marker}`);
+    }
+  }
+}
+
+assert.deepEqual(
+  registryOverrideLocations,
+  [],
+  "dependency acquisition, bootstrap, update, CI, and publish paths must inherit the configured registry",
 );
 
 const freshnessWorkflow = workflowContents.get(".github/workflows/toolchain-freshness.yml");

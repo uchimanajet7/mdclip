@@ -3,7 +3,8 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const ignoredDirectories = new Set([".git", "_local", "node_modules", "dist", "local-verification", "demo"]);
+const documentationSurfaceFiles = Object.freeze(["README.md", "README.ja.md"]);
+const documentationSurfaceDirectories = Object.freeze(["docs", "raycast-publish", ".github/release-changelog"]);
 
 const documentFamilies = Object.freeze([
   {
@@ -58,7 +59,7 @@ export async function validateDocumentationLanguageContract({ repoRoot }) {
     await validateFamilyMember(repoRoot, family.id, family.japanese, family.japaneseSelector);
   }
 
-  const markdownFiles = await listMarkdownFiles(repoRoot);
+  const markdownFiles = await listProductMarkdownFiles(repoRoot);
   const actualPairedReferences = [];
 
   for (const source of markdownFiles) {
@@ -104,7 +105,17 @@ async function validateFamilyMember(repoRoot, familyId, relativePath, expectedSe
   );
 }
 
-async function listMarkdownFiles(root, relativeDirectory = "") {
+async function listProductMarkdownFiles(root) {
+  const files = [...documentationSurfaceFiles];
+
+  for (const relativeDirectory of documentationSurfaceDirectories) {
+    files.push(...(await listMarkdownFilesInDirectory(root, relativeDirectory)));
+  }
+
+  return [...new Set(files)].sort();
+}
+
+async function listMarkdownFilesInDirectory(root, relativeDirectory) {
   const directory = path.join(root, relativeDirectory);
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
@@ -113,9 +124,7 @@ async function listMarkdownFiles(root, relativeDirectory = "") {
     const relativePath = path.posix.join(relativeDirectory, entry.name);
 
     if (entry.isDirectory()) {
-      if (!ignoredDirectories.has(entry.name)) {
-        files.push(...(await listMarkdownFiles(root, relativePath)));
-      }
+      files.push(...(await listMarkdownFilesInDirectory(root, relativePath)));
       continue;
     }
 

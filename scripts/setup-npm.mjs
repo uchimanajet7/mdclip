@@ -13,7 +13,7 @@ try {
 
   if (currentVersion !== npmVersion) {
     console.log(`Installing project npm ${npmVersion}; current npm is ${currentVersion}.`);
-    execFileSync("npm", ["install", "--global", `npm@${npmVersion}`], {
+    execFileSync("npm", ["install", "--global", `npm@${npmVersion}`, "--ignore-scripts"], {
       cwd: bootstrapRoot,
       stdio: "inherit",
     });
