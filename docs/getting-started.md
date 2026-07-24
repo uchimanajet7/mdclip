@@ -132,13 +132,7 @@ Remove the MdClip extension imported into Raycast, the downloaded source code, a
 2. Select MdClip.
 3. Run the uninstall or remove action.
 
-If you cannot remove MdClip from Raycast, quit Raycast and check the following folder in Finder.
-
-```text
-~/.config/raycast/extensions/mdclip
-```
-
-If it exists, delete only this `mdclip` folder. The `~/.config/raycast/extensions` folder may contain other local extensions.
+If Raycast cannot remove MdClip, report the problem through [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues).
 
 ### 9.2 Delete the Source Code
 
@@ -151,7 +145,6 @@ Deleting the source-code folder also removes the `node_modules` folder created b
 To confirm that your Mac has returned to its state before MdClip was installed, check the following.
 
 - The MdClip commands no longer appear in Raycast.
-- `~/.config/raycast/extensions/mdclip` does not exist.
 - The downloaded and extracted `mdclip` folder no longer exists.
 
 If you use Node.js, npm, or Raycast for other purposes, keep those tools installed and remove only the MdClip extension and source code.

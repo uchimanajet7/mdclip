@@ -132,13 +132,7 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 2. MdClip を選択する。
 3. アンインストールまたは削除のアクションを実行する。
 
-Raycast 上で削除できない場合は、Raycast を終了してから Finder で次のフォルダを確認します。
-
-```text
-~/.config/raycast/extensions/mdclip
-```
-
-存在する場合は、この `mdclip` フォルダだけを削除します。`~/.config/raycast/extensions` には、他のローカル拡張機能が入っている場合があります。
+Raycast から MdClip を削除できない場合は、[GitHub Issues](https://github.com/uchimanajet7/mdclip/issues) で問題を報告してください。
 
 ### 9.2 ソースコードを削除する
 
@@ -151,7 +145,6 @@ Finder で展開した `mdclip` フォルダを削除します。
 導入前の状態に戻す場合は、次を確認します。
 
 - Raycast で MdClip のコマンドが表示されない。
-- `~/.config/raycast/extensions/mdclip` が存在しない。
 - ダウンロードして展開した `mdclip` フォルダが残っていない。
 
 Node.js、npm、Raycast を他の用途でも使う場合は、それらのツール自体は削除せず、MdClip の拡張機能とソースコードだけを削除してください。

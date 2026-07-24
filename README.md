@@ -137,7 +137,7 @@ MdClip does not make network requests during normal extension use.
 
 ## Help
 
-For setup, update, and removal instructions, see [Getting Started](docs/getting-started.md). If an MdClip problem remains, check the [existing issues](https://github.com/uchimanajet7/mdclip/issues). If it has not been reported, sign in to GitHub and open a new issue.
+For setup, update, and removal instructions, see [Getting Started](docs/getting-started.md). Report unresolved MdClip problems through [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues).
 
 Include the reproduction steps, the actual and expected results, and the MdClip, Raycast, and macOS versions. Do not include private Markdown content, clipboard content, or other sensitive data.
 

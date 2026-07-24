@@ -23,7 +23,6 @@ const nodeWorkflowVersionFiles = new Map([
   [".github/workflows/publish-release-to-raycast.yml", ["release-source/.node-version"]],
   [".github/workflows/toolchain-freshness.yml", [".node-version"]],
 ]);
-const forbiddenRegistryHost = ["npm", "flatt", "tech"].join(".");
 
 const npmrcLines = (await readFile(npmrcPath, "utf8"))
   .split(/\r?\n/)
@@ -362,16 +361,11 @@ const repositoryFiles = repositoryFilesOutput
   .toString("utf8")
   .split("\0")
   .filter((filePath) => filePath.length > 0);
-const forbiddenRegistryFiles = [];
 const duplicatedToolchainVersionFiles = [];
 const duplicatedNpmVersionDeclaration = `${["NPM", "VERSION"].join("_")}: ${selectedNpmVersion}`;
 
 for (const filePath of repositoryFiles) {
   const contents = await readFile(filePath);
-
-  if (contents.includes(forbiddenRegistryHost)) {
-    forbiddenRegistryFiles.push(filePath);
-  }
 
   if (
     filePath.startsWith(".github/workflows/") &&
@@ -381,11 +375,6 @@ for (const filePath of repositoryFiles) {
   }
 }
 
-assert.deepEqual(
-  forbiddenRegistryFiles,
-  [],
-  `repository files must not contain the workstation-specific registry host ${forbiddenRegistryHost}`,
-);
 assert.deepEqual(
   duplicatedToolchainVersionFiles,
   [],

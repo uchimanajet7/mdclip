@@ -139,7 +139,7 @@ Markdown 本文は、利用者がコピーアクションを実行した場合�
 
 ## ヘルプ
 
-導入、更新、削除については [使い始める手順](docs/getting-started.ja.md) を参照してください。MdClip の問題が解決しない場合は、[既存の Issues](https://github.com/uchimanajet7/mdclip/issues) を確認してください。未報告であれば、GitHub にサインインして新しい Issue を作成してください。
+導入、更新、削除については [使い始める手順](docs/getting-started.ja.md) を参照してください。解決しない MdClip の問題は [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues) で報告してください。
 
 再現手順、実際の結果、期待する結果、MdClip、Raycast、macOS のバージョンを記載してください。非公開の Markdown 本文、クリップボードの内容、その他の機密情報は記載しないでください。
 
