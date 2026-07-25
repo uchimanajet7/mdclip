@@ -201,6 +201,8 @@ Raycast アプリ上では、以下を人間が操作して確認します。
 - Raw content copy が動作すること
 - Expanded content copy で Dynamic Placeholders が展開されること
 - Preview と editor 起動が期待通りに動くこと
+- Preview detail metadata が上から `Markdown Source`、`Size`、`Updated`、`Full Path` の順で separator なしで表示され、`Relative Path` は metadata に重複表示されないこと
+- relative parent path の一覧表示、relative path 検索、`Path (A-Z)` sort が維持されていること
 - 設定済みの empty Markdown Source では個別 command からその folder を開けること
 - すべての設定済み source が empty の場合、All Markdown Sources から source ごとの folder を区別して開けること
 - configured path の読み込み失敗時は folder を開く action ではなく `Open Extension Preferences` が表示されること

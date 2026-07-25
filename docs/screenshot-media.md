@@ -159,9 +159,13 @@ Expected current UI wording includes:
 - `Markdown Source 2`
 - `All Markdown Sources`
 - `Markdown Source`
-- `Relative Path`
+- `Size`
+- `Updated`
+- `Full Path`
 - `Copy Raw Content`
 - `Copy Expanded Content`
+
+When the preview metadata is visible, it must show `Markdown Source`, `Size`, `Updated`, and `Full Path` in that order without a separator. `Relative Path` must not appear in the metadata; the list continues to show the file name and relative parent path.
 
 The screenshots must not show old active wording such as `Block Set`, `All Block Sets`, `local-copy-blocks`, or `Local Copy Blocks`.
 

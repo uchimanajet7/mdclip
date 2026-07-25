@@ -315,11 +315,8 @@ function MarkdownFilePreviewDetail({ file, previewOptions }: { file: MarkdownFil
       metadata={
         <List.Item.Detail.Metadata>
           <List.Item.Detail.Metadata.Label title="Markdown Source" text={file.markdownSource.displayName} />
-          <List.Item.Detail.Metadata.Label title="Relative Path" text={file.relativePath} />
-          <List.Item.Detail.Metadata.Separator />
           <List.Item.Detail.Metadata.Label title="Size" text={formatFileSize(file.size)} />
           <List.Item.Detail.Metadata.Label title="Updated" text={formatDateTime(file.updatedAt)} />
-          <List.Item.Detail.Metadata.Separator />
           <List.Item.Detail.Metadata.Label title="Full Path" text={file.path} />
         </List.Item.Detail.Metadata>
       }

@@ -151,6 +151,19 @@ preview は初回起動時に enabled とします。
 
 preview 表示中は、選択中 file の冒頭を Raycast detail pane に表示します。preview content は一覧作成時には読み込まず、選択中 file で必要になった時点で読み込みます。
 
+detail pane の metadata は、上から次の順で表示します。
+
+| Metadata          | 用途                                                             |
+| ----------------- | ---------------------------------------------------------------- |
+| `Markdown Source` | file が属する論理的な Markdown Source を確認する                 |
+| `Size`            | file size を確認する                                             |
+| `Updated`         | file の更新日時を確認する                                        |
+| `Full Path`       | file system 上の absolute path を確認する。metadata の最後に置く |
+
+4 項目は separator を挟まず連続して表示します。`Full Path` は Detail 上で確認できる状態を維持し、主要な file 選択と preview content の確認を妨げないよう metadata の最後に置きます。
+
+一覧の title に file name、subtitle に relative parent path を表示しているため、relative path は detail metadata では重複表示しません。relative path は一覧表示、検索、`Path (A-Z)` sort では引き続き使います。Raycast の `List.Item.Detail.Metadata` は選択 item の追加の構造化情報を表示する領域で、separator は metadata item を grouping する場合に使います。この metadata は 1 つの連続した file information set として表示するため、separator は使いません。[Raycast List API](https://developers.raycast.com/api-reference/user-interface/list) [Apple Human Interface Guidelines: Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
+
 preview は `Preview Line Count` と `Preview Max Characters` の小さい方の制限に従って切り詰めます。各設定値は前後の空白を除き、残った文字列全体が ASCII 数字 `[0-9]+` だけで構成される場合に整数として扱います。範囲内ならその値を使い、上限を超える場合は上限値を使います。JavaScript の数値範囲を超える長い数字列も上限値を使います。
 
 未設定、空文字、`0`、負数、`+` 記号付き、小数、指数表記、数字以外を含む値、途中に空白がある値は無効です。無効な `Preview Line Count` は `10`、無効な `Preview Max Characters` は `4000` を使います。この補正で toast や追加の設定画面は表示しません。
