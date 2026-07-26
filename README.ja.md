@@ -21,6 +21,8 @@ MdClip は Markdown ファイルを新規作成、編集、移動、名前変更
 
 ## 使い始める
 
+MdClip は現在、Raycast Store ではなく、GitHub Release のソースコードから導入するローカル Raycast 拡張機能です。初回導入には Node.js とターミナルを使用し、更新時は最新リリースを取得して手順を再実行します。
+
 通常利用では、[最新の GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest) から `Source code (zip)` を取得します。取得するソースアーカイブは、最新のリリースタグに紐づくソースです。
 
 ```bash

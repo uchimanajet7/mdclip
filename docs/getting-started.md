@@ -4,9 +4,9 @@ English | [日本語](getting-started.ja.md)
 
 ## 1. Purpose
 
-This guide explains how to download `Source code (zip)` from the latest GitHub Release, install the dependencies on a Mac, and start using MdClip through Raycast development mode.
+MdClip is currently installed from GitHub Release source code as a local Raycast extension, not from the Raycast Store. Initial setup uses Node.js and Terminal, and updates are applied manually from a newer release.
 
-The downloaded source archive contains the source fixed to its release tag. To use a newer version, download `Source code (zip)` again from the latest GitHub Release, use the Node.js version selected by that release, and rerun `npm ci` and `npm run dev`.
+This guide provides the corresponding download, dependency installation, Raycast development-mode startup, Markdown Source configuration, verification, update, and removal steps. Each downloaded source archive is fixed to its release tag.
 
 ## 2. Requirements
 

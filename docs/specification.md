@@ -365,6 +365,8 @@ Reference:
 
 Active public release unit は GitHub Release です。通常利用者の導入、更新、削除は、英語では `docs/getting-started.md`、日本語では `docs/getting-started.ja.md` を正とし、latest GitHub Release の `Source code (zip)` を取得します。
 
+README と Getting Started の両言語では、具体的な操作手順より前に、Raycast Store 経由ではないローカル拡張機能であること、GitHub Release のソースコードから導入すること、初回導入では Node.js とターミナルを使用すること、更新は新しい Release から手動で行うことを簡潔に示します。詳細手順は Getting Started に集約し、GitHub Release body は Release 固有の利用者操作だけを扱い、Store 公開用の内部情報は利用者向け導入説明に混在させません。
+
 Release owner / maintainer の GitHub Release 管理は `docs/release-management.md` を正とします。Release manifest は `.github/release-manifest.json`、GitHub Release body は `.github/release-changelog/*.md` を使います。
 
 Current UI evidence と README media は `docs/screenshot-media.md` を正とします。

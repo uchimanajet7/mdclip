@@ -4,9 +4,9 @@
 
 ## 1. 目的
 
-この手順では、最新の GitHub Release から `Source code (zip)` を取得し、Mac 上で依存関係を入れて、Raycast の開発モードから MdClip を使い始めます。
+MdClip は現在、Raycast Store ではなく、GitHub Release のソースコードから導入するローカル Raycast 拡張機能です。初回導入には Node.js とターミナルを使用し、更新時は最新リリースを取得して手順を再実行します。
 
-取得したソースアーカイブには、リリースタグに対応する固定のソースが入っています。新しいバージョンを使う場合は、最新の GitHub Release から `Source code (zip)` を取得し直し、そのリリースが選択している Node.js を使用して、`npm ci` と `npm run dev` を再実行します。
+この文書では、ソースコードの取得、依存関係の導入、Raycast 開発モードでの起動、Markdown Source の設定、動作確認、更新、削除の各手順を説明します。取得したソースアーカイブは、対応するリリースタグに固定されています。
 
 ## 2. 必要なもの
 

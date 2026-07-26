@@ -21,6 +21,8 @@ MdClip does not create, edit, move, rename, or delete your Markdown files.
 
 ## Get Started
 
+MdClip is currently installed from GitHub Release source code as a local Raycast extension, not from the Raycast Store. Initial setup uses Node.js and Terminal, and updates are applied manually from a newer release.
+
 For normal use, download `Source code (zip)` from the [latest GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest). The downloaded source archive is tied to the latest release tag.
 
 ```bash
