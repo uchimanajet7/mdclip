@@ -248,24 +248,22 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 
 ## 15. Implementation
 
-| Area                      | 方針                                                                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Framework                 | Raycast Extension, TypeScript, React, Raycast API                                                            |
-| File traversal            | Node.js standard library                                                                                     |
-| Placeholder replacement   | extension 内の明示的な置換処理                                                                               |
-| Preferences type          | Raycast CLI が生成する `raycast-env.d.ts` を信頼する                                                         |
-| Runtime source model      | `MarkdownSource*` と `MarkdownFile*`                                                                         |
-| Compatibility migration   | 旧 identity 用 migration は追加しない                                                                        |
-| Node.js toolchain         | `.node-version` に検証済みlatest LTSを正確に固定し、`engines.node` はRaycast APIのminimumを宣言する          |
-| npm toolchain             | `packageManager` と `devEngines.packageManager` に検証済みexact versionを固定し、npm 11.17.0以上を必須にする |
-| npm bootstrap             | repository外でconfigured registryからselected npmをscriptなしに導入してから最初のproject commandを実行する   |
-| Toolchain freshness       | weekly read-only workflowでNode.js LTS、npm latest、Dependabot Core npm major compatibilityを確認する        |
-| Dependency registry       | registry endpointは環境設定を使い、lockfileには`integrity`を保持してregistry固有`resolved` URLを記録しない   |
-| Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                    |
+| Area                      | 方針                                                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Framework                 | Raycast Extension, TypeScript, React, Raycast API                                                          |
+| File traversal            | Node.js standard library                                                                                   |
+| Placeholder replacement   | extension 内の明示的な置換処理                                                                             |
+| Preferences type          | Raycast CLI が生成する `raycast-env.d.ts` を信頼する                                                       |
+| Runtime source model      | `MarkdownSource*` と `MarkdownFile*`                                                                       |
+| Compatibility migration   | 旧 identity 用 migration は追加しない                                                                      |
+| Node.js toolchain         | `.node-version` に検証済みlatest stable versionを示し、`engines.node` はRaycast APIのminimumを宣言する     |
+| npm toolchain             | selected Node.jsに同梱されるnpmを使い、`engines.npm`にはinstall-script policyに必要なminimumだけを宣言する |
+| npm environment           | npmのexact versionを独立して固定せず、MdClipからglobal npmをインストール、更新、置換しない                 |
+| Toolchain freshness       | weekly read-only workflowでlatest stable Node.jsと同梱npmのminimum適合を確認する                           |
+| Dependency registry       | registry endpointは環境設定を使い、lockfileには`integrity`を保持してregistry固有`resolved` URLを記録しない |
+| Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                  |
 
-npm latestがDependabot Coreの対応majorを超える場合だけ、npm major selectionを明示的な互換性holdとして維持します。hold中も対応済みmajor内のlatestを別に検知し、minor/patch updateを止めません。Dependabot Coreのmain sourceは実装状況の根拠であり、GitHub hosted Dependabotへの配備を証明するものではありません。新しいnpm majorの採用完了には、clean CIとGitHub hosted Dependabotの実行結果が必要です。
-
-`npm run update:dependencies` はapplication dependencyだけを更新し、Node.jsまたはnpmを変更しません。`npm run update:toolchain` は `.node-version`、`packageManager`、`devEngines.packageManager`、lockfile root metadataを一体で更新します。Node.js selectionが変わった場合、更新前のNode.js processで完了を宣言せず、新しいNode.jsとselected npmでbootstrapとverificationをやり直します。
+`npm run update:dependencies` はapplication dependencyだけを更新し、Node.jsまたはnpmの要件を変更しません。`npm run update:toolchain` は `.node-version`だけをlatest stable Node.jsへ更新します。Node.js selectionが変わった場合、更新前のNode.js processで完了を宣言せず、新しいNode.jsに同梱されるnpmで`npm ci`とverificationをやり直します。
 
 dependency updateはconfigured registryから最新の公式Raycast migrationを取得し、更新前の`@raycast/api` versionに必要な変換を適用してからdirect dependency一覧を読み直します。direct dependencyはlatestを最初に試します。latestがstrict peer dependency resolutionで拒否された場合だけ、temporary project上で公開済みstable versionを新しい順に実際のnpm resolverへ渡し、成立する最も新しいversionを選びます。dependency候補の取得中はinstall scriptを実行せず、候補確定後のclean `npm ci`でlockfileのversionと`integrity`を使って依存関係を入れ直し、review済みscriptを実行します。保留したdependencyについては `npm explain --json` の構造化された依存経路とSemVer判定を使い、直接の阻害依存、各依存枝で最も近い推移阻害依存、さらに深い阻害依存の件数を表示します。npmのerror message文字列から互換rangeや依存経路を推測しません。
 
@@ -277,7 +275,7 @@ dependency updateはconfigured registryから最新の公式Raycast migrationを
 | `npm run lint`                     | 開発・メンテナンス時の標準検証                                      |
 | `npm run check:dependencies`       | dependency source、lockfile integrity、install script policy の検証 |
 | `npm run check:dependency-updater` | peer dependency阻害情報の抽出・要約・表示のtest                     |
-| `npm run check:toolchain`          | Node.js LTS、npm latest、Dependabot compatibilityのread-only検証    |
+| `npm run check:toolchain`          | latest stable Node.jsと同梱npmのminimum適合をread-only検証          |
 | `npm run check:type`               | TypeScript 型検査                                                   |
 | `npm run check:lint`               | Raycast CLI を使わない source ESLint                                |
 | `npm run check:format`             | managed files の format check                                       |
@@ -291,7 +289,7 @@ dependency updateはconfigured registryから最新の公式Raycast migrationを
 | `npm run format`                   | managed files の write-format                                       |
 | `npm run fix-lint`                 | source ESLint 自動修正と write-format                               |
 | `npm run update:dependencies`      | latest 優先・peer-compatible fallback 付き dependency update        |
-| `npm run update:toolchain`         | Node.js/npm selectionとlockfile root metadataの一体更新             |
+| `npm run update:toolchain`         | `.node-version`をlatest stable Node.jsへ更新                        |
 | `npm run migrate`                  | latest公式Raycast API migration                                     |
 | `npm run icon:generate`            | 確認用 icon 生成                                                    |
 
@@ -424,7 +422,6 @@ repository-root
 │   ├── local-verification.mjs
 │   ├── publish-raycast-pr.mjs
 │   ├── release-manifest.mjs
-│   ├── setup-npm.mjs
 │   ├── sync-readme-media.mjs
 │   ├── toolchain.mjs
 │   ├── update-dependencies.mjs

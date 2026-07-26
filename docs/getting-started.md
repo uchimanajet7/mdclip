@@ -6,7 +6,7 @@ English | [日本語](getting-started.ja.md)
 
 This guide explains how to download `Source code (zip)` from the latest GitHub Release, install the dependencies on a Mac, and start using MdClip through Raycast development mode.
 
-The downloaded source archive contains the source fixed to its release tag. To use a newer version, download `Source code (zip)` again from the latest GitHub Release, set up the project's npm version, and rerun `npm ci` and `npm run dev` as needed.
+The downloaded source archive contains the source fixed to its release tag. To use a newer version, download `Source code (zip)` again from the latest GitHub Release, use the Node.js version selected by that release, and rerun `npm ci` and `npm run dev`.
 
 ## 2. Requirements
 
@@ -51,15 +51,14 @@ Use the Node.js version shown by `cat .node-version`. If Node.js is not installe
 Run the following commands in the terminal.
 
 ```bash
-node scripts/setup-npm.mjs
 npm ci
 ```
 
-`node scripts/setup-npm.mjs` selects the npm version tested with this MdClip release. If your current npm version is different, the command changes the global npm version used by your currently selected Node.js installation. `npm ci` installs MdClip's dependencies in the extracted source folder.
+The Node.js release shown in `.node-version` includes an npm version that meets MdClip's minimum requirement. MdClip does not install or replace npm globally. `npm ci` uses `package-lock.json` to install MdClip's dependencies in the extracted source folder.
 
 Completion checks:
 
-- Both commands finish without errors.
+- `npm ci` finishes without errors.
 - The `mdclip/node_modules` folder is created.
 
 ## 5. Start in Raycast Development Mode
@@ -118,7 +117,6 @@ Completion checks:
 
 - The downloaded ZIP file is `Source code (zip)` from the latest release page.
 - The Node.js version shown by `cat .node-version` is active in the new `mdclip` folder.
-- The selected npm version is active in the new `mdclip` folder.
 - `npm ci` finishes without errors in the new `mdclip` folder.
 - After running `npm run dev` in the new `mdclip` folder, you can open the MdClip commands from Raycast.
 

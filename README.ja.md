@@ -24,12 +24,11 @@ MdClip は Markdown ファイルを新規作成、編集、移動、名前変更
 通常利用では、[最新の GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest) から `Source code (zip)` を取得します。取得するソースアーカイブは、最新のリリースタグに紐づくソースです。
 
 ```bash
-node scripts/setup-npm.mjs
 npm ci
 npm run dev
 ```
 
-`node scripts/setup-npm.mjs` は、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更する場合があります。導入、更新、削除、利用環境への影響の詳細は [使い始める手順](docs/getting-started.ja.md) を参照してください。
+`.node-version` に示された Node.js を使用します。この Node.js には、MdClip に対応する npm が含まれています。MdClip がグローバル npm をインストールまたは置換することはありません。導入、更新、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
 `npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source にフォルダを設定します。
 

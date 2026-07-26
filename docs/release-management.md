@@ -158,14 +158,13 @@ GitHub Release が正常に公開された後は、manifest を未確定の次�
 現在の `Build` workflow は次を実行します。
 
 1. `.node-version` の Node.js をsetupする。
-2. `package.json#packageManager` のnpmをsetupする。
-3. `npm run check:dependencies`
-4. `npm ci`
-5. `npm run build`
-6. `npm run lint`
-7. `npm run lint:raycast`
+2. `npm run check:dependencies`
+3. `npm ci`
+4. `npm run build`
+5. `npm run lint`
+6. `npm run lint:raycast`
 
-すべてのexternal actionはfull commit SHAへ固定し、DependabotのGitHub Actions updateで新しいreleaseを検知します。`setup-node`のnpm cacheはbootstrap前にnpmを実行するため無効化し、selected npmのsetup後にproject commandを開始します。
+すべてのexternal actionはfull commit SHAへ固定し、DependabotのGitHub Actions updateで新しいreleaseを検知します。`setup-node`のnpm cacheは無効化し、`.node-version`のNode.jsに同梱されるnpmでproject commandを実行します。
 
 ### 7.2 Release
 
@@ -173,7 +172,7 @@ GitHub Release が正常に公開された後は、manifest を未確定の次�
 
 `Release` workflow は Raycast Store publish を呼び出しません。`publish_to_raycast` input も持ちません。
 
-dependency installと検証はreusable `Build` jobだけが担当します。`prepare-tag`と`github-release`はNode.js standard libraryだけを使うrelease manifest処理なので、npm setupと`npm ci`を重複実行しません。
+dependency installと検証はreusable `Build` jobだけが担当します。`prepare-tag`と`github-release`はNode.js standard libraryだけを使うrelease manifest処理なので、`npm ci`を重複実行しません。
 
 ### 7.3 Store publication workflow
 
@@ -181,7 +180,7 @@ dependency installと検証はreusable `Build` jobだけが担当します。`pr
 
 Repository variable `MDCLIP_RAYCAST_STORE_PUBLISH_REAPPROVED` が `true` の場合だけ、Store publish path として扱います。
 
-publish jobは、default branchではなく指定された`release-source/.node-version`とrelease sourceの`packageManager`をsetupします。publish script内部の`npm ci`と`npx --yes @raycast/api@latest publish`は、そのrelease artifactのtoolchainと実行環境のnpm registry設定で実行します。
+publish jobは、default branchではなく指定された`release-source/.node-version`のNode.jsをsetupします。publish script内部の`npm ci`と`npx --yes @raycast/api@latest publish`は、そのNode.jsに同梱されるnpmと実行環境のnpm registry設定で実行します。
 
 Store publish を開始すると、script はrelease sourceでGitに追跡されたfilesだけをcopy候補にし、`raycast-publish/README.md` と `raycast-publish/CHANGELOG.md` を publish source の root `README.md` / `CHANGELOG.md` として使います。source-use root の `README.md`、`README.ja.md`、`docs/`、root `CHANGELOG.md`、`.github/`、`raycast-publish/` は publish source から除外します。
 
@@ -191,9 +190,7 @@ Store publish を開始すると、script はrelease sourceでGitに追跡され
 
 ### 7.4 Toolchain freshness
 
-`Toolchain Freshness` workflow は、毎週火曜日09:17（Asia/Tokyo）と手動実行時に、`.node-version` のNode.jsと `package.json#packageManager` のnpmを現在のlatestと比較します。このworkflowは`contents: read`だけを使い、branch、commit、Pull Request、Issueを作成しません。
-
-npm latestのmajorがDependabot Coreの対応majorを超える場合は、互換性保留として理由とupstream sourceを表示します。ただし対応済みmajor内のlatestも別に取得するため、互換性保留中でもminor/patch updateを見逃しません。Dependabot Core main sourceはGitHub hosted serviceへの配備証明ではありません。採用するmajorの変更にはclean CIとGitHub hosted Dependabotの実行証拠が必要です。更新可能なstale toolchainは`npm run update:toolchain`による更新を要求します。
+`Toolchain Freshness` workflow は、毎週火曜日09:17（Asia/Tokyo）と手動実行時に、`.node-version` のNode.jsをNode.js公式release indexのlatest stable versionと比較し、そのNode.jsに同梱されるnpmが`engines.npm`を満たすことを確認します。このworkflowは`contents: read`だけを使い、branch、commit、Pull Request、Issueを作成しません。更新可能なstale Node.js selectionは`npm run update:toolchain`による更新を要求します。
 
 ## 8. Store publication prerequisites
 

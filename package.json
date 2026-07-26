@@ -6,17 +6,9 @@
   "icon": "icon.png",
   "author": "uchimanajet7",
   "license": "MIT",
-  "packageManager": "npm@11.18.0",
   "engines": {
     "node": ">=22.22.2",
     "npm": ">=11.17.0"
-  },
-  "devEngines": {
-    "packageManager": {
-      "name": "npm",
-      "version": "11.18.0",
-      "onFail": "error"
-    }
   },
   "platforms": [
     "macOS"

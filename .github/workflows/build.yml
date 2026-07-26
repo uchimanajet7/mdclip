@@ -25,9 +25,6 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
 
-      - name: Setup npm
-        run: node scripts/setup-npm.mjs
-
       - name: Verify dependency sources
         run: npm run check:dependencies
 

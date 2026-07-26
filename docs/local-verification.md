@@ -21,15 +21,14 @@ Raycast CLI lint は `npm run lint:raycast` として明示的に分離します
 リポジトリルートで次を実行します。
 
 ```bash
-node scripts/setup-npm.mjs
 npm ci
 ```
 
-setup scriptは `package.json#packageManager` に固定された検証済みnpmを有効化し、実際のnpm versionが一致することを確認します。現在のnpmと異なる場合は、実行環境のconfigured registryからinstall scriptを実行せずにexact npm versionを取得して、選択中のNode.js installationに属するglobal npmを更新します。旧npmによる導入処理はrepository外で実行し、repositoryの`devEngines`を評価する前にselected npmを有効化します。`npm ci` は、初回セットアップ、`package-lock.json` 変更後、依存関係を入れ直す場合に実行します。
+`.node-version` に示されたNode.jsを使用します。このNode.js releaseには、MdClipのnpm minimumを満たすnpmが含まれています。MdClipはnpmのexact versionを独立して固定せず、global npmをインストール、更新、置換しません。`npm ci` は、初回セットアップ、`package-lock.json` 変更後、依存関係を入れ直す場合に実行します。
 
-install-script policyの完全なhardeningを含むnpm 11.17.0以上が必要です。`package.json` の `engines.npm`、exact `devEngines.packageManager`、project `.npmrc` の `engine-strict=true` により、policy minimumを満たさないinstallとselected npm以外のsource operationを停止します。[npm `devEngines`](https://docs.npmjs.com/cli/v12/configuring-npm/package-json/#devengines) はsource codeを扱う環境を `install`、`ci`、`run` の前に検査し、[`engine-strict`](https://docs.npmjs.com/cli/v12/using-npm/config/#engine-strict) はengine不一致をinstall errorにします。
+install-script policyのhardeningを含むnpm 11.17.0以上が必要です。`package.json` の `engines.npm` とproject `.npmrc` の `engine-strict=true` により、policy minimumを満たさないinstallを停止します。npmの特定patch versionは要求しません。[npm `engines`](https://docs.npmjs.com/cli/v12/configuring-npm/package-json/#engines) は対応範囲を宣言でき、[`engine-strict`](https://docs.npmjs.com/cli/v12/using-npm/config/#engine-strict) はengine不一致をinstall errorにします。
 
-`.node-version` は検証対象のNode.js LTSを正確に固定します。`engines.node` はRaycast APIが要求するminimumを表し、`.node-version` のselected versionとは役割が異なります。現在のNode.js 24.18.0 LTSはnpm 11.16.0を同梱するため、Node.jsを揃えただけではnpm minimumを満たさず、setup scriptが必要です。[Node.js 24.18.0 archive](https://nodejs.org/en/download/archive/v24.18.0)
+`.node-version` は検証対象のlatest stable Node.jsを示します。`engines.node` は現在のRaycast APIが要求するminimumを表し、`.node-version` のselected versionとは役割が異なります。現在のNode.js 26.5.0はnpm 11.17.0を同梱しており、追加のnpm setupなしでnpm minimumを満たします。[Node.js release index](https://nodejs.org/dist/index.json)
 
 ## 4. npm scripts
 
@@ -41,7 +40,7 @@ install-script policyの完全なhardeningを含むnpm 11.17.0以上が必要で
 | `npm run check:dependency-updater` | `node --test scripts/peer-dependency-report.test.mjs`                           | peer dependency阻害情報の抽出・要約・表示を検査                     |
 | `npm run check:release`            | `node --test scripts/release-manifest.test.mjs`                                 | GitHub Release body の構造契約を検査                                |
 | `npm run check:docs`               | documentation language contract の test と repository 検査                      | 英日文書ペア、言語切替、canonical path、登録済み参照を検査          |
-| `npm run check:toolchain`          | `node scripts/check-toolchain-freshness.mjs`                                    | Node.js LTS、npm latest、Dependabot compatibility のread-only確認   |
+| `npm run check:toolchain`          | `node scripts/check-toolchain-freshness.mjs`                                    | latest stable Node.jsと同梱npmのminimum適合をread-only確認          |
 | `npm run check:type`               | `tsc -p tsconfig.json --noEmit`                                                 | TypeScript 型検査                                                   |
 | `npm run check:lint`               | `eslint src/**`                                                                 | Raycast CLI を使わない source lint                                  |
 | `npm run check:format`             | `node scripts/format.mjs --check`                                               | 明示対象ファイルの整形差分確認                                      |
@@ -54,7 +53,7 @@ install-script policyの完全なhardeningを含むnpm 11.17.0以上が必要で
 | `npm run format`                   | `node scripts/format.mjs --write`                                               | 明示対象ファイルの Prettier 整形                                    |
 | `npm run fix-lint`                 | `eslint src/** --fix && npm run format`                                         | source ESLint 自動修正と write-format                               |
 | `npm run update:dependencies`      | `node scripts/update-dependencies.mjs`                                          | latest優先でapplication dependencyを更新                            |
-| `npm run update:toolchain`         | `node scripts/update-toolchain.mjs`                                             | Node.js/npm selectionとlockfile metadataを一体更新                  |
+| `npm run update:toolchain`         | `node scripts/update-toolchain.mjs`                                             | `.node-version`をlatest stable Node.jsへ更新                        |
 | `npm run migrate`                  | `npx --yes @raycast/migration@latest .`                                         | 最新の公式Raycast migrationによるAPI migration                      |
 | `npm run icon:generate`            | `node scripts/generate-icon.mjs`                                                | 確認用 icon 生成                                                    |
 
@@ -64,11 +63,11 @@ install-script policyの完全なhardeningを含むnpm 11.17.0以上が必要で
 
 `npm run check:docs` は、`README.md`、`README.ja.md`、`docs/`、`raycast-publish/`、`.github/release-changelog/`を製品文書面として正方向に定義し、宣言済みの英日文書ペア、H1直後の相互言語link、canonical path、paired documentを参照する全Markdown linkをNode.js標準機能だけで検査します。Gitや個人環境のignore設定を必要としないため、repository checkoutとGitHub Releaseのsource archiveで同じ対象を検査します。翻訳文の意味や文章の一致は機械判定せず、導入、更新、削除、完了確認のtask coverageをmaintainerが両言語で確認します。
 
-`npm run update:toolchain` はNode.js latest LTSと、承認済みnpm policyで採用可能なlatestを確認し、`.node-version`、`packageManager`、`devEngines.packageManager`、lockfile metadataを一体で更新します。selected Node.jsが変わった場合は更新前のNode.js processで完了扱いにせず、exit status 2で終了します。新しいNode.jsへ切り替え、npm setup、`npm ci`、lint、Raycast lint、buildを実行した後に完了を判断します。
+`npm run update:toolchain` はNode.js公式release indexにあるlatest stable Node.jsを確認し、`.node-version`だけを更新します。そのNode.jsに同梱されるnpmが`engines.npm`を満たさない場合は更新しません。selected Node.jsが変わった場合は更新前のNode.js processで完了扱いにせず、exit status 2で終了します。新しいNode.jsへ切り替え、`npm ci`、lint、Raycast lint、buildを実行した後に完了を判断します。
 
-`npm run check:toolchain` はファイルを変更しません。npm全体のlatestとDependabot対応major内のlatestは実行環境のconfigured registryから取得し、Node.js latest LTSはNode.js公式release index、Dependabot対応npm majorはDependabot Coreのcurrent sourceから取得します。通常のlint/buildへnetwork freshnessを混ぜず、定期workflowと明示実行だけで使います。[Dependabot npm package-manager source](https://github.com/dependabot/dependabot-core/blob/main/npm_and_yarn/lib/dependabot/npm_and_yarn/npm_package_manager.rb)
+`npm run check:toolchain` はファイルを変更しません。Node.js公式release indexからlatest stable Node.jsとその同梱npmを確認し、`.node-version`の更新有無と`engines.npm`への適合を報告します。npm registryのlatestやDependabotの対応majorを独立したnpm選択条件にはしません。通常のlint/buildへnetwork freshnessを混ぜず、定期workflowと明示実行だけで使います。[Node.js release index](https://nodejs.org/dist/index.json)
 
-project `.npmrc` は registry host や認証情報を固定せず、registry dependency の `resolved` URL を `package-lock.json` から省略し、peer dependency override を禁止し、必要な npm version と install-script review を厳格化します。local、CI、dependency update、npm bootstrap、toolchain、Store補助経路はそれぞれの実行環境のnpm registry設定を使い、lockfileのversionと`integrity`を共有します。[npm config の `omit-lockfile-registry-resolved`](https://docs.npmjs.com/cli/v11/using-npm/config/#omit-lockfile-registry-resolved) は、registry dependencyのtarball endpointを後続install時のregistry設定から解決する構成です。
+project `.npmrc` は registry host や認証情報を固定せず、registry dependency の `resolved` URL を `package-lock.json` から省略し、peer dependency override を禁止し、必要な npm version と install-script review を厳格化します。local、CI、dependency update、toolchain、Store補助経路はそれぞれの実行環境のnpm registry設定を使い、lockfileのversionと`integrity`を共有します。[npm config の `omit-lockfile-registry-resolved`](https://docs.npmjs.com/cli/v11/using-npm/config/#omit-lockfile-registry-resolved) は、registry dependencyのtarball endpointを後続install時のregistry設定から解決する構成です。
 
 dependency の install script は `package.json` の `allowScripts` で package name 単位に review します。`resolved` URL を省略する構成では npm が lockfile URL から信頼できる version identity を取得できないため、version 固定 entry は使いません。name-only entry は将来の同名 package version にも適用されるので、dependency update のたびに `package-lock.json` の `hasInstallScript` と `allowScripts` の完全一致を `npm run check:dependencies` で検査します。未 review の install script は `.npmrc` の `strict-allow-scripts=true` により install error にします。[npm の install-script approval](https://docs.npmjs.com/cli/v11/commands/npm-install-scripts/) は name-only entry が将来 version にも適用されることを説明し、[`strict-allow-scripts`](https://docs.npmjs.com/cli/v11/commands/npm-install/#strict-allow-scripts) は未 review script を hard error にします。
 
@@ -180,14 +179,13 @@ npm run lint:raycast -- --relaxed
 現在の `Build` workflow は次を実行します。
 
 1. `.node-version` のNode.js setup
-2. `package.json#packageManager` のnpm setup
-3. `npm run check:dependencies`
-4. `npm ci`
-5. `npm run build`
-6. `npm run lint`
-7. `npm run lint:raycast`
+2. `npm run check:dependencies`
+3. `npm ci`
+4. `npm run build`
+5. `npm run lint`
+6. `npm run lint:raycast`
 
-Node.jsとnpmのexact versionはworkflowへ重複記述せず、`.node-version` と `package.json#packageManager` をsource of truthにします。すべての`setup-node` pathはnpm cacheを無効化し、external actionはfull commit SHAへ固定します。`Build`は実行環境のnpm registry設定を使い、通常CIとReleaseで共有する唯一のdependency installを担当します。Release metadata jobsはNode.js standard libraryだけを使うためnpm setupと`npm ci`を実行しません。Raycast Publishはscript内部に`npm ci`とlatest公式CLIを取得する`npx`があるため、`release-source/.node-version`とrelease sourceの`packageManager`をsetupしてからpublish scriptを実行します。
+Node.js selectionはworkflowへ重複記述せず、`.node-version` をsource of truthにします。npmはselected Node.jsに同梱されるversionを使い、`engines.npm`のminimumだけを要求します。すべての`setup-node` pathはnpm cacheを無効化し、external actionはfull commit SHAへ固定します。`Build`は実行環境のnpm registry設定を使い、通常CIとReleaseで共有する唯一のdependency installを担当します。Release metadata jobsはNode.js standard libraryだけを使うため`npm ci`を実行しません。Raycast Publishは`release-source/.node-version`をsetupしてから、script内部の`npm ci`とlatest公式CLIを取得する`npx`を実行します。
 
 `Toolchain Freshness` workflowは毎週火曜日09:17（Asia/Tokyo）と手動実行時に `npm run check:toolchain` を実行します。GitHub Actionsのscheduled workflowは毎時0分付近に遅延しやすいため17分にずらし、通常buildやPull Requestを最新releaseの発生だけで失敗させないよう別workflowにしています。[GitHub Actions `schedule`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 

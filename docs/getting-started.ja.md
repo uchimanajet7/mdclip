@@ -6,7 +6,7 @@
 
 この手順では、最新の GitHub Release から `Source code (zip)` を取得し、Mac 上で依存関係を入れて、Raycast の開発モードから MdClip を使い始めます。
 
-取得したソースアーカイブには、リリースタグに対応する固定のソースが入っています。新しいバージョンを使う場合は、最新の GitHub Release から `Source code (zip)` を取得し直し、プロジェクトで使う npm のバージョンを揃えてから、必要に応じて `npm ci` と `npm run dev` を再実行します。
+取得したソースアーカイブには、リリースタグに対応する固定のソースが入っています。新しいバージョンを使う場合は、最新の GitHub Release から `Source code (zip)` を取得し直し、そのリリースが選択している Node.js を使用して、`npm ci` と `npm run dev` を再実行します。
 
 ## 2. 必要なもの
 
@@ -51,11 +51,10 @@ npm -v
 開いたターミナルで次を実行します。
 
 ```bash
-node scripts/setup-npm.mjs
 npm ci
 ```
 
-`node scripts/setup-npm.mjs` は、この MdClip リリースで検証された npm バージョンを選択します。現在の npm バージョンが異なる場合、このコマンドは、現在選択している Node.js 環境で使われるグローバル npm のバージョンを変更します。`npm ci` は、展開したソースフォルダに MdClip の依存関係をインストールします。
+`.node-version` に示された Node.js には、MdClip の最小要件を満たす npm が含まれています。MdClip がグローバル npm をインストールまたは置換することはありません。`npm ci` は、`package-lock.json` を使って、展開したソースフォルダに MdClip の依存関係をインストールします。
 
 完了確認:
 
@@ -118,7 +117,6 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 
 - ダウンロードした ZIP ファイルが、最新リリースのページにある `Source code (zip)` である。
 - 新しい `mdclip` フォルダで、`cat .node-version` に表示された Node.js バージョンが有効になっている。
-- 新しい `mdclip` フォルダで、選択された npm バージョンが有効になっている。
 - 新しい `mdclip` フォルダで `npm ci` が失敗せずに終了する。
 - 新しい `mdclip` フォルダで `npm run dev` を実行し、Raycast から MdClip のコマンドを開ける。
 

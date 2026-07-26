@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
-import { promisify } from "node:util";
-import { compareVersions, parseMinimumNpmVersion, parseNpmPackageManager } from "./toolchain.mjs";
+import { compareVersions, parseMinimumNpmVersion } from "./toolchain.mjs";
 
-const execFileAsync = promisify(execFile);
 const npmrcPath = ".npmrc";
 const nodeVersionPath = ".node-version";
 const packageJsonPath = "package.json";
@@ -36,11 +33,15 @@ assert.deepEqual(
 );
 
 const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
-const selectedNpmVersion = parseNpmPackageManager(packageJson.packageManager);
 const selectedNodeVersion = (await readFile(nodeVersionPath, "utf8")).trim();
-const minimumSelectedNpmVersion = parseMinimumNpmVersion(packageJson.engines?.npm);
+parseMinimumNpmVersion(packageJson.engines?.npm);
 
 assert.match(selectedNodeVersion, /^\d+\.\d+\.\d+$/, `${nodeVersionPath} must pin an exact stable Node.js version`);
+assert.equal(
+  compareVersions(selectedNodeVersion, minimumNodeVersion.slice(2)) >= 0,
+  true,
+  `${nodeVersionPath} must satisfy engines.node`,
+);
 assert.equal(
   packageJson.engines?.node,
   minimumNodeVersion,
@@ -52,14 +53,14 @@ assert.equal(
   `${packageJsonPath} must require an npm version that enforces the install-script policy`,
 );
 assert.equal(
-  compareVersions(selectedNpmVersion, minimumSelectedNpmVersion) >= 0,
-  true,
-  `${packageJsonPath} packageManager must satisfy engines.npm`,
+  Object.hasOwn(packageJson, "packageManager"),
+  false,
+  `${packageJsonPath} must not require an exact npm version`,
 );
-assert.deepEqual(
+assert.equal(
   packageJson.devEngines?.packageManager,
-  { name: "npm", version: selectedNpmVersion, onFail: "error" },
-  `${packageJsonPath} devEngines must enforce the exact selected npm version`,
+  undefined,
+  `${packageJsonPath} devEngines must not require an exact npm version`,
 );
 assert.equal(
   packageJson.scripts?.["check:toolchain"],
@@ -135,16 +136,6 @@ assert.deepEqual(
 );
 assert.deepEqual(invalidInstallScriptPolicyValues, [], `${packageJsonPath} allowScripts decisions must be boolean`);
 
-const setupNpmScript = await readFile("scripts/setup-npm.mjs", "utf8");
-assert.equal(
-  setupNpmScript.includes('readStringOption("--repo-root")') &&
-    setupNpmScript.includes("mkdtempSync") &&
-    setupNpmScript.includes("cwd: bootstrapRoot") &&
-    setupNpmScript.includes("--ignore-scripts"),
-  true,
-  "npm bootstrap must support artifact roots and install the selected npm from the configured registry outside the guarded repository without lifecycle scripts",
-);
-
 const dependencyUpdater = await readFile("scripts/update-dependencies.mjs", "utf8");
 const initialDependencyCheckIndex = dependencyUpdater.indexOf('await run("npm", ["run", "check:dependencies"])');
 const migrationCommand = 'await run("npm", ["run", "migrate"])';
@@ -157,9 +148,11 @@ const dependencyUpdateIndex = dependencyUpdater.indexOf(
 );
 assert.equal(
   dependencyUpdater.includes("getToolchainFreshness") ||
-    dependencyUpdater.includes('writeFile(path.join(repoRoot, ".node-version")'),
+    dependencyUpdater.includes('writeFile(path.join(repoRoot, ".node-version")') ||
+    dependencyUpdater.includes("packageManager") ||
+    dependencyUpdater.includes("devEngines"),
   false,
-  "dependency updates must not change the selected Node.js or npm toolchain",
+  "dependency updates must not change the selected Node.js version or package-manager requirements",
 );
 assert.equal(
   dependencyUpdater.includes("mdclip-dependency-resolution-") &&
@@ -229,7 +222,7 @@ for (const [workflowPath, expectedVersionFiles] of nodeWorkflowVersionFiles) {
   assert.equal(
     findAllIndices(workflow, "package-manager-cache: false").length,
     expectedVersionFiles.length,
-    `${workflowPath} must disable every setup-node npm cache before npm bootstrap`,
+    `${workflowPath} must disable every setup-node npm cache`,
   );
   assert.equal(
     /^\s*node-version:/m.test(workflow),
@@ -247,18 +240,16 @@ for (const [workflowPath, expectedVersionFiles] of nodeWorkflowVersionFiles) {
   );
 }
 
-const setupNpmCommand = "run: node scripts/setup-npm.mjs";
 const dependencyCheckCommand = "run: npm run check:dependencies";
 const installCommand = "run: npm ci";
 const buildWorkflow = workflowContents.get(".github/workflows/build.yml");
-const buildSetupIndex = buildWorkflow.indexOf(setupNpmCommand);
 const buildCheckIndex = buildWorkflow.indexOf(dependencyCheckCommand);
 const buildInstallIndex = buildWorkflow.indexOf(installCommand);
 
 assert.equal(
-  buildSetupIndex !== -1 && buildSetupIndex < buildCheckIndex && buildCheckIndex < buildInstallIndex,
+  buildCheckIndex !== -1 && buildCheckIndex < buildInstallIndex,
   true,
-  "build workflow must bootstrap selected npm and verify policy before its only npm ci",
+  "build workflow must verify dependency policy before its only npm ci",
 );
 assert.equal(findAllIndices(buildWorkflow, installCommand).length, 1, "build workflow must own one dependency install");
 assert.equal(
@@ -273,21 +264,17 @@ assert.equal(
   true,
   "release workflow must reuse the verified build workflow",
 );
-assert.equal(releaseWorkflow.includes(setupNpmCommand), false, "release metadata jobs must not bootstrap unused npm");
 assert.equal(releaseWorkflow.includes(installCommand), false, "release metadata jobs must not reinstall dependencies");
 
 const publishWorkflow = workflowContents.get(".github/workflows/publish-release-to-raycast.yml");
 const publishCheckoutIndex = publishWorkflow.indexOf("path: release-source");
 const publishNodeIndex = publishWorkflow.indexOf("node-version-file: release-source/.node-version");
-const publishNpmIndex = publishWorkflow.indexOf("run: node scripts/setup-npm.mjs --repo-root release-source");
 const publishCommandIndex = publishWorkflow.indexOf("run: node scripts/publish-raycast-pr.mjs");
 
 assert.equal(
-  publishCheckoutIndex < publishNodeIndex &&
-    publishNodeIndex < publishNpmIndex &&
-    publishNpmIndex < publishCommandIndex,
+  publishCheckoutIndex < publishNodeIndex && publishNodeIndex < publishCommandIndex,
   true,
-  "Raycast publish must select the release artifact Node.js and npm before the nested install path",
+  "Raycast publish must select the release artifact Node.js before the nested npm install path",
 );
 
 const publishScript = await readFile("scripts/publish-raycast-pr.mjs", "utf8");
@@ -299,7 +286,6 @@ assert.equal(
 );
 
 const registryNeutralFiles = [
-  "scripts/setup-npm.mjs",
   "scripts/toolchain.mjs",
   "scripts/update-dependencies.mjs",
   "scripts/update-toolchain.mjs",
@@ -329,7 +315,7 @@ for (const filePath of registryNeutralFiles) {
 assert.deepEqual(
   registryOverrideLocations,
   [],
-  "dependency acquisition, bootstrap, update, CI, and publish paths must inherit the configured registry",
+  "dependency acquisition, update, CI, and publish paths must inherit the configured registry",
 );
 
 const freshnessWorkflow = workflowContents.get(".github/workflows/toolchain-freshness.yml");
@@ -344,33 +330,40 @@ assert.equal(
   "toolchain freshness workflow must run weekly away from the start of the hour",
 );
 assert.equal(
-  freshnessWorkflow.indexOf(setupNpmCommand) < freshnessWorkflow.indexOf("run: npm run check:toolchain"),
+  freshnessWorkflow.includes("run: npm run check:toolchain"),
   true,
-  "toolchain freshness workflow must bootstrap npm before the project freshness check",
+  "toolchain freshness workflow must run the project freshness check",
 );
 
-const { stdout: repositoryFilesOutput } = await execFileAsync(
-  "git",
-  ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
-  {
-    encoding: "buffer",
-    maxBuffer: 1024 * 1024 * 20,
-  },
-);
-const repositoryFiles = repositoryFilesOutput
-  .toString("utf8")
-  .split("\0")
-  .filter((filePath) => filePath.length > 0);
-const duplicatedToolchainVersionFiles = [];
-const duplicatedNpmVersionDeclaration = `${["NPM", "VERSION"].join("_")}: ${selectedNpmVersion}`;
+const scriptPaths = (await readdir("scripts"))
+  .filter((fileName) => fileName.endsWith(".mjs") && fileName !== "check-dependency-sources.mjs")
+  .map((fileName) => `scripts/${fileName}`);
+const globalNpmMutationPaths = [...scriptPaths, ...workflowPaths];
+const globalNpmMutationLocations = [];
 
-for (const filePath of repositoryFiles) {
-  const contents = await readFile(filePath);
+for (const filePath of globalNpmMutationPaths) {
+  const contents = await readFile(filePath, "utf8");
 
   if (
-    filePath.startsWith(".github/workflows/") &&
-    (contents.includes(duplicatedNpmVersionDeclaration) || contents.includes(`node-version: ${selectedNodeVersion}`))
+    /\bnpm\s+(?:install|i|add|update|upgrade|uninstall|remove|rm)\b[^\n]*(?:--global|-g)(?:\s|$)/.test(contents) ||
+    /\[\s*["'](?:install|i|add|update|upgrade|uninstall|remove|rm)["']\s*,\s*["'](?:--global|-g)["']/.test(contents)
   ) {
+    globalNpmMutationLocations.push(filePath);
+  }
+}
+
+assert.deepEqual(
+  globalNpmMutationLocations,
+  [],
+  "project scripts and workflows must not install, update, replace, or remove global npm",
+);
+
+const duplicatedToolchainVersionFiles = [];
+
+for (const filePath of workflowPaths) {
+  const contents = await readFile(filePath);
+
+  if (contents.includes(`node-version: ${selectedNodeVersion}`)) {
     duplicatedToolchainVersionFiles.push(filePath);
   }
 }
@@ -378,7 +371,7 @@ for (const filePath of repositoryFiles) {
 assert.deepEqual(
   duplicatedToolchainVersionFiles,
   [],
-  "workflow files must derive Node.js and npm versions from their repository sources of truth",
+  "workflow files must derive the Node.js version from .node-version",
 );
 
 console.log("dependency source and toolchain verification passed");

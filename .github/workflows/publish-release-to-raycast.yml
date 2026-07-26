@@ -79,9 +79,6 @@ jobs:
           node-version-file: release-source/.node-version
           package-manager-cache: false
 
-      - name: Setup release npm
-        run: node scripts/setup-npm.mjs --repo-root release-source
-
       - name: Verify release manifest tag
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}

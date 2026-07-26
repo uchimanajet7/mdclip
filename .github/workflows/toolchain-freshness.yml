@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   check:
-    name: Check Node.js and npm
+    name: Check Node.js
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,9 +22,6 @@ jobs:
         with:
           node-version-file: .node-version
           package-manager-cache: false
-
-      - name: Setup npm
-        run: node scripts/setup-npm.mjs
 
       - name: Check toolchain freshness
         run: npm run check:toolchain
