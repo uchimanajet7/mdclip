@@ -21,9 +21,11 @@ export type MarkdownFile = {
   size: number;
 };
 
+export type MarkdownSourceLoadFailureReason = "source-unavailable" | "source-unreadable" | "source-read-failed";
+
 export type MarkdownSourceLoadFailure = {
   markdownSource: ConfiguredMarkdownSource;
-  message: string;
+  reason: MarkdownSourceLoadFailureReason;
 };
 
 export type MarkdownFileLoadResult = {

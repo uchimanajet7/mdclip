@@ -5,9 +5,18 @@ import type {
   MarkdownFile,
   MarkdownFileLoadResult,
   MarkdownSourceLoadFailure,
+  MarkdownSourceLoadFailureReason,
 } from "../types";
 
 const EXCLUDED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
+type MarkdownSourceLoadTarget = "source-root" | "source-contents";
+
+class MarkdownSourceLoadError extends Error {
+  constructor(readonly reason: MarkdownSourceLoadFailureReason) {
+    super(reason);
+    this.name = "MarkdownSourceLoadError";
+  }
+}
 
 export function getMarkdownFileSearchFields(file: MarkdownFile): { title: string; keywords: string[] } {
   const parentDirectory = path.dirname(file.relativePath);
@@ -22,10 +31,16 @@ export function getMarkdownFileSearchFields(file: MarkdownFile): { title: string
 
 export async function listMarkdownFiles(markdownSource: ConfiguredMarkdownSource): Promise<MarkdownFile[]> {
   const rootPath = path.resolve(markdownSource.directory);
-  const rootStat = await fs.stat(rootPath);
+  let rootStat;
+
+  try {
+    rootStat = await fs.stat(rootPath);
+  } catch (error) {
+    throw toMarkdownSourceLoadError(error, "source-root");
+  }
 
   if (!rootStat.isDirectory()) {
-    throw new Error(`${markdownSource.displayName} is not a directory: ${rootPath}`);
+    throw new MarkdownSourceLoadError("source-unavailable");
   }
 
   const files = await walkDirectory(rootPath, rootPath, markdownSource);
@@ -47,7 +62,7 @@ export async function listMarkdownFilesFromMarkdownSources(
 
     failures.push({
       markdownSource: markdownSources[index],
-      message: getErrorMessage(result.reason),
+      reason: getMarkdownSourceLoadFailureReason(result.reason),
     });
   });
 
@@ -59,7 +74,14 @@ async function walkDirectory(
   currentPath: string,
   markdownSource: ConfiguredMarkdownSource,
 ): Promise<MarkdownFile[]> {
-  const entries = await fs.readdir(currentPath, { withFileTypes: true });
+  let entries;
+
+  try {
+    entries = await fs.readdir(currentPath, { withFileTypes: true });
+  } catch (error) {
+    throw toMarkdownSourceLoadError(error, currentPath === rootPath ? "source-root" : "source-contents");
+  }
+
   const files: MarkdownFile[] = [];
 
   for (const entry of entries) {
@@ -82,7 +104,13 @@ async function walkDirectory(
       continue;
     }
 
-    const stat = await fs.stat(entryPath);
+    let stat;
+
+    try {
+      stat = await fs.stat(entryPath);
+    } catch (error) {
+      throw toMarkdownSourceLoadError(error, "source-contents");
+    }
 
     files.push({
       path: entryPath,
@@ -101,10 +129,43 @@ function shouldSkipDirectory(directoryName: string): boolean {
   return directoryName.startsWith(".") || EXCLUDED_DIRECTORY_NAMES.has(directoryName);
 }
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
+export function classifyMarkdownSourceLoadFailure(
+  error: unknown,
+  target: MarkdownSourceLoadTarget,
+): MarkdownSourceLoadFailureReason {
+  const code = getFileSystemErrorCode(error);
+
+  if (code === "EACCES" || code === "EPERM") {
+    return "source-unreadable";
   }
 
-  return String(error);
+  if (target === "source-root" && (code === "ENOENT" || code === "ENOTDIR")) {
+    return "source-unavailable";
+  }
+
+  return "source-read-failed";
+}
+
+function toMarkdownSourceLoadError(error: unknown, target: MarkdownSourceLoadTarget): MarkdownSourceLoadError {
+  if (error instanceof MarkdownSourceLoadError) {
+    return error;
+  }
+
+  return new MarkdownSourceLoadError(classifyMarkdownSourceLoadFailure(error, target));
+}
+
+function getMarkdownSourceLoadFailureReason(error: unknown): MarkdownSourceLoadFailureReason {
+  if (error instanceof MarkdownSourceLoadError) {
+    return error.reason;
+  }
+
+  return "source-read-failed";
+}
+
+function getFileSystemErrorCode(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  return typeof error.code === "string" ? error.code : undefined;
 }

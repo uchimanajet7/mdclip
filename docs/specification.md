@@ -130,7 +130,7 @@ Markdown file content は検索対象にしません。一覧検索のために 
 
 preview 表示中は detail pane に情報を集約し、一覧側の過密表示を避けます。
 
-All Markdown Sources では、Markdown Source ごとの section を維持します。読み込めない source がある場合は、読み込める source の files を表示し、失敗 source を `Could Not Load` section と Toast で通知します。
+All Markdown Sources では、Markdown Source ごとの section を維持します。読み込めない source がある場合は、読み込める source の files を表示し、失敗 source を `Could Not Load` section と Toast で通知します。Toast は読み込み失敗の発生と対象 source を通知し、`Could Not Load` section は継続確認と `Open Extension Preferences` による復旧操作を提供します。
 
 ## 9. Sort
 
@@ -193,7 +193,7 @@ preview visibility は Raycast Cache に `mdclip.preview.enabled` として保�
 
 `Open in Editor` と `Open` は同時に表示しません。Editor preference が設定済みの場合は `Open in Editor`、未設定の場合は `Open` を表示します。
 
-設定済み source に Markdown files がない場合、個別 command は `Open Markdown Source Folder` を primary action とします。All Markdown Sources は source ごとに `Open <Source Name> Folder` を表示します。folder の設定先を変更する場合に備えて、`Open Extension Preferences` も secondary action として表示します。source disabled、source folder unset、または configured path が directory ではない場合は folder を開く action を表示せず、`Open Extension Preferences` を復旧経路とします。
+設定済み source に Markdown files がない場合、個別 command は `Open Markdown Source Folder` を primary action とします。All Markdown Sources は source ごとに `Open <Source Name> Folder` を表示します。folder の設定先を変更する場合に備えて、`Open Extension Preferences` も secondary action として表示します。source disabled、source folder unset、または configured source folder を読み込めない場合は folder を開く action を表示せず、`Open Extension Preferences` を復旧経路とします。
 
 ## 12. Dynamic Placeholders
 
@@ -224,15 +224,29 @@ MdClip の placeholder 展開は、上の表にある対応 placeholder につ�
 
 ## 13. Error states
 
-| 状態                                         | 表示                                                                               |
-| -------------------------------------------- | ---------------------------------------------------------------------------------- |
-| source disabled                              | 設定確認画面と `Open Extension Preferences`                                        |
-| source folder unset                          | 設定確認画面と `Open Extension Preferences`                                        |
-| configured path is not a directory           | 読み込み失敗画面と `Open Extension Preferences`                                    |
-| no Markdown files                            | empty state、source folder を開く primary action、`Open Extension Preferences`     |
-| partial load failure in All Markdown Sources | 読み込める files を表示し、失敗 source を `Could Not Load` section と Toast で表示 |
-| clipboard read failure during expanded copy  | copy を開始せず、success HUD を表示せず、Failure Toast を表示                      |
-| copy failure                                 | failure Toast                                                                      |
+| 状態                                                | 表示                                                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| source disabled                                     | 設定確認画面と `Open Extension Preferences`                                                |
+| source folder unset                                 | 設定確認画面と `Open Extension Preferences`                                                |
+| configured source folder is unavailable             | source 名、folder が利用不能であること、復旧方法、`Open Extension Preferences`             |
+| configured source folder or its contents unreadable | source 名、すべての files を読み取れないこと、復旧方法、`Open Extension Preferences`       |
+| source contents changed or another read failure     | source 名、すべての files を読み取れなかったこと、再確認方法、`Open Extension Preferences` |
+| no Markdown files                                   | empty state、source folder を開く primary action、`Open Extension Preferences`             |
+| partial load failure in All Markdown Sources        | 読み込める files を表示し、失敗 source を `Could Not Load` section と Toast で表示         |
+| clipboard read failure during expanded copy         | copy を開始せず、success HUD を表示せず、Failure Toast を表示                              |
+| copy failure                                        | failure Toast                                                                              |
+
+個別の Markdown Source command ですべての files を読み込めない場合は、`Could not load Markdown Source` を表示します。All Markdown Sources ですべての source を読み込めない場合は、`Could not load Markdown Sources` を表示します。
+
+利用者向けの読み込み失敗表示には、Markdown Source の表示名、利用者が理解できる失敗状態、実行可能な復旧方法だけを含めます。Node.js の system error message、error code、system call、stack trace、absolute path は表示しません。
+
+ルートの configured source path が存在しない、directory ではなくなった、またはルートの directory scan 中に失われた場合は、source folder が利用不能であると表示します。通常の preferences 操作では `directory` picker が file の選択を防ぐため、`not a directory` を独立した利用者向け状態にはしません。
+
+ルートまたは配下の読み込みで `EACCES` または `EPERM` が発生した場合は、source folder 内のすべての files を読み取れないことと、folder permissions の確認または別の folder の選択を案内します。
+
+ルート以外の走査対象で `ENOENT` または `ENOTDIR` が発生した場合は、ルート folder が失われたとは断定しません。source folder 内のすべての files を読み取れなかったことと、folder の確認後に command を開き直すことを案内します。その他の予期しない source 読み込み失敗も同じ一般的な読み込み失敗として扱います。
+
+部分失敗時の `Could Not Load` row は source の表示名を title とし、subtitle は `Folder is no longer available.` または `Some files could not be read.` とします。Toast は失敗した source の表示名だけを通知し、読み込めた source の files はそのまま利用できます。
 
 ## 14. Security and data handling
 

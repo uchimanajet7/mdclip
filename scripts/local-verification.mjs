@@ -86,9 +86,12 @@ async function verifyMarkdownFileListing() {
     outfile: outputFile,
   });
 
-  const { getMarkdownFileSearchFields, listMarkdownFiles, listMarkdownFilesFromMarkdownSources } = await import(
-    pathToFileURL(outputFile)
-  );
+  const {
+    classifyMarkdownSourceLoadFailure,
+    getMarkdownFileSearchFields,
+    listMarkdownFiles,
+    listMarkdownFilesFromMarkdownSources,
+  } = await import(pathToFileURL(outputFile));
   const markdownSourceRoot = path.join(fixtureRoot, "markdown-source");
   const secondMarkdownSourceRoot = path.join(fixtureRoot, "second-markdown-source");
   const missingMarkdownSourceRoot = path.join(fixtureRoot, "missing-markdown-source");
@@ -156,10 +159,55 @@ async function verifyMarkdownFileListing() {
   );
   assert.equal(combinedResult.failures.length, 1);
   assert.equal(combinedResult.failures[0].markdownSource.displayName, "Missing Fixture");
-  assert.match(combinedResult.failures[0].message, /ENOENT|no such file/i);
+  assert.equal(combinedResult.failures[0].reason, "source-unavailable");
+  assert.equal(combinedResult.failures[0].message, undefined);
 
   const notDirectoryPath = path.join(fixtureRoot, "not-directory.md");
   await writeFile(notDirectoryPath, "# Not Directory\n");
+
+  const notDirectoryResult = await listMarkdownFilesFromMarkdownSources([
+    {
+      id: 1,
+      commandTitle: "Markdown Source 1",
+      displayName: "Not Directory",
+      directory: notDirectoryPath,
+    },
+  ]);
+
+  assert.deepEqual(notDirectoryResult.files, []);
+  assert.equal(notDirectoryResult.failures.length, 1);
+  assert.equal(notDirectoryResult.failures[0].reason, "source-unavailable");
+
+  for (const code of ["EACCES", "EPERM"]) {
+    assert.equal(
+      classifyMarkdownSourceLoadFailure(Object.assign(new Error("internal detail"), { code }), "source-root"),
+      "source-unreadable",
+    );
+    assert.equal(
+      classifyMarkdownSourceLoadFailure(Object.assign(new Error("internal detail"), { code }), "source-contents"),
+      "source-unreadable",
+    );
+  }
+
+  for (const code of ["ENOENT", "ENOTDIR"]) {
+    assert.equal(
+      classifyMarkdownSourceLoadFailure(Object.assign(new Error("internal detail"), { code }), "source-root"),
+      "source-unavailable",
+    );
+    assert.equal(
+      classifyMarkdownSourceLoadFailure(Object.assign(new Error("internal detail"), { code }), "source-contents"),
+      "source-read-failed",
+    );
+  }
+
+  assert.equal(
+    classifyMarkdownSourceLoadFailure(Object.assign(new Error("internal detail"), { code: "EMFILE" }), "source-root"),
+    "source-read-failed",
+  );
+  assert.equal(
+    classifyMarkdownSourceLoadFailure(new Error("internal detail"), "source-contents"),
+    "source-read-failed",
+  );
 
   await assert.rejects(
     () =>
@@ -169,7 +217,11 @@ async function verifyMarkdownFileListing() {
         displayName: "Not Directory",
         directory: notDirectoryPath,
       }),
-    /is not a directory/,
+    (error) => {
+      assert.equal(error.reason, "source-unavailable");
+      assert(!String(error.message).includes(notDirectoryPath));
+      return true;
+    },
   );
 }
 

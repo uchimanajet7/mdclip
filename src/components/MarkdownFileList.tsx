@@ -20,6 +20,7 @@ type Props = {
   markdownSources: ConfiguredMarkdownSource[];
   searchBarPlaceholder: string;
   emptyTitle: string;
+  loadErrorTitle: string;
 };
 
 type LoadState = {
@@ -38,7 +39,7 @@ const PREVIEW_TRUNCATION_NOTICE =
   "Preview truncated at the configured line or character limit. Open the file to view the full content.";
 const previewVisibilityCache = new Cache();
 
-export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyTitle }: Props) {
+export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyTitle, loadErrorTitle }: Props) {
   const [state, setState] = useState<LoadState>({ files: [], failures: [], isLoading: true });
   const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
   const [isPreviewEnabled, setIsPreviewEnabled] = useState(readInitialPreviewVisibility);
@@ -91,9 +92,14 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
             message: formatMarkdownSourceFailureNames(result.failures),
           });
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
-          setState({ files: [], failures: [], error: getErrorMessage(error), isLoading: false });
+          setState({
+            files: [],
+            failures: [],
+            error: "MdClip could not load Markdown files. Check the configured folders and open the command again.",
+            isLoading: false,
+          });
         }
       }
     }
@@ -138,7 +144,7 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
     >
       {state.error ? (
         <List.EmptyView
-          title="Could not load Markdown files"
+          title={loadErrorTitle}
           description={state.error}
           actions={
             <ActionPanel>
@@ -222,7 +228,7 @@ function MarkdownSourceFailureListItem({ failure }: { failure: MarkdownSourceLoa
       id={`markdown-source-load-failure-${failure.markdownSource.id}`}
       icon={Icon.Warning}
       title={failure.markdownSource.displayName}
-      subtitle={failure.message}
+      subtitle={formatMarkdownSourceFailureSubtitle(failure)}
       actions={
         <ActionPanel>
           <Action icon={Icon.Gear} title="Open Extension Preferences" onAction={openExtensionPreferences} />
@@ -415,7 +421,24 @@ function formatMarkdownSourceFailureNames(failures: MarkdownSourceLoadFailure[])
 }
 
 function formatMarkdownSourceFailureMessages(failures: MarkdownSourceLoadFailure[]): string {
-  return failures.map((failure) => `${failure.markdownSource.displayName}: ${failure.message}`).join("\n");
+  return failures.map(formatMarkdownSourceFailureMessage).join("\n");
+}
+
+function formatMarkdownSourceFailureMessage(failure: MarkdownSourceLoadFailure): string {
+  const sourceName = failure.markdownSource.displayName;
+
+  switch (failure.reason) {
+    case "source-unavailable":
+      return `${sourceName} folder is no longer available. Restore it or choose another folder in Extension Preferences.`;
+    case "source-unreadable":
+      return `MdClip cannot read all files in the ${sourceName} folder. Check the folder's permissions or choose another folder in Extension Preferences.`;
+    case "source-read-failed":
+      return `MdClip could not read all files in the ${sourceName} folder. Check the folder and open the command again.`;
+  }
+}
+
+function formatMarkdownSourceFailureSubtitle(failure: MarkdownSourceLoadFailure): string {
+  return failure.reason === "source-unavailable" ? "Folder is no longer available." : "Some files could not be read.";
 }
 
 function getErrorMessage(error: unknown): string {
