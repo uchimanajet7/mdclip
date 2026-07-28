@@ -341,7 +341,7 @@ manual UI verification:
 npm run dev
 ```
 
-manual UI verification では、command names、preferences、list behavior、copy actions、preview、editor actions、error states が MdClip / Markdown Source model と一致することを確認します。current UI evidence と README media の確認は `docs/screenshot-media.md` の `MdClip UI Evidence and README Media Procedure` に従います。
+manual UI verification では、command names、preferences、list behavior、copy actions、preview、editor actions、error states が MdClip / Markdown Source model と一致することを確認します。current screenshot / UI evidence と README media の確認は、共通手順である `docs/screenshot-media.md` の `MdClip Screenshot and UI Evidence Procedure` に従います。
 
 ## 18. Documentation language contract
 
@@ -383,11 +383,11 @@ README と Getting Started の両言語では、具体的な操作手順より�
 
 Release owner / maintainer の GitHub Release 管理は `docs/release-management.md` を正とします。Release manifest は `.github/release-manifest.json`、GitHub Release body は `.github/release-changelog/*.md` を使います。
 
-Current UI evidence と README media は `docs/screenshot-media.md` を正とします。
+README、GitHub、GitHub Release、Store で共有する current screenshot / UI evidence の作成、同期、検証は `docs/screenshot-media.md` を唯一の共通手順とします。Source display name は configured value または folder-derived fallback のどちらも有効であり、screenshot acceptance では固定した example name を要求しません。
 
 Store publish を行う前に、product direction、workflow、script、secret、Store Version History、screenshots、README、docs、GitHub About metadata を一つの publication path として確認します。
 
-`raycast-publish/` は Store publication resource set です。Store publish 用の README、Version History、screenshot 手順、背景説明をまとめます。Store publication 前の Store screenshot / metadata procedure は `raycast-publish/screenshots.md` を正とします。root `CHANGELOG.md` を source-use root に復帰する場合は、root surface の意味と README / GitHub Release / Store Version History の整合性を別途判断します。
+`raycast-publish/` は Store publication resource set です。Store publish 用の README、Version History、Store 固有 screenshot checklist、背景説明をまとめます。`raycast-publish/screenshots.md` は `docs/screenshot-media.md` の共通手順を参照し、Store 固有の枚数、publication resource、Pull Request review evidence だけを追加確認します。root `CHANGELOG.md` を source-use root に復帰する場合は、root surface の意味と README / GitHub Release / Store Version History の整合性を別途判断します。
 
 ## 20. Repository structure
 
@@ -471,7 +471,7 @@ repository-root
 | `docs/getting-started.ja.md` | Japanese user onboarding, update, and removal guide |
 | `docs/local-verification.md` | Development and maintenance verification guide      |
 | `docs/release-management.md` | Release owner / maintainer release operation guide  |
-| `docs/screenshot-media.md`   | Current UI evidence and README/GitHub media guide   |
+| `docs/screenshot-media.md`   | Canonical screenshot and UI evidence procedure      |
 | `raycast-publish/`           | Store publication resource set                      |
 
 Generated or local-only paths include:
@@ -487,7 +487,7 @@ assets/icon.generated.png
 
 ## 21. Media and metadata
 
-Current UI evidence and README media handling is defined in `docs/screenshot-media.md`.
+Shared screenshot creation, current UI evidence verification, and README media handling are defined only in `docs/screenshot-media.md`.
 
 The active current-evidence paths are:
 
@@ -501,4 +501,4 @@ The active current-evidence paths are:
 
 `scripts/sync-readme-media.mjs` copies `metadata/mdclip-1.png` to `media/mdclip-1.png`. It must not recreate old `local-copy-blocks` media.
 
-Store publish screenshot handling belongs to `raycast-publish/screenshots.md` and the Store publication prerequisites. Old Store-oriented screenshots and media are not current MdClip UI evidence.
+Store publish uses the accepted shared screenshots. `raycast-publish/screenshots.md` adds only the current Store-specific requirements and Pull Request review checks; it does not redefine the common capture procedure. Old Store-oriented screenshots and media are not current MdClip UI evidence.

@@ -11,7 +11,7 @@ This directory is the resource set for preparing and publishing MdClip to the Ra
 | Active user path | GitHub Release `Source code (zip)` and local Raycast development mode           |
 | Entry point      | Complete the prerequisites below before enabling the Store publication workflow |
 
-The files in this directory keep the Store-facing README, Store Version History, screenshot procedure, and publish background together so the Store publication path can be reviewed as one coordinated path.
+The files in this directory keep the Store-facing README, Store Version History, Store-specific screenshot checklist, and publish background together so the Store publication path can be reviewed as one coordinated path. The common screenshot procedure remains in `docs/screenshot-media.md`.
 
 ## Current Distribution and Store Background
 
@@ -40,7 +40,7 @@ The Store publication resources are kept together so the full publication path c
 | `publish.md`     | Entry point, background, prerequisites, and Store publication procedure                 |
 | `README.md`      | Store-facing README source to use as root `README.md` in a prepared publish source      |
 | `CHANGELOG.md`   | Store Version History source to use as root `CHANGELOG.md` in a prepared publish source |
-| `screenshots.md` | Store screenshot and metadata procedure to complete before Store publication            |
+| `screenshots.md` | Store-specific checklist applied after the common screenshot procedure                  |
 
 ## Active Root Versus Publish Source
 
@@ -81,7 +81,7 @@ Keep the workflow disabled and do not add secrets or create or update a `raycast
    - Versioning: https://developers.raycast.com/information/versioning
 2. Confirm the current product should still be submitted as MdClip.
 3. Confirm `package.json` metadata, command titles, categories, and keywords are Store-appropriate.
-4. Refresh screenshots by following `raycast-publish/screenshots.md`.
+4. Create and verify the shared screenshots with `docs/screenshot-media.md`, then complete `raycast-publish/screenshots.md`.
 5. Confirm `raycast-publish/README.md` is the Store-facing README source.
 6. Confirm `raycast-publish/CHANGELOG.md` is the Store Version History source.
 7. Confirm the GitHub Release tag exists and points to the source state to publish.

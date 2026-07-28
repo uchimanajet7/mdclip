@@ -213,7 +213,7 @@ Raycast アプリ上では、以下を人間が操作して確認します。
 - 実際に省略された preview だけに省略案内が表示され、short file と empty file には表示されないこと
 - 無効な source、未設定 folder、読み込み失敗時の状態が理解できること
 
-Current MdClip UI evidence を作成する場合は、[Screenshot and Media Procedure](screenshot-media.md) を使います。これは Raycast GUI/manual work と manual visual checks を含むため、通常の `npm run lint` には含めません。
+Current MdClip screenshot / UI evidence を作成する場合は、共通手順である [Screenshot and UI Evidence Procedure](screenshot-media.md) を使います。これは Raycast GUI/manual work と manual visual checks を含むため、通常の `npm run lint` には含めません。Store 公開時だけ追加する確認は `raycast-publish/screenshots.md` が扱い、共通撮影手順を重複して定義しません。
 
 ## 11. Store 公開関連
 

@@ -22,7 +22,7 @@ MdClip の active release path は GitHub Release です。release owner / maint
 | `Build` workflow                 | build、local verification、Raycast CLI lint を確認する | branch push、Pull Request、手動実行、または他 workflow から実行する |
 | `.github/release-manifest.json`  | リリース準備コミットが表す GitHub Release の記述子     | リリース準備時に更新し、`Release` workflow の入力として管理する     |
 | `.github/release-changelog/*.md` | GitHub Release body の source                          | release tag と同じ version 名で作成または更新する                   |
-| `docs/screenshot-media.md`       | README / GitHub / release 用 UI evidence 手順          | current UI evidence を扱う release 前確認で使う                     |
+| `docs/screenshot-media.md`       | 共通 screenshot / UI evidence 手順                     | README、GitHub、Release、Store で共有する画像の作成と確認に使う     |
 | `docs/local-verification.md`     | 開発・メンテナンス検証手順                             | release 前の local verification と手動確認の範囲を定義する          |
 
 ## 3. 公式情報の位置づけ
@@ -135,7 +135,7 @@ GitHub Release を作成する場合は、次を行います。
 6. `npm run lint` を実行する。
 7. 必要に応じて `npm run lint:raycast` を実行する。
 8. 必要に応じて `npm run build` を実行する。
-9. README や GitHub Release で current UI evidence を扱う場合は、`docs/screenshot-media.md` に従って画像を作成し、manual visual checks を完了する。
+9. README や GitHub Release で current UI evidence を扱う場合は、共通の `docs/screenshot-media.md` に従って画像を作成し、manual visual checks を完了する。
 10. 変更を commit / push する。
 11. GitHub Actions の `Release` workflow を手動実行する。
 
@@ -212,9 +212,8 @@ Raycast Store publish に関係する公式情報は次です。
 - `raycast-publish/publish.md`
 - `raycast-publish/README.md`
 - `raycast-publish/CHANGELOG.md`
-- `raycast-publish/screenshots.md`
-- Store screenshot / metadata workflow
-- current screenshot/media procedure
+- 共通 screenshot / UI evidence 手順である `docs/screenshot-media.md`
+- Store 固有の追加確認だけを扱う `raycast-publish/screenshots.md`
 - `RAYCAST_PUBLISH_GITHUB_TOKEN_CLASSIC`
 - README / docs / GitHub About metadata
 
