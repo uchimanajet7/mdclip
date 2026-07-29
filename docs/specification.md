@@ -85,7 +85,7 @@ MdClip Preferences
 | Markdown Source N Name   | textfield |               no | none    | MdClip 内の一覧、section、metadata で使う source 表示名。Raycast Root Search の command title は変更しない。空の場合は folder name を使う |
 | Editor                   | appPicker |               no | none    | Open in Editor で使う editor                                                                                                              |
 | Preview Line Count       | textfield |               no | `10`    | 前後空白を除いた `1`〜`100` の ASCII 数字による整数。無効値は `10`、`100` 超は `100`                                                      |
-| Preview Max Characters   | textfield |               no | `4000`  | 前後空白を除いた `1`〜`20000` の ASCII 数字による整数。無効値は `4000`、`20000` 超は `20000`                                              |
+| Preview Max Characters   | textfield |               no | `4000`  | Unicode code point 数による preview 上限。前後空白を除いた `1`〜`20000` の ASCII 数字による整数。無効値は `4000`、`20000` 超は `20000`    |
 
 `Raycast required` は、値が未入力のときに Raycast が command を開く前に設定を要求するかを表します。README と Store README の `When needed` / `必要になる条件` は、利用者が MdClip の機能を使うための条件を表します。この 2 つを同じ「必須 / 任意」として扱いません。
 
@@ -164,7 +164,11 @@ detail pane の metadata は、上から次の順で表示します。
 
 一覧の title に file name、subtitle に relative parent path を表示しているため、relative path は detail metadata では重複表示しません。relative path は一覧表示、検索、`Path (A-Z)` sort では引き続き使います。Raycast の `List.Item.Detail.Metadata` は選択 item の追加の構造化情報を表示する領域で、separator は metadata item を grouping する場合に使います。この metadata は 1 つの連続した file information set として表示するため、separator は使いません。[Raycast List API](https://developers.raycast.com/api-reference/user-interface/list) [Apple Human Interface Guidelines: Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
 
-preview は `Preview Line Count` と `Preview Max Characters` の小さい方の制限に従って切り詰めます。各設定値は前後の空白を除き、残った文字列全体が ASCII 数字 `[0-9]+` だけで構成される場合に整数として扱います。範囲内ならその値を使い、上限を超える場合は上限値を使います。JavaScript の数値範囲を超える長い数字列も上限値を使います。
+preview は `Preview Line Count` と `Preview Max Characters` のうち先に到達する制限に従って切り詰めます。`Preview Max Characters` は JavaScript の UTF-16 code unit 数ではなく Unicode code point 数による上限です。上限位置が Unicode extended grapheme cluster の途中にある場合は、その cluster 全体を表示対象から外し、直前の cluster boundary で終了します。cluster を完成させるために上限を超えて content を追加しないため、実際の表示文字数が設定値より少なくなる場合があります。boundary 判定には標準の `Intl.Segmenter` の `grapheme` granularity を使い、独自の Unicode 分割規則や追加 package は使いません。[Unicode UAX #29](https://www.unicode.org/reports/tr29/) [ECMA-402 `Intl.Segmenter`](https://tc39.es/ecma402/#intl-segmenter-objects)
+
+preview 読み込みは、正規化後の行制限超過または code point 上限超過を確認できた時点で停止します。1 code point は UTF-8 で最大 4 bytes なので、最大設定値 `20000` でも code point 上限に必要な入力は最大約 80000 bytes と、境界確認に使う既存の 4096-byte read chunk に制限されます。長い combining sequence や ZWJ sequence が上限をまたぐ場合も、file 全体を読み続けず、その cluster を分割表示しません。
+
+各設定値は前後の空白を除き、残った文字列全体が ASCII 数字 `[0-9]+` だけで構成される場合に整数として扱います。範囲内ならその値を使い、上限を超える場合は上限値を使います。JavaScript の数値範囲を超える長い数字列も上限値を使います。
 
 未設定、空文字、`0`、負数、`+` 記号付き、小数、指数表記、数字以外を含む値、途中に空白がある値は無効です。無効な `Preview Line Count` は `10`、無効な `Preview Max Characters` は `4000` を使います。この補正で toast や追加の設定画面は表示しません。
 

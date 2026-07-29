@@ -71,7 +71,7 @@ async function verifyPreviewPreferences() {
   assert.equal(preferences.previewMaxCharacters.default, "4000");
   assert.equal(
     preferences.previewMaxCharacters.description,
-    "Maximum preview characters. Enter a whole number from 1 to 20000. Invalid values use 4000; higher values use 20000.",
+    "Maximum preview characters. A displayed character that crosses the limit is omitted instead of split. Enter a whole number from 1 to 20000. Invalid values use 4000; higher values use 20000.",
   );
 }
 
@@ -357,6 +357,69 @@ async function verifyPreview() {
   assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), {
     content: "line1\nline2",
     isTruncated: false,
+  });
+
+  await writeFile(previewFilePath, "😀");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1 }), {
+    content: "😀",
+    isTruncated: false,
+  });
+
+  await writeFile(previewFilePath, "😀X");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1 }), {
+    content: "😀",
+    isTruncated: true,
+  });
+
+  await writeFile(previewFilePath, "e\u0301X");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1 }), {
+    content: "",
+    isTruncated: true,
+  });
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 2 }), {
+    content: "e\u0301",
+    isTruncated: true,
+  });
+
+  const familyEmoji = "👨‍👩‍👧‍👦";
+  await writeFile(previewFilePath, `${familyEmoji}X`);
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 6 }), {
+    content: "",
+    isTruncated: true,
+  });
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 7 }), {
+    content: familyEmoji,
+    isTruncated: true,
+  });
+
+  await writeFile(previewFilePath, "🇯🇵X");
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 2 }), {
+    content: "🇯🇵",
+    isTruncated: true,
+  });
+
+  const devanagariConjunct = "क्षि";
+  await writeFile(previewFilePath, `${devanagariConjunct}X`);
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 3 }), {
+    content: "",
+    isTruncated: true,
+  });
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 4 }), {
+    content: devanagariConjunct,
+    isTruncated: true,
+  });
+
+  const chunkBoundaryPrefix = "a".repeat(4095);
+  await writeFile(previewFilePath, `${chunkBoundaryPrefix}😀X`);
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 4096 }), {
+    content: `${chunkBoundaryPrefix}😀`,
+    isTruncated: true,
+  });
+
+  await writeFile(previewFilePath, `a${"\u0301".repeat(20000)}X`);
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 20000 }), {
+    content: "",
+    isTruncated: true,
   });
 }
 

@@ -153,9 +153,12 @@ npm run dev
 - 横断検索で一部 source の読み込み失敗と成功分の Markdown files を分けて返せること
 - 検索 field が file name を title、relative path とその directory segment および Markdown Source 表示名を keywords として返すこと
 - 検索 keywords に absolute path と Markdown file content が含まれないこと
-- preview が指定行数と最大文字数に従って冒頭 content と省略有無を返せること
+- preview が指定行数と Unicode code point 数による最大文字数に従って冒頭 content と省略有無を返せること
 - 行数または文字数の制限より後ろに content がある場合だけ preview を省略扱いにし、制限位置で終了する file、short file、empty file を省略扱いにしないこと
 - CRLF を含む file でも preview content と省略有無を正しく判定できること
+- surrogate pair、combining sequence、ZWJ emoji、regional-indicator flag、Indic conjunct を extended grapheme cluster の途中で分割しないこと
+- UTF-8 code point が 4096-byte read chunk の境界をまたぐ場合も、code point 数と extended grapheme cluster boundary を正しく判定できること
+- code point 上限より長い単一 extended grapheme cluster を読み続けたり分割表示したりせず、cluster 全体を省略扱いにすること
 - `{date}`、`{time}`、`{datetime}`、`{day}`、`{timezone}`、`{now}`、`{uuid}`、`{clipboard}` を置換できること
 - 複数の `{uuid}` を出現箇所ごとに別々の UUID へ置換できること
 - `{clipboard}` を含まない Markdown 本文では clipboard を読み取らないこと

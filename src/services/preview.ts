@@ -6,6 +6,7 @@ const DEFAULT_PREVIEW_MAX_CHARACTERS = 4000;
 const MAX_PREVIEW_LINE_COUNT = 100;
 const MAX_PREVIEW_CHARACTERS = 20000;
 const ASCII_DIGITS_PATTERN = /^[0-9]+$/;
+const GRAPHEME_SEGMENTER = new Intl.Segmenter("und", { granularity: "grapheme" });
 
 export type PreviewOptions = {
   isEnabled: boolean;
@@ -46,7 +47,12 @@ export async function readMarkdownPreview(filePath: string, options: PreviewLimi
   let content = "";
 
   try {
-    while (!hasPreviewOverflow(content, safeLineCount, safeMaxCharacters) || content.endsWith("\r")) {
+    while (true) {
+      const overflow = getPreviewOverflow(content, safeLineCount, safeMaxCharacters);
+      if (overflow.characterLimit || (overflow.lineLimit && !content.endsWith("\r"))) {
+        break;
+      }
+
       const { bytesRead } = await file.read(buffer, 0, buffer.length, null);
 
       if (bytesRead === 0) {
@@ -84,11 +90,18 @@ function parsePreviewLimit(value: string | undefined, defaultValue: number, maxV
   return Math.min(parsedValue, maxValue);
 }
 
-function hasPreviewOverflow(content: string, lineCount: number, maxCharacters: number): boolean {
+function getPreviewOverflow(
+  content: string,
+  lineCount: number,
+  maxCharacters: number,
+): { characterLimit: boolean; lineLimit: boolean } {
   const normalizedContent = normalizeLineEndings(content);
   const lineTrimmedContent = trimPreviewLines(normalizedContent, lineCount);
 
-  return lineTrimmedContent.length > maxCharacters || lineTrimmedContent.length < normalizedContent.length;
+  return {
+    characterLimit: countUnicodeCodePoints(lineTrimmedContent) > maxCharacters,
+    lineLimit: lineTrimmedContent.length < normalizedContent.length,
+  };
 }
 
 function normalizeLineEndings(content: string): string {
@@ -96,10 +109,40 @@ function normalizeLineEndings(content: string): string {
 }
 
 function trimPreview(content: string, lineCount: number, maxCharacters: number): string {
-  return trimPreviewLines(content, lineCount).slice(0, maxCharacters);
+  const lineTrimmedContent = trimPreviewLines(content, lineCount);
+
+  if (countUnicodeCodePoints(lineTrimmedContent) <= maxCharacters) {
+    return lineTrimmedContent;
+  }
+
+  let codePointCount = 0;
+  let endIndex = 0;
+
+  for (const { index, segment } of GRAPHEME_SEGMENTER.segment(lineTrimmedContent)) {
+    const nextCodePointCount = codePointCount + countUnicodeCodePoints(segment);
+    if (nextCodePointCount > maxCharacters) {
+      break;
+    }
+
+    codePointCount = nextCodePointCount;
+    endIndex = index + segment.length;
+  }
+
+  return lineTrimmedContent.slice(0, endIndex);
 }
 
 function trimPreviewLines(content: string, lineCount: number): string {
   const lines = content.split("\n");
   return lines.slice(0, lineCount).join("\n");
+}
+
+function countUnicodeCodePoints(content: string): number {
+  let count = 0;
+  const codePoints = content[Symbol.iterator]();
+
+  while (!codePoints.next().done) {
+    count += 1;
+  }
+
+  return count;
 }
