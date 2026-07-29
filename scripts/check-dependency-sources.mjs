@@ -73,6 +73,11 @@ assert.equal(
   `${packageJsonPath} must separate toolchain updates from dependency updates`,
 );
 assert.equal(
+  packageJson.scripts?.["update:dependencies"],
+  "node scripts/update-dependencies.mjs",
+  `${packageJsonPath} must expose the established local dependency apply-and-verify task`,
+);
+assert.equal(
   packageJson.scripts?.migrate,
   "npx --yes @raycast/migration@latest .",
   `${packageJsonPath} migration must run the latest official Raycast migration package non-interactively`,
@@ -137,43 +142,44 @@ assert.deepEqual(
 assert.deepEqual(invalidInstallScriptPolicyValues, [], `${packageJsonPath} allowScripts decisions must be boolean`);
 
 const dependencyUpdater = await readFile("scripts/update-dependencies.mjs", "utf8");
-const initialDependencyCheckIndex = dependencyUpdater.indexOf('await run("npm", ["run", "check:dependencies"])');
-const migrationCommand = 'await run("npm", ["run", "migrate"])';
-const migrationIndex = dependencyUpdater.indexOf(migrationCommand);
-const dependencyManifestReadIndex = dependencyUpdater.indexOf(
-  'const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"))',
-);
-const dependencyUpdateIndex = dependencyUpdater.indexOf(
-  'await run("npm", ["update", "--save", "--strict-peer-deps", "--ignore-scripts"])',
+const dependencyUpdateCommands = [
+  'await run("npm", ["run", "check:toolchain"])',
+  'await run("npm", ["run", "check:dependencies"])',
+  'await run("npm", ["ci"])',
+  'await run("npm", ["run", "migrate"])',
+  'await run("npm", ["run", "check:dependencies"])',
+  'await run("npx", ["--yes", "npm-check-updates@latest"])',
+  'await run("npx", ["--yes", "npm-check-updates@latest", "--peer", "--enginesNode", "--upgrade"])',
+  'await run("npm", ["install", "--ignore-scripts"])',
+  'await run("npm", ["run", "check:dependencies"])',
+  'await run("npm", ["ci"])',
+  'await run("npm", ["run", "lint"])',
+  'await run("npm", ["run", "build"])',
+  'await run("npm", ["run", "lint:raycast"])',
+];
+let previousDependencyUpdateCommandIndex = -1;
+const dependencyUpdateCommandIndices = dependencyUpdateCommands.map((command) => {
+  const commandIndex = dependencyUpdater.indexOf(command, previousDependencyUpdateCommandIndex + 1);
+  previousDependencyUpdateCommandIndex = commandIndex;
+  return commandIndex;
+});
+
+assert.equal(
+  dependencyUpdateCommandIndices.every((index) => index !== -1),
+  true,
+  "dependency updates must preserve the approved toolchain, policy, migration, candidate, resolution, clean-install, and verification order",
 );
 assert.equal(
-  dependencyUpdater.includes("getToolchainFreshness") ||
-    dependencyUpdater.includes('writeFile(path.join(repoRoot, ".node-version")') ||
-    dependencyUpdater.includes("packageManager") ||
-    dependencyUpdater.includes("devEngines"),
+  findAllIndices(dependencyUpdater, 'await run("npm", ["ci"])').length,
+  2,
+  "dependency updates must verify one clean baseline and one clean resolved result",
+);
+assert.equal(
+  dependencyUpdater.includes("--legacy-peer-deps") ||
+    dependencyUpdater.includes("--force") ||
+    dependencyUpdater.includes("dangerously-allow-all-scripts"),
   false,
-  "dependency updates must not change the selected Node.js version or package-manager requirements",
-);
-assert.equal(
-  dependencyUpdater.includes("mdclip-dependency-resolution-") &&
-    dependencyUpdater.includes("--package-lock-only") &&
-    dependencyUpdater.includes("--ignore-scripts") &&
-    dependencyUpdater.includes('await run("npm", ["ci"])'),
-  true,
-  "dependency updates must use isolated npm resolution, suppress lifecycle scripts while changing the lockfile, and then perform one clean install through the configured registry",
-);
-assert.equal(
-  initialDependencyCheckIndex !== -1 &&
-    initialDependencyCheckIndex < migrationIndex &&
-    migrationIndex < dependencyManifestReadIndex &&
-    dependencyManifestReadIndex < dependencyUpdateIndex,
-  true,
-  "dependency updates must verify policy, run the latest Raycast migration through the configured registry, rebuild targets from its result, and only then update dependencies",
-);
-assert.equal(
-  findAllIndices(dependencyUpdater, migrationCommand).length,
-  1,
-  "dependency updates must run Raycast migration exactly once before advancing dependency versions",
+  "dependency updates must not bypass peer or install-script policy",
 );
 
 const workflowPaths = (await readdir(".github/workflows"))

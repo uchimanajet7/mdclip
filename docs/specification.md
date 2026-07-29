@@ -276,36 +276,40 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 | Toolchain freshness       | weekly read-only workflowでlatest stable Node.jsと同梱npmのminimum適合を確認する                           |
 | Dependency registry       | registry endpointは環境設定を使い、lockfileには`integrity`を保持してregistry固有`resolved` URLを記録しない |
 | Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                  |
+| Dependency updates        | grouped Dependabot候補、人間判断、ローカル一括適用、npm解決、clean install、完全検証を分離して接続する     |
 
-`npm run update:dependencies` はapplication dependencyだけを更新し、Node.jsまたはnpmの要件を変更しません。`npm run update:toolchain` は `.node-version`だけをlatest stable Node.jsへ更新します。Node.js selectionが変わった場合、更新前のNode.js processで完了を宣言せず、新しいNode.jsに同梱されるnpmで`npm ci`とverificationをやり直します。
+application dependencyとGitHub Actionsの定期更新候補は `.github/dependabot.yml` のweekly Dependabot version updatesが提示します。npm version updatesは一つのgrouped Pull Requestにまとめ、security updatesとは混在させません。最終的な互換性と採用判断はmaintainerが担当し、自動merge、自動publish、自動releaseを行いません。
 
-dependency updateはconfigured registryから最新の公式Raycast migrationを取得し、更新前の`@raycast/api` versionに必要な変換を適用してからdirect dependency一覧を読み直します。direct dependencyはlatestを最初に試します。latestがstrict peer dependency resolutionで拒否された場合だけ、temporary project上で公開済みstable versionを新しい順に実際のnpm resolverへ渡し、成立する最も新しいversionを選びます。dependency候補の取得中はinstall scriptを実行せず、候補確定後のclean `npm ci`でlockfileのversionと`integrity`を使って依存関係を入れ直し、review済みscriptを実行します。保留したdependencyについては `npm explain --json` の構造化された依存経路とSemVer判定を使い、直接の阻害依存、各依存枝で最も近い推移阻害依存、さらに深い阻害依存の件数を表示します。npmのerror message文字列から互換rangeや依存経路を推測しません。
+`npm run update:dependencies` はNode.jsまたはnpmの要件を変更せず、Gitのclean/dirty状態に依存せずに現在のworking treeでapplication dependencyの候補適用、解決、clean install、verificationを一続きで実行します。このcommandはGit statusの検査、commit、stash、reset、restoreを行いません。最初にtoolchain freshness、dependency policy、現在のlockfileによるclean installを確認し、dependency rangeを変更する前にlatest公式Raycast migrationを実行します。次に `npm-check-updates@latest` で全stable latest候補を表示し、`--peer --enginesNode`でpeer dependencyと宣言済みNode.js要件を満たすdirect dependency候補だけを一括反映します。npmはinstall scriptを停止した中間installでdirect・transitive dependency全体を解決し、`strict-peer-deps=true`で不成立の組み合わせを拒否します。候補確定後はdependency policy、clean `npm ci`、通常lint、Raycast build、Raycast lintを順番に実行します。
+
+失敗時はその場で停止し、peer dependency override、強制適用、独自のolder-compatible version探索、自動復元を行いません。既存の未コミット変更と更新途中の変更が同じworking treeに残る場合があるため、maintainerはcommand output、現在のGit diff、migration差分、resolver output、release notesを確認し、変更単位で次の対応を決定します。command自体は変更をstash、commit、reset、restore、破棄しません。runtime dependencyまたはmigrationによるsource変更がある場合だけ、Raycast development modeでprimary user taskを手動確認します。development toolingだけの更新では利用者向け動作に変化がなければGUI確認を必須にしません。
+
+`npm run update:toolchain` は `.node-version`だけをlatest stable Node.jsへ更新します。Node.js selectionが変わった場合、更新前のNode.js processで完了を宣言せず、新しいNode.jsに同梱されるnpmで`npm ci`とverificationをやり直します。
 
 ## 16. Project commands
 
-| Command                            | 役割                                                                |
-| ---------------------------------- | ------------------------------------------------------------------- |
-| `npm run check`                    | `npm run lint` の既存 alias                                         |
-| `npm run lint`                     | 開発・メンテナンス時の標準検証                                      |
-| `npm run check:dependencies`       | dependency source、lockfile integrity、install script policy の検証 |
-| `npm run check:dependency-updater` | peer dependency阻害情報の抽出・要約・表示のtest                     |
-| `npm run check:toolchain`          | latest stable Node.jsと同梱npmのminimum適合をread-only検証          |
-| `npm run check:type`               | TypeScript 型検査                                                   |
-| `npm run check:lint`               | Raycast CLI を使わない source ESLint                                |
-| `npm run check:format`             | managed files の format check                                       |
-| `npm run check:local`              | Raycast アプリに依存しない repository 固有 verification             |
-| `npm run lint:raycast`             | Raycast CLI lint                                                    |
-| `npm run build`                    | Raycast build validation                                            |
-| `npm run dev`                      | Raycast development mode                                            |
-| `npm run demo:setup`               | demo Markdown Sources 作成                                          |
-| `npm run demo:clean`               | demo Markdown Sources 削除                                          |
-| `npm run sync:readme-media`        | `metadata/mdclip-1.png` から `media/mdclip-1.png` への media sync   |
-| `npm run format`                   | managed files の write-format                                       |
-| `npm run fix-lint`                 | source ESLint 自動修正と write-format                               |
-| `npm run update:dependencies`      | latest 優先・peer-compatible fallback 付き dependency update        |
-| `npm run update:toolchain`         | `.node-version`をlatest stable Node.jsへ更新                        |
-| `npm run migrate`                  | latest公式Raycast API migration                                     |
-| `npm run icon:generate`            | 確認用 icon 生成                                                    |
+| Command                       | 役割                                                                |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `npm run check`               | `npm run lint` の既存 alias                                         |
+| `npm run lint`                | 開発・メンテナンス時の標準検証                                      |
+| `npm run check:dependencies`  | dependency source、lockfile integrity、install script policy の検証 |
+| `npm run check:toolchain`     | latest stable Node.jsと同梱npmのminimum適合をread-only検証          |
+| `npm run check:type`          | TypeScript 型検査                                                   |
+| `npm run check:lint`          | Raycast CLI を使わない source ESLint                                |
+| `npm run check:format`        | managed files の format check                                       |
+| `npm run check:local`         | Raycast アプリに依存しない repository 固有 verification             |
+| `npm run lint:raycast`        | Raycast CLI lint                                                    |
+| `npm run build`               | Raycast build validation                                            |
+| `npm run dev`                 | Raycast development mode                                            |
+| `npm run demo:setup`          | demo Markdown Sources 作成                                          |
+| `npm run demo:clean`          | demo Markdown Sources 削除                                          |
+| `npm run sync:readme-media`   | `metadata/mdclip-1.png` から `media/mdclip-1.png` への media sync   |
+| `npm run format`              | managed files の write-format                                       |
+| `npm run fix-lint`            | source ESLint 自動修正と write-format                               |
+| `npm run update:dependencies` | compatible dependency候補の一括適用、解決、clean install、完全検証  |
+| `npm run update:toolchain`    | `.node-version`をlatest stable Node.jsへ更新                        |
+| `npm run migrate`             | latest公式Raycast API migration                                     |
+| `npm run icon:generate`       | 確認用 icon 生成                                                    |
 
 `npm run publish` は通常 npm script surface に置きません。
 

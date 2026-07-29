@@ -11,6 +11,11 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     versioning-strategy: "increase"
+    groups:
+      all-npm-version-updates:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"

@@ -32,40 +32,49 @@ install-script policyのhardeningを含むnpm 11.17.0以上が必要です。`pa
 
 ## 4. npm scripts
 
-| Script                             | 実体                                                                            | 用途                                                                |
-| ---------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `npm run check`                    | `npm run lint`                                                                  | 既存の一括確認名                                                    |
-| `npm run lint`                     | dependency、release、documentation、type、format、local verification の順次実行 | 通常のローカル検証                                                  |
-| `npm run check:dependencies`       | `node scripts/check-dependency-sources.mjs`                                     | dependency source、lockfile integrity、install script policy の確認 |
-| `npm run check:dependency-updater` | `node --test scripts/peer-dependency-report.test.mjs`                           | peer dependency阻害情報の抽出・要約・表示を検査                     |
-| `npm run check:release`            | `node --test scripts/release-manifest.test.mjs`                                 | GitHub Release body の構造契約を検査                                |
-| `npm run check:docs`               | documentation language contract の test と repository 検査                      | 英日文書ペア、言語切替、canonical path、登録済み参照を検査          |
-| `npm run check:toolchain`          | `node scripts/check-toolchain-freshness.mjs`                                    | latest stable Node.jsと同梱npmのminimum適合をread-only確認          |
-| `npm run check:type`               | `tsc -p tsconfig.json --noEmit`                                                 | TypeScript 型検査                                                   |
-| `npm run check:lint`               | `eslint src/**`                                                                 | Raycast CLI を使わない source lint                                  |
-| `npm run check:format`             | `node scripts/format.mjs --check`                                               | 明示対象ファイルの整形差分確認                                      |
-| `npm run check:local`              | `node scripts/local-verification.mjs`                                           | Raycast アプリに依存しないリポジトリ固有の確認                      |
-| `npm run lint:raycast`             | `ray lint`                                                                      | 明示的な Raycast CLI lint                                           |
-| `npm run build`                    | `ray build -e dist`                                                             | Raycast build 検証                                                  |
-| `npm run dev`                      | `ray develop`                                                                   | Raycast development mode で起動                                     |
-| `npm run demo:setup`               | `node scripts/demo-markdown-sources.mjs setup`                                  | ローカル確認用の demo Markdown Source folders を作成                |
-| `npm run demo:clean`               | `node scripts/demo-markdown-sources.mjs clean`                                  | ローカル確認用の demo Markdown Source folders を削除                |
-| `npm run format`                   | `node scripts/format.mjs --write`                                               | 明示対象ファイルの Prettier 整形                                    |
-| `npm run fix-lint`                 | `eslint src/** --fix && npm run format`                                         | source ESLint 自動修正と write-format                               |
-| `npm run update:dependencies`      | `node scripts/update-dependencies.mjs`                                          | latest優先でapplication dependencyを更新                            |
-| `npm run update:toolchain`         | `node scripts/update-toolchain.mjs`                                             | `.node-version`をlatest stable Node.jsへ更新                        |
-| `npm run migrate`                  | `npx --yes @raycast/migration@latest .`                                         | 最新の公式Raycast migrationによるAPI migration                      |
-| `npm run icon:generate`            | `node scripts/generate-icon.mjs`                                                | 確認用 icon 生成                                                    |
+| Script                        | 実体                                                                            | 用途                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `npm run check`               | `npm run lint`                                                                  | 既存の一括確認名                                                    |
+| `npm run lint`                | dependency、release、documentation、type、format、local verification の順次実行 | 通常のローカル検証                                                  |
+| `npm run check:dependencies`  | `node scripts/check-dependency-sources.mjs`                                     | dependency source、lockfile integrity、install script policy の確認 |
+| `npm run check:release`       | `node --test scripts/release-manifest.test.mjs`                                 | GitHub Release body の構造契約を検査                                |
+| `npm run check:docs`          | documentation language contract の test と repository 検査                      | 英日文書ペア、言語切替、canonical path、登録済み参照を検査          |
+| `npm run check:toolchain`     | `node scripts/check-toolchain-freshness.mjs`                                    | latest stable Node.jsと同梱npmのminimum適合をread-only確認          |
+| `npm run check:type`          | `tsc -p tsconfig.json --noEmit`                                                 | TypeScript 型検査                                                   |
+| `npm run check:lint`          | `eslint src/**`                                                                 | Raycast CLI を使わない source lint                                  |
+| `npm run check:format`        | `node scripts/format.mjs --check`                                               | 明示対象ファイルの整形差分確認                                      |
+| `npm run check:local`         | `node scripts/local-verification.mjs`                                           | Raycast アプリに依存しないリポジトリ固有の確認                      |
+| `npm run update:dependencies` | `node scripts/update-dependencies.mjs`                                          | dependency候補の一括適用、解決、clean install、完全検証             |
+| `npm run lint:raycast`        | `ray lint`                                                                      | 明示的な Raycast CLI lint                                           |
+| `npm run build`               | `ray build -e dist`                                                             | Raycast build 検証                                                  |
+| `npm run dev`                 | `ray develop`                                                                   | Raycast development mode で起動                                     |
+| `npm run demo:setup`          | `node scripts/demo-markdown-sources.mjs setup`                                  | ローカル確認用の demo Markdown Source folders を作成                |
+| `npm run demo:clean`          | `node scripts/demo-markdown-sources.mjs clean`                                  | ローカル確認用の demo Markdown Source folders を削除                |
+| `npm run format`              | `node scripts/format.mjs --write`                                               | 明示対象ファイルの Prettier 整形                                    |
+| `npm run fix-lint`            | `eslint src/** --fix && npm run format`                                         | source ESLint 自動修正と write-format                               |
+| `npm run update:toolchain`    | `node scripts/update-toolchain.mjs`                                             | `.node-version`をlatest stable Node.jsへ更新                        |
+| `npm run migrate`             | `npx --yes @raycast/migration@latest .`                                         | 最新の公式Raycast migrationによるAPI migration                      |
+| `npm run icon:generate`       | `node scripts/generate-icon.mjs`                                                | 確認用 icon 生成                                                    |
 
 `npm run format`、`npm run fix-lint`、`npm run migrate`、`npm run update:dependencies`、`npm run update:toolchain`、`npm run icon:generate`、`npm run demo:setup`、`npm run demo:clean` はファイルを書き換える可能性があります。目的が明確な場合だけ実行します。
 
-`npm run update:dependencies` はNode.jsとnpmを変更しません。最初のpolicy検査後、実行環境のconfigured registryを使って最新の公式Raycast migrationを実行します。migrationは更新前のlockfileにある`@raycast/api` versionを基準に必要な変換を選び、`package.json`のdependencyを追加・削除する場合があるため、その完了後にdirect dependency一覧を読み直してから更新を始めます。install scriptを停止したまま現在のsemver範囲内を更新し、各direct dependencyの `latest` を試します。`latest` がpeer dependency条件を満たさない場合だけ、temporary project上で公開済みstable versionを新しい順に実際のnpm resolverへ渡し、成立する最も新しいversionを維持または選択します。候補確定後はclean `npm ci`でlockfileのversionと`integrity`を使って依存関係を入れ直し、review済みinstall scriptを実行してから通常検査へ進みます。保留時は `npm explain --json` とSemVer判定から、直接の阻害依存、各依存枝で最も近い推移阻害依存、さらに深い阻害依存の件数を表示します。完全な依存木は表示内の `npm explain <package>` で確認できます。npm error messageの文字列から互換rangeや依存経路を推測せず、peer overrideも許可しません。peer dependency以外の更新失敗は無視せずに処理を停止します。[Raycast migration](https://developers.raycast.com/misc/migration) は更新前のAPI versionから必要なmigrationを検出する仕組みと`@raycast/migration@latest`の直接実行を案内しています。[npm ci](https://docs.npmjs.com/cli/v11/commands/npm-ci/) はlockfileとmanifestの不一致時に停止し、lockfileを書き換えずにclean installします。
+application dependencyとGitHub Actionsの定期更新候補は `.github/dependabot.yml` のweekly Dependabot version updatesが提示します。npm version updatesは一つのgrouped Pull Requestにまとめ、security updatesとは混在させません。maintainerはPull Requestのmanifest、lockfile、release notes、resolver結果、CI結果を確認し、互換性を判断してから採用します。自動merge、peer dependency override、自動publish、自動releaseは行いません。[Dependabot version updates](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependabot-version-updates) は更新Pull Requestとreviewの責任分担を説明し、[Dependabot groups](https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/optimizing-pr-creation-version-updates#grouping-related-dependencies-together) は関連dependencyを一つのPull Requestへまとめる構成を説明しています。
+
+ローカルでdependency候補を適用する場合は、現在のworking treeで次を実行します。このcommandはGitのclean/dirty状態を実行条件にせず、Git statusの検査、commit、stash、reset、restoreを行いません。
+
+```bash
+npm run update:dependencies
+```
+
+このcommandは、toolchain freshnessとdependency policyを確認し、現在のlockfileからclean installした後、dependency rangeを変更する前に最新の公式Raycast migrationを実行します。続いて `npm-check-updates@latest` ですべてのstable latest候補を表示し、`--peer --enginesNode`でpeer dependencyと宣言済みNode.js要件を満たすdirect dependency候補だけを一括反映します。npmはinstall scriptを停止した中間installでdirect・transitive dependency全体を解決し、`strict-peer-deps=true`で不成立の組み合わせを拒否します。候補確定後はdependency policyを再確認し、clean `npm ci`、通常lint、Raycast build、Raycast lintを順番に実行します。[npm-check-updates](https://github.com/raineorshine/npm-check-updates#how-dependency-updates-are-determined) はdefaultでdirect dependencyのlatest stable versionを候補とし、[`--peer`](https://github.com/raineorshine/npm-check-updates#peer) はinstalled packageのpeer dependencyを確認してcompatible versionへ絞り込むことを説明しています。[`npm install`](https://docs.npmjs.com/cli/v11/commands/npm-install/) はlockfile更新を伴うdependency resolution、[`npm ci`](https://docs.npmjs.com/cli/v11/commands/npm-ci/) はmanifestとlockfileの不一致時に停止するclean installを定義しています。
+
+どの段階でも失敗した場合は処理を停止し、互換性を無視した更新、古いversionの独自探索、強制適用、自動復元を行いません。既存の未コミット変更と更新途中の変更が同じworking treeに残る場合があるため、maintainerはcommand outputと現在のGit diffを確認し、変更単位で次の対応を判断します。このcommand自体は変更をstash、commit、reset、restore、破棄しません。`@raycast/api`、React、runtime dependency、またはmigrationによるsource変更がある場合だけ、続けて `npm run dev` でMdClipのprimary taskを人間が確認します。development toolingだけの更新では、利用者向け動作に変化がなければGUI確認を必須にしません。[Raycast migration](https://developers.raycast.com/misc/migration) は現在使用しているAPI versionから利用可能なmigrationを検出し、適用後の差分確認を求めています。
 
 `npm run check:docs` は、`README.md`、`README.ja.md`、`docs/`、`raycast-publish/`、`.github/release-changelog/`を製品文書面として正方向に定義し、宣言済みの英日文書ペア、H1直後の相互言語link、canonical path、paired documentを参照する全Markdown linkをNode.js標準機能だけで検査します。Gitや個人環境のignore設定を必要としないため、repository checkoutとGitHub Releaseのsource archiveで同じ対象を検査します。翻訳文の意味や文章の一致は機械判定せず、導入、更新、削除、完了確認のtask coverageをmaintainerが両言語で確認します。
 
 `npm run update:toolchain` はNode.js公式release indexにあるlatest stable Node.jsを確認し、`.node-version`だけを更新します。そのNode.jsに同梱されるnpmが`engines.npm`を満たさない場合は更新しません。selected Node.jsが変わった場合は更新前のNode.js processで完了扱いにせず、exit status 2で終了します。新しいNode.jsへ切り替え、`npm ci`、lint、Raycast lint、buildを実行した後に完了を判断します。
 
-`npm run check:toolchain` はファイルを変更しません。Node.js公式release indexからlatest stable Node.jsとその同梱npmを確認し、`.node-version`の更新有無と`engines.npm`への適合を報告します。npm registryのlatestやDependabotの対応majorを独立したnpm選択条件にはしません。通常のlint/buildへnetwork freshnessを混ぜず、定期workflowと明示実行だけで使います。[Node.js release index](https://nodejs.org/dist/index.json)
+`npm run check:toolchain` はファイルを変更しません。Node.js公式release indexからlatest stable Node.jsとその同梱npmを確認し、`.node-version`の更新有無と`engines.npm`への適合を報告します。npm registryのlatestやDependabotの対応majorを独立したnpm選択条件にはしません。通常のlint/buildへnetwork freshnessを混ぜず、定期workflowと `npm run update:dependencies` のpreflightだけで使います。[Node.js release index](https://nodejs.org/dist/index.json)
 
 project `.npmrc` は registry host や認証情報を固定せず、registry dependency の `resolved` URL を `package-lock.json` から省略し、peer dependency override を禁止し、必要な npm version と install-script review を厳格化します。local、CI、dependency update、toolchain、Store補助経路はそれぞれの実行環境のnpm registry設定を使い、lockfileのversionと`integrity`を共有します。[npm config の `omit-lockfile-registry-resolved`](https://docs.npmjs.com/cli/v11/using-npm/config/#omit-lockfile-registry-resolved) は、registry dependencyのtarball endpointを後続install時のregistry設定から解決する構成です。
 
@@ -100,13 +109,12 @@ npm run dev
 `npm run lint` は次を順に実行します。
 
 1. `npm run check:dependencies`
-2. `npm run check:dependency-updater`
-3. `npm run check:release`
-4. `npm run check:docs`
-5. `npm run check:type`
-6. `npm run check:lint`
-7. `npm run check:format`
-8. `npm run check:local`
+2. `npm run check:release`
+3. `npm run check:docs`
+4. `npm run check:type`
+5. `npm run check:lint`
+6. `npm run check:format`
+7. `npm run check:local`
 
 この確認では、次を扱います。
 
