@@ -34,9 +34,13 @@ export async function listMarkdownFiles(markdownSource: ConfiguredMarkdownSource
   let rootStat;
 
   try {
-    rootStat = await fs.stat(rootPath);
+    rootStat = await fs.lstat(rootPath);
   } catch (error) {
     throw toMarkdownSourceLoadError(error, "source-root");
+  }
+
+  if (rootStat.isSymbolicLink()) {
+    throw new MarkdownSourceLoadError("source-symbolic-link");
   }
 
   if (!rootStat.isDirectory()) {

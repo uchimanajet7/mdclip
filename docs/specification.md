@@ -109,7 +109,9 @@ MdClip Preferences
 - hidden directory 配下
 - extension が `.md` ではない file
 
-symbolic link は辿りません。
+symbolic link は対応対象外であり、辿りません。設定された Markdown Source path の最後の entry 自体が symbolic link の場合は、その link が有効な directory を指していても、切れた link でも、その source を読み込みません。Markdown Source 配下の file または directory の symbolic link は列挙対象から除外します。
+
+この判定対象は、設定された path の最後の entry と Markdown Source 配下です。設定 path より上位にある ancestor path component は判定対象にせず、OS が解決した先の最後の entry が実体 directory なら読み込みます。symbolic link を許可する preference は設けません。
 
 ## 8. List UI
 
@@ -232,6 +234,7 @@ MdClip の placeholder 展開は、上の表にある対応 placeholder につ�
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | source disabled                                     | 設定確認画面と `Open Extension Preferences`                                                |
 | source folder unset                                 | 設定確認画面と `Open Extension Preferences`                                                |
+| configured source path is a symbolic link           | symbolic link が非対応であること、実体 folder の選択、`Open Extension Preferences`         |
 | configured source folder is unavailable             | source 名、folder が利用不能であること、復旧方法、`Open Extension Preferences`             |
 | configured source folder or its contents unreadable | source 名、すべての files を読み取れないこと、復旧方法、`Open Extension Preferences`       |
 | source contents changed or another read failure     | source 名、すべての files を読み取れなかったこと、再確認方法、`Open Extension Preferences` |
@@ -244,13 +247,15 @@ MdClip の placeholder 展開は、上の表にある対応 placeholder につ�
 
 利用者向けの読み込み失敗表示には、Markdown Source の表示名、利用者が理解できる失敗状態、実行可能な復旧方法だけを含めます。Node.js の system error message、error code、system call、stack trace、absolute path は表示しません。
 
+設定された source path の最後の entry 自体が symbolic link の場合は、link target の状態にかかわらず `Symbolic links are not supported. Select the original folder.` と表示します。切れた symbolic link も、単なる folder 消失ではなく同じ symbolic link 非対応状態として扱います。
+
 ルートの configured source path が存在しない、directory ではなくなった、またはルートの directory scan 中に失われた場合は、source folder が利用不能であると表示します。通常の preferences 操作では `directory` picker が file の選択を防ぐため、`not a directory` を独立した利用者向け状態にはしません。
 
 ルートまたは配下の読み込みで `EACCES` または `EPERM` が発生した場合は、source folder 内のすべての files を読み取れないことと、folder permissions の確認または別の folder の選択を案内します。
 
 ルート以外の走査対象で `ENOENT` または `ENOTDIR` が発生した場合は、ルート folder が失われたとは断定しません。source folder 内のすべての files を読み取れなかったことと、folder の確認後に command を開き直すことを案内します。その他の予期しない source 読み込み失敗も同じ一般的な読み込み失敗として扱います。
 
-部分失敗時の `Could Not Load` row は source の表示名を title とし、subtitle は `Folder is no longer available.` または `Some files could not be read.` とします。Toast は失敗した source の表示名だけを通知し、読み込めた source の files はそのまま利用できます。
+部分失敗時の `Could Not Load` row は source の表示名を title とし、subtitle は `Symbolic links are not supported.`、`Folder is no longer available.`、または `Some files could not be read.` とします。Toast は失敗した source の表示名だけを通知し、読み込めた source の files はそのまま利用できます。
 
 ## 14. Security and data handling
 

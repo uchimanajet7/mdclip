@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
@@ -95,11 +95,17 @@ async function verifyMarkdownFileListing() {
   const markdownSourceRoot = path.join(fixtureRoot, "markdown-source");
   const secondMarkdownSourceRoot = path.join(fixtureRoot, "second-markdown-source");
   const missingMarkdownSourceRoot = path.join(fixtureRoot, "missing-markdown-source");
+  const symbolicLinkRoot = path.join(fixtureRoot, "symbolic-link-root");
+  const brokenSymbolicLinkRoot = path.join(fixtureRoot, "broken-symbolic-link-root");
+  const ancestorTargetRoot = path.join(fixtureRoot, "ancestor-target");
+  const ancestorSymbolicLink = path.join(fixtureRoot, "ancestor-symbolic-link");
+  const sourceBelowSymbolicLinkAncestor = path.join(ancestorSymbolicLink, "source");
   await mkdir(path.join(markdownSourceRoot, "nested"), { recursive: true });
   await mkdir(path.join(markdownSourceRoot, ".hidden"), { recursive: true });
   await mkdir(path.join(markdownSourceRoot, ".git"), { recursive: true });
   await mkdir(path.join(markdownSourceRoot, "node_modules"), { recursive: true });
   await mkdir(secondMarkdownSourceRoot, { recursive: true });
+  await mkdir(path.join(ancestorTargetRoot, "source"), { recursive: true });
   await writeFile(path.join(markdownSourceRoot, "a.md"), "# A\n");
   await writeFile(path.join(markdownSourceRoot, "nested", "b.MD"), "# B\n");
   await writeFile(path.join(markdownSourceRoot, "c.txt"), "C\n");
@@ -107,6 +113,12 @@ async function verifyMarkdownFileListing() {
   await writeFile(path.join(markdownSourceRoot, ".git", "ignored.md"), "git\n");
   await writeFile(path.join(markdownSourceRoot, "node_modules", "ignored.md"), "node_modules\n");
   await writeFile(path.join(secondMarkdownSourceRoot, "second.md"), "# Second\n");
+  await writeFile(path.join(ancestorTargetRoot, "source", "ancestor.md"), "# Ancestor\n");
+  await symlink("a.md", path.join(markdownSourceRoot, "linked-file.md"));
+  await symlink("nested", path.join(markdownSourceRoot, "linked-directory"));
+  await symlink(markdownSourceRoot, symbolicLinkRoot);
+  await symlink(path.join(fixtureRoot, "missing-symbolic-link-target"), brokenSymbolicLinkRoot);
+  await symlink(ancestorTargetRoot, ancestorSymbolicLink);
 
   const files = await listMarkdownFiles({
     id: 1,
@@ -122,6 +134,18 @@ async function verifyMarkdownFileListing() {
   assert(files.every((file) => file.markdownSource.displayName === "Fixture"));
   assert(files.every((file) => file.size > 0));
   assert(files.every((file) => file.updatedAt instanceof Date));
+
+  const filesBelowSymbolicLinkAncestor = await listMarkdownFiles({
+    id: 1,
+    commandTitle: "Markdown Source 1",
+    displayName: "Ancestor Fixture",
+    directory: sourceBelowSymbolicLinkAncestor,
+  });
+
+  assert.deepEqual(
+    filesBelowSymbolicLinkAncestor.map((file) => file.relativePath),
+    ["ancestor.md"],
+  );
 
   const nestedFile = files.find((file) => file.relativePath === path.join("nested", "b.MD"));
   assert(nestedFile);
@@ -161,6 +185,43 @@ async function verifyMarkdownFileListing() {
   assert.equal(combinedResult.failures[0].markdownSource.displayName, "Missing Fixture");
   assert.equal(combinedResult.failures[0].reason, "source-unavailable");
   assert.equal(combinedResult.failures[0].message, undefined);
+
+  const symbolicLinkCombinedResult = await listMarkdownFilesFromMarkdownSources([
+    {
+      id: 1,
+      commandTitle: "Markdown Source 1",
+      displayName: "Symbolic Link Fixture",
+      directory: symbolicLinkRoot,
+    },
+    {
+      id: 2,
+      commandTitle: "Markdown Source 2",
+      displayName: "Second Fixture",
+      directory: secondMarkdownSourceRoot,
+    },
+  ]);
+
+  assert.deepEqual(
+    symbolicLinkCombinedResult.files.map((file) => file.relativePath),
+    ["second.md"],
+  );
+  assert.equal(symbolicLinkCombinedResult.failures.length, 1);
+  assert.equal(symbolicLinkCombinedResult.failures[0].markdownSource.displayName, "Symbolic Link Fixture");
+  assert.equal(symbolicLinkCombinedResult.failures[0].reason, "source-symbolic-link");
+  assert.equal(symbolicLinkCombinedResult.failures[0].message, undefined);
+
+  const brokenSymbolicLinkResult = await listMarkdownFilesFromMarkdownSources([
+    {
+      id: 1,
+      commandTitle: "Markdown Source 1",
+      displayName: "Broken Symbolic Link Fixture",
+      directory: brokenSymbolicLinkRoot,
+    },
+  ]);
+
+  assert.deepEqual(brokenSymbolicLinkResult.files, []);
+  assert.equal(brokenSymbolicLinkResult.failures.length, 1);
+  assert.equal(brokenSymbolicLinkResult.failures[0].reason, "source-symbolic-link");
 
   const notDirectoryPath = path.join(fixtureRoot, "not-directory.md");
   await writeFile(notDirectoryPath, "# Not Directory\n");

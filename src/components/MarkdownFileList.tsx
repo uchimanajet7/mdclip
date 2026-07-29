@@ -428,6 +428,8 @@ function formatMarkdownSourceFailureMessage(failure: MarkdownSourceLoadFailure):
   const sourceName = failure.markdownSource.displayName;
 
   switch (failure.reason) {
+    case "source-symbolic-link":
+      return `${sourceName}: Symbolic links are not supported. Select the original folder.`;
     case "source-unavailable":
       return `${sourceName} folder is no longer available. Restore it or choose another folder in Extension Preferences.`;
     case "source-unreadable":
@@ -438,7 +440,15 @@ function formatMarkdownSourceFailureMessage(failure: MarkdownSourceLoadFailure):
 }
 
 function formatMarkdownSourceFailureSubtitle(failure: MarkdownSourceLoadFailure): string {
-  return failure.reason === "source-unavailable" ? "Folder is no longer available." : "Some files could not be read.";
+  switch (failure.reason) {
+    case "source-symbolic-link":
+      return "Symbolic links are not supported.";
+    case "source-unavailable":
+      return "Folder is no longer available.";
+    case "source-unreadable":
+    case "source-read-failed":
+      return "Some files could not be read.";
+  }
 }
 
 function getErrorMessage(error: unknown): string {

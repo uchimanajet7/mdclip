@@ -146,6 +146,8 @@ npm run dev
 - Preview preferences が上限超過値と JavaScript の数値範囲を超える数字列を上限値へ丸めること
 - `.md` file を大文字小文字を区別せずに再帰的に検出できること
 - `.git`、`node_modules`、隠し directory、`.md` ではない file を除外できること
+- source 配下の file と directory の symbolic link を列挙せず、設定された source path の最後の entry 自体が有効または切れた symbolic link の場合は `source-symbolic-link` に分類できること
+- 設定された source path の ancestor component に symbolic link があっても、最後の entry が実体 directory なら読み込めること
 - 存在しない source root と directory ではなくなった source root を `source-unavailable` に分類できること
 - root または配下で発生した `EACCES` と `EPERM` を `source-unreadable` に分類できること
 - 配下で発生した `ENOENT` と `ENOTDIR`、およびその他の読み込み失敗を、root folder の消失と断定せず `source-read-failed` に分類できること
@@ -218,8 +220,9 @@ Raycast アプリ上では、以下を人間が操作して確認します。
 - 設定済みの empty Markdown Source では個別 command からその folder を開けること
 - すべての設定済み source が empty の場合、All Markdown Sources から source ごとの folder を区別して開けること
 - 個別 command の source folder が利用不能な場合は `Could not load Markdown Source`、source 名、`folder is no longer available`、復旧方法、`Open Extension Preferences` が表示されること
+- 個別 command の設定 source path 自体が有効または切れた symbolic link の場合は `Could not load Markdown Source`、source 名、`Symbolic links are not supported. Select the original folder.`、`Open Extension Preferences` が表示されること
 - All Markdown Sources のすべての source を読み込めない場合は `Could not load Markdown Sources` と source ごとの利用者向け説明が表示されること
-- All Markdown Sources の一部だけを読み込めない場合は、成功した files、失敗 source 名の Toast、`Could Not Load` section、`Folder is no longer available.` または `Some files could not be read.`、`Open Extension Preferences` が同時に確認できること
+- All Markdown Sources の一部だけを読み込めない場合は、成功した files、失敗 source 名の Toast、`Could Not Load` section、`Symbolic links are not supported.`、`Folder is no longer available.`、または `Some files could not be read.`、`Open Extension Preferences` が同時に確認できること
 - source 読み込み失敗の表示に Node.js の error code、system call、stack trace、absolute path が含まれないこと
 - 実際に省略された preview だけに省略案内が表示され、short file と empty file には表示されないこと
 - 無効な source、未設定 folder、読み込み失敗時の状態が理解できること

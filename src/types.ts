@@ -21,7 +21,8 @@ export type MarkdownFile = {
   size: number;
 };
 
-export type MarkdownSourceLoadFailureReason = "source-unavailable" | "source-unreadable" | "source-read-failed";
+export type MarkdownSourceLoadFailureReason =
+  "source-symbolic-link" | "source-unavailable" | "source-unreadable" | "source-read-failed";
 
 export type MarkdownSourceLoadFailure = {
   markdownSource: ConfiguredMarkdownSource;
