@@ -121,7 +121,7 @@ symbolic link は対応対象外であり、辿りません。設定された Ma
 - subtitle: Markdown Source Folder からの relative parent path がある場合だけ表示
 - accessories: preview 非表示時に updated time と file size を表示
 
-一覧検索には Raycast List の標準 filtering を使います。各 item の検索 field は次のとおりです。
+一覧検索には [Raycast List の標準 filtering](https://developers.raycast.com/api-reference/user-interface/list) を使います。`filtering={{ keepSectionOrder: false }}` を明示し、検索中の section 順を固定せず、Raycast が item ranking に基づいて section 順を変更できる状態を維持します。各 item の検索 field は次のとおりです。
 
 - title: file name
 - keywords: Markdown Source Folder からの relative path、relative parent path の各 segment、Markdown Source の表示名
@@ -132,7 +132,9 @@ Markdown file content は検索対象にしません。一覧検索のために 
 
 preview 表示中は detail pane に情報を集約し、一覧側の過密表示を避けます。
 
-All Markdown Sources では、Markdown Source ごとの section を維持します。読み込めない source がある場合は、読み込める source の files を表示し、失敗 source を `Could Not Load` section と Toast で通知します。Toast は読み込み失敗の発生と対象 source を通知し、`Could Not Load` section は継続確認と `Open Extension Preferences` による復旧操作を提供します。
+All Markdown Sources では、Markdown Source ごとの section を維持します。検索文字が空の場合は、有効かつ設定済みの Markdown Sources の設定順で section を表示します。検索文字がある場合は、Raycast の item ranking に基づく section 順の変更を許可します。Markdown Source の番号と設定順は検索優先度を表しません。検索結果の各 file は、section 順が変わった場合も所属する Markdown Source の section 内に表示します。
+
+読み込めない source がある場合は、読み込める source の files を表示し、失敗 source を `Could Not Load` section と Toast で通知します。Toast は読み込み失敗の発生と対象 source を通知し、`Could Not Load` section は継続確認と `Open Extension Preferences` による復旧操作を提供します。`Could Not Load` は filtering 前の構造では通常の Markdown Source sections の後に置きます。検索文字がある場合は、他の sections と同様に Raycast の filtering と ranking の対象となります。
 
 ## 9. Sort
 
@@ -145,7 +147,7 @@ All Markdown Sources では、Markdown Source ごとの section を維持しま�
 | Name (A-Z)             | file name ascending                                   |
 | Path (A-Z)             | Markdown Source Folder からの relative path ascending |
 
-All Markdown Sources では source section を維持し、section 内の files だけを sort します。
+All Markdown Sources では、検索文字が空の場合に source section を設定順で維持し、section 内の files だけを sort します。検索文字がある場合も、MdClip は選択した Sort に従う file 順で各 section を Raycast List へ渡します。section 順は Sort の対象にせず、Raycast の filtering と item ranking に基づく変更を許可します。
 
 ## 10. Preview
 

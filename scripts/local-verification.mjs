@@ -16,6 +16,7 @@ await mkdir(distRoot, { recursive: true });
 
 await verifyCommandEntryPoints();
 await verifyMarkdownSourcePreferences();
+await verifyListFilteringContract();
 await verifyMarkdownFileListing();
 await verifyPreview();
 await verifyDynamicPlaceholdersExpansion();
@@ -50,6 +51,15 @@ async function verifyMarkdownSourcePreferences() {
     assert.equal(preferences[`folder${index}DisplayName`].title, `Markdown Source ${index} Name`);
     assert.equal(preferences[`folder${index}DisplayName`].required, false);
   }
+}
+
+async function verifyListFilteringContract() {
+  const listSource = await readText("src/components/MarkdownFileList.tsx");
+
+  assert(
+    listSource.includes("filtering={{ keepSectionOrder: false }}"),
+    "MarkdownFileList must explicitly allow Raycast filtering to rank source sections.",
+  );
 }
 
 async function verifyPreviewPreferences() {

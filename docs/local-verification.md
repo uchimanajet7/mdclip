@@ -155,6 +155,7 @@ npm run dev
 - 横断検索で一部 source の読み込み失敗と成功分の Markdown files を分けて返せること
 - 検索 field が file name を title、relative path とその directory segment および Markdown Source 表示名を keywords として返すこと
 - 検索 keywords に absolute path と Markdown file content が含まれないこと
+- MarkdownFileList が Raycast 標準 filtering を明示的に有効化し、`keepSectionOrder: false` によって検索中の source section 順を item ranking に委ねること
 - preview が指定行数と Unicode code point 数による最大文字数に従って冒頭 content と省略有無を返せること
 - 行数または文字数の制限より後ろに content がある場合だけ preview を省略扱いにし、制限位置で終了する file、short file、empty file を省略扱いにしないこと
 - CRLF を含む file でも preview content と省略有無を正しく判定できること
@@ -217,6 +218,7 @@ Raycast アプリ上では、以下を人間が操作して確認します。
 - Preview と editor 起動が期待通りに動くこと
 - Preview detail metadata が上から `Markdown Source`、`Size`、`Updated`、`Full Path` の順で separator なしで表示され、`Relative Path` は metadata に重複表示されないこと
 - relative parent path の一覧表示、relative path 検索、`Path (A-Z)` sort が維持されていること
+- All Markdown Sources で検索文字が空の場合は source sections が設定順で表示され、複数 source に一致する検索文字を入力した場合も各 file が所属 source の section 内に表示されること。検索中の section 順は Raycast の item ranking によって変わることを許容し、検索文字を消すと設定順へ戻ること
 - 設定済みの empty Markdown Source では個別 command からその folder を開けること
 - すべての設定済み source が empty の場合、All Markdown Sources から source ごとの folder を区別して開けること
 - 個別 command の source folder が利用不能な場合は `Could not load Markdown Source`、source 名、`folder is no longer available`、復旧方法、`Open Extension Preferences` が表示されること

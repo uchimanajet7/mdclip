@@ -125,6 +125,7 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
 
   return (
     <List
+      filtering={{ keepSectionOrder: false }}
       isLoading={state.isLoading}
       isShowingDetail={previewOptions.isEnabled}
       searchBarPlaceholder={searchBarPlaceholder}
