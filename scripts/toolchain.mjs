@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
 export const nodeReleaseIndex = "https://nodejs.org/dist/index.json";
 
 export async function readProjectToolchain(repoRoot = process.cwd()) {
@@ -18,42 +19,38 @@ export async function readProjectToolchain(repoRoot = process.cwd()) {
   };
 }
 
-export async function getToolchainFreshness(repoRoot = process.cwd()) {
+export async function getToolchainUpdatePlan(repoRoot = process.cwd()) {
   const selected = await readProjectToolchain(repoRoot);
-  const latest = await getLatestStableNode();
-  const nodeUpdateAvailable = compareVersions(latest.nodeVersion, selected.nodeVersion) > 0;
-  const bundledNpmMeetsMinimum = compareVersions(latest.npmVersion, selected.minimumNpmVersion) >= 0;
+  const target = await getLatestCompatibleStableNode(selected.minimumNpmVersion);
+  const selectionComparison = compareVersions(selected.nodeVersion, target.nodeVersion);
+
+  if (selectionComparison > 0) {
+    throw new Error(
+      `.node-version ${selected.nodeVersion} is newer than the latest compatible stable Node.js ${target.nodeVersion}; refusing to downgrade the project selection`,
+    );
+  }
 
   return {
-    latest,
+    target,
     selected: {
       nodeVersion: selected.nodeVersion,
       minimumNpmVersion: selected.minimumNpmVersion,
+      nodeVersionPath: selected.nodeVersionPath,
     },
-    nodeUpdateAvailable,
-    bundledNpmMeetsMinimum,
-    actionable: nodeUpdateAvailable,
+    nodeVersionChangeRequired: selectionComparison < 0,
   };
 }
 
-export function formatToolchainFreshness(status) {
-  const lines = [
-    `Selected Node.js: ${status.selected.nodeVersion}`,
-    `Latest stable Node.js: ${status.latest.nodeVersion}`,
-    `npm bundled with latest stable Node.js: ${status.latest.npmVersion}`,
-    `Minimum npm required by MdClip: ${status.selected.minimumNpmVersion}`,
-    status.bundledNpmMeetsMinimum
-      ? "Bundled npm status: compatible"
-      : `Bundled npm status: incompatible (requires npm >=${status.selected.minimumNpmVersion})`,
+export function formatToolchainUpdatePlan(plan) {
+  return [
+    `Current .node-version: ${plan.selected.nodeVersion}`,
+    `Target stable Node.js: ${plan.target.nodeVersion}`,
+    `npm bundled with target Node.js: ${plan.target.npmVersion}`,
+    `Minimum npm required by MdClip: ${plan.selected.minimumNpmVersion}`,
+    plan.nodeVersionChangeRequired
+      ? `Project Node.js selection: update required (${plan.selected.nodeVersion} -> ${plan.target.nodeVersion})`
+      : "Project Node.js selection: current",
   ];
-
-  lines.push(
-    status.nodeUpdateAvailable
-      ? `Node.js status: update available (${status.selected.nodeVersion} -> ${status.latest.nodeVersion})`
-      : "Node.js status: current",
-  );
-
-  return lines;
 }
 
 export function parseMinimumNpmVersion(value) {
@@ -83,28 +80,29 @@ export function compareVersions(left, right) {
   return 0;
 }
 
-async function getLatestStableNode() {
+async function getLatestCompatibleStableNode(minimumNpmVersion) {
   const releases = await fetchJson(nodeReleaseIndex);
 
   if (!Array.isArray(releases)) {
     throw new Error("Node.js release index did not return an array");
   }
 
-  const latestStable = releases.find(
+  const latestCompatibleStable = releases.find(
     (release) =>
       typeof release?.version === "string" &&
       /^v\d+\.\d+\.\d+$/.test(release.version) &&
       typeof release.npm === "string" &&
-      /^\d+\.\d+\.\d+$/.test(release.npm),
+      /^\d+\.\d+\.\d+$/.test(release.npm) &&
+      compareVersions(release.npm, minimumNpmVersion) >= 0,
   );
 
-  if (!latestStable) {
-    throw new Error("Node.js release index did not contain a stable release with bundled npm");
+  if (!latestCompatibleStable) {
+    throw new Error(`Node.js release index did not contain a stable release with bundled npm >=${minimumNpmVersion}`);
   }
 
   return {
-    nodeVersion: parseExactVersion(latestStable.version.replace(/^v/, ""), "latest stable Node.js version"),
-    npmVersion: parseExactVersion(latestStable.npm, "bundled npm version"),
+    nodeVersion: parseExactVersion(latestCompatibleStable.version.replace(/^v/, ""), "target stable Node.js version"),
+    npmVersion: parseExactVersion(latestCompatibleStable.npm, "bundled npm version"),
   };
 }
 
@@ -114,7 +112,7 @@ async function fetchJson(url) {
 
 async function fetchText(url) {
   const response = await fetch(url, {
-    headers: { "user-agent": "mdclip-toolchain-check" },
+    headers: { "user-agent": "mdclip-dependency-maintenance" },
     signal: AbortSignal.timeout(30_000),
   });
 

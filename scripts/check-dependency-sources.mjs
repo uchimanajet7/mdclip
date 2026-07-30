@@ -18,7 +18,6 @@ const nodeWorkflowVersionFiles = new Map([
   [".github/workflows/build.yml", [".node-version"]],
   [".github/workflows/release.yml", [".node-version", ".node-version"]],
   [".github/workflows/publish-release-to-raycast.yml", ["release-source/.node-version"]],
-  [".github/workflows/toolchain-freshness.yml", [".node-version"]],
 ]);
 
 const npmrcLines = (await readFile(npmrcPath, "utf8"))
@@ -63,14 +62,14 @@ assert.equal(
   `${packageJsonPath} devEngines must not require an exact npm version`,
 );
 assert.equal(
-  packageJson.scripts?.["check:toolchain"],
-  "node scripts/check-toolchain-freshness.mjs",
-  `${packageJsonPath} must expose the read-only toolchain freshness check`,
+  Object.hasOwn(packageJson.scripts ?? {}, "check:toolchain"),
+  false,
+  `${packageJsonPath} must not expose a separate toolchain freshness gate`,
 );
 assert.equal(
-  packageJson.scripts?.["update:toolchain"],
-  "node scripts/update-toolchain.mjs",
-  `${packageJsonPath} must separate toolchain updates from dependency updates`,
+  Object.hasOwn(packageJson.scripts ?? {}, "update:toolchain"),
+  false,
+  `${packageJsonPath} must not split Node.js selection from dependency maintenance`,
 );
 assert.equal(
   packageJson.scripts?.["update:dependencies"],
@@ -96,6 +95,7 @@ assert.equal(
 
 const packageLock = JSON.parse(await readFile(packageLockPath, "utf8"));
 const rootLockfilePackage = packageLock.packages?.[""];
+const raycastApiLockfilePackage = packageLock.packages?.["node_modules/@raycast/api"];
 const packageEntries = Object.entries(packageLock.packages ?? {});
 const resolvedEntries = packageEntries.filter(([, packageMetadata]) => packageMetadata.resolved !== undefined);
 const missingIntegrityEntries = packageEntries.filter(
@@ -124,6 +124,33 @@ assert.deepEqual(
   packageJson.engines,
   `${packageLockPath} root engines must match package.json`,
 );
+
+const raycastNodeTypesContracts = [
+  raycastApiLockfilePackage?.dependencies?.["@types/node"],
+  raycastApiLockfilePackage?.peerDependencies?.["@types/node"],
+].filter(Boolean);
+const uniqueRaycastNodeTypesContracts = [...new Set(raycastNodeTypesContracts)];
+
+assert.equal(
+  uniqueRaycastNodeTypesContracts.length,
+  1,
+  `${packageLockPath} @raycast/api must declare one consistent @types/node runtime contract`,
+);
+assert.match(
+  uniqueRaycastNodeTypesContracts[0] ?? "",
+  /^\d+\.\d+\.\d+$/,
+  `${packageLockPath} @raycast/api must declare an exact @types/node runtime contract`,
+);
+assert.equal(
+  packageJson.devDependencies?.["@types/node"],
+  uniqueRaycastNodeTypesContracts[0],
+  `${packageJsonPath} @types/node must match the Raycast-managed extension runtime instead of the local maintenance Node.js`,
+);
+assert.equal(
+  rootLockfilePackage?.devDependencies?.["@types/node"],
+  uniqueRaycastNodeTypesContracts[0],
+  `${packageLockPath} root @types/node must match package.json and the @raycast/api runtime contract`,
+);
 assert.deepEqual(
   resolvedEntries.map(([packagePath]) => packagePath),
   [],
@@ -142,14 +169,36 @@ assert.deepEqual(
 assert.deepEqual(invalidInstallScriptPolicyValues, [], `${packageJsonPath} allowScripts decisions must be boolean`);
 
 const dependencyUpdater = await readFile("scripts/update-dependencies.mjs", "utf8");
+const toolchainHelper = await readFile("scripts/toolchain.mjs", "utf8");
+
+assert.equal(
+  toolchainHelper.includes("compareVersions(release.npm, minimumNpmVersion) >= 0"),
+  true,
+  "Node.js selection must choose a stable release whose bundled npm satisfies the project minimum",
+);
+assert.equal(
+  toolchainHelper.includes("refusing to downgrade the project selection"),
+  true,
+  "Node.js selection must not turn a stale or inconsistent release index into a project downgrade",
+);
+assert.equal(
+  /\b(?:writeFile|execFile|spawn)\b/.test(toolchainHelper) || /\b(?:mise|nvm|fnm|volta|asdf)\b/.test(toolchainHelper),
+  false,
+  "the toolchain helper must remain read-only and independent of local Node.js version managers",
+);
+
 const dependencyUpdateCommands = [
-  'await run("npm", ["run", "check:toolchain"])',
+  "const toolchainPlan = await getToolchainUpdatePlan(repoRoot)",
+  "if (runningNodeVersion !== toolchainPlan.target.nodeVersion)",
+  "await writeFile(toolchainPlan.selected.nodeVersionPath",
   'await run("npm", ["run", "check:dependencies"])',
   'await run("npm", ["ci"])',
   'await run("npm", ["run", "migrate"])',
-  'await run("npm", ["run", "check:dependencies"])',
-  'await run("npx", ["--yes", "npm-check-updates@latest"])',
-  'await run("npx", ["--yes", "npm-check-updates@latest", "--peer", "--enginesNode", "--upgrade"])',
+  'await run("npx", ["--yes", "npm-check-updates@latest", "--reject", "@types/node"])',
+  '"--enginesNode"',
+  '"--upgrade"',
+  'await run("npm", ["update", "--ignore-scripts"])',
+  "if (await alignNodeTypesWithRaycastRuntime())",
   'await run("npm", ["install", "--ignore-scripts"])',
   'await run("npm", ["run", "check:dependencies"])',
   'await run("npm", ["ci"])',
@@ -167,12 +216,34 @@ const dependencyUpdateCommandIndices = dependencyUpdateCommands.map((command) =>
 assert.equal(
   dependencyUpdateCommandIndices.every((index) => index !== -1),
   true,
-  "dependency updates must preserve the approved toolchain, policy, migration, candidate, resolution, clean-install, and verification order",
+  "dependency updates must preserve the unified preflight, Node selection, policy, migration, candidate, Raycast runtime alignment, clean-install, and verification order",
 );
 assert.equal(
   findAllIndices(dependencyUpdater, 'await run("npm", ["ci"])').length,
   2,
   "dependency updates must verify one clean baseline and one clean resolved result",
+);
+assert.equal(
+  findAllIndices(dependencyUpdater, 'await run("npm", ["update", "--ignore-scripts"])').length,
+  1,
+  "dependency updates must refresh the complete compatible transitive graph once",
+);
+assert.equal(
+  findAllIndices(dependencyUpdater, 'await run("npm", ["install", "--ignore-scripts"])').length,
+  1,
+  "dependency updates must re-resolve the manifest when Raycast runtime type alignment changes it",
+);
+assert.equal(
+  findAllIndices(dependencyUpdater, '"@types/node"').length >= 4 &&
+    dependencyUpdater.includes('"--reject", "@types/node"'),
+  true,
+  "dependency updates must keep @types/node out of generic latest-version selection and align it from @raycast/api",
+);
+assert.equal(
+  dependencyUpdater.includes("Switch Node.js with your preferred version manager") &&
+    dependencyUpdater.includes("No files were changed."),
+  true,
+  "dependency updates must leave local Node.js management to the maintainer and report the no-write preflight stop",
 );
 assert.equal(
   dependencyUpdater.includes("--legacy-peer-deps") ||
@@ -189,10 +260,20 @@ const workflowPaths = (await readdir(".github/workflows"))
 const workflowContents = new Map(
   await Promise.all(workflowPaths.map(async (workflowPath) => [workflowPath, await readFile(workflowPath, "utf8")])),
 );
+const splitToolchainWorkflowPaths = workflowPaths.filter((workflowPath) =>
+  /(?:check:toolchain|update:toolchain|scripts\/toolchain\.mjs|nodejs\.org\/dist\/index\.json)/.test(
+    workflowContents.get(workflowPath),
+  ),
+);
 const setupNodeWorkflowPaths = workflowPaths.filter((workflowPath) =>
   workflowContents.get(workflowPath).includes("uses: actions/setup-node@"),
 );
 
+assert.deepEqual(
+  splitToolchainWorkflowPaths,
+  [],
+  "workflows must not restore a separate Node.js freshness gate outside dependency maintenance",
+);
 assert.deepEqual(
   setupNodeWorkflowPaths,
   [...nodeWorkflowVersionFiles.keys()].sort(),
@@ -294,7 +375,6 @@ assert.equal(
 const registryNeutralFiles = [
   "scripts/toolchain.mjs",
   "scripts/update-dependencies.mjs",
-  "scripts/update-toolchain.mjs",
   "scripts/publish-raycast-pr.mjs",
   ".github/workflows/build.yml",
 ];
@@ -322,23 +402,6 @@ assert.deepEqual(
   registryOverrideLocations,
   [],
   "dependency acquisition, update, CI, and publish paths must inherit the configured registry",
-);
-
-const freshnessWorkflow = workflowContents.get(".github/workflows/toolchain-freshness.yml");
-assert.equal(
-  freshnessWorkflow.includes("permissions:\n  contents: read"),
-  true,
-  "toolchain freshness workflow must remain read-only",
-);
-assert.equal(
-  freshnessWorkflow.includes('cron: "17 9 * * 2"') && freshnessWorkflow.includes('timezone: "Asia/Tokyo"'),
-  true,
-  "toolchain freshness workflow must run weekly away from the start of the hour",
-);
-assert.equal(
-  freshnessWorkflow.includes("run: npm run check:toolchain"),
-  true,
-  "toolchain freshness workflow must run the project freshness check",
 );
 
 const scriptPaths = (await readdir("scripts"))
@@ -380,7 +443,7 @@ assert.deepEqual(
   "workflow files must derive the Node.js version from .node-version",
 );
 
-console.log("dependency source and toolchain verification passed");
+console.log("dependency source and maintenance verification passed");
 
 function packageNameFromLockfilePath(packagePath) {
   const nodeModulesSegment = "node_modules/";

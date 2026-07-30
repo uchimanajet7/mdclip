@@ -188,9 +188,11 @@ Store publish を開始すると、script はrelease sourceでGitに追跡され
 
 外部 GitHub state を変える前に、[Store publication prerequisites](#8-store-publication-prerequisites) がすべて完了していることと、対象とする外部 state を確認します。
 
-### 7.4 Toolchain freshness
+### 7.4 Dependency and toolchain maintenance
 
-`Toolchain Freshness` workflow は、毎週火曜日09:17（Asia/Tokyo）と手動実行時に、`.node-version` のNode.jsをNode.js公式release indexのlatest stable versionと比較し、そのNode.jsに同梱されるnpmが`engines.npm`を満たすことを確認します。このworkflowは`contents: read`だけを使い、branch、commit、Pull Request、Issueを作成しません。更新可能なstale Node.js selectionは`npm run update:toolchain`による更新を要求します。
+Node.js selectionとdependencyは、Release workflowから独立したlocal maintenance operationとして `npm run update:dependencies` で一緒に更新・検証します。このcommandは、`engines.npm`を満たすnpmを同梱した最新stable Node.jsを選び、実行中Node.jsが一致する場合だけ `.node-version`、dependency、lockfileを更新して完全検証します。Node.js自体のinstallや切り替え、Git操作、Pull Request、Issue、Release、Raycast Store publicationは行いません。
+
+Release workflowは引き続きRelease sourceに記録された `.node-version` を使用し、release時にlatest Node.jsへ自動追従しません。Node.js selectionとdependencyの採用判断は、local maintenanceの差分と検証結果をmaintainerが確認した後に行います。
 
 ## 8. Store publication prerequisites
 
