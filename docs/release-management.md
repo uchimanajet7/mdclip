@@ -15,15 +15,15 @@ MdClip の active release path は GitHub Release です。release owner / maint
 
 ## 2. Release owner 管理対象
 
-| 対象                             | 役割                                                   | release 管理での扱い                                                |
-| -------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------- |
-| GitHub Release                   | latest release tag と source archive の公開単位        | Active public release unit                                          |
-| `Release` workflow               | Git tag と GitHub Release を作成する                   | `.github/release-manifest.json` に従って手動実行する                |
-| `Build` workflow                 | build、local verification、Raycast CLI lint を確認する | branch push、Pull Request、手動実行、または他 workflow から実行する |
-| `.github/release-manifest.json`  | リリース準備コミットが表す GitHub Release の記述子     | リリース準備時に更新し、`Release` workflow の入力として管理する     |
-| `.github/release-changelog/*.md` | GitHub Release body の source                          | release tag と同じ version 名で作成または更新する                   |
-| `docs/screenshot-media.md`       | 共通 screenshot / UI evidence 手順                     | README、GitHub、Release、Store で共有する画像の作成と確認に使う     |
-| `docs/local-verification.md`     | 開発・メンテナンス検証手順                             | release 前の local verification と手動確認の範囲を定義する          |
+| 対象                             | 役割                                                   | release 管理での扱い                                                                                           |
+| -------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| GitHub Release                   | latest release tag と source archive の公開単位        | Active public release unit                                                                                     |
+| `Release` workflow               | Git tag と GitHub Release を作成する                   | `.github/release-manifest.json` に従って手動実行する                                                           |
+| `Build` workflow                 | build、local verification、Raycast CLI lint を確認する | `main` branch への push、`main` branch を target とする Pull Request、手動実行、または他 workflow から実行する |
+| `.github/release-manifest.json`  | リリース準備コミットが表す GitHub Release の記述子     | リリース準備時に更新し、`Release` workflow の入力として管理する                                                |
+| `.github/release-changelog/*.md` | GitHub Release body の source                          | release tag と同じ version 名で作成または更新する                                                              |
+| `docs/screenshot-media.md`       | 共通 screenshot / UI evidence 手順                     | README、GitHub、Release、Store で共有する画像の作成と確認に使う                                                |
+| `docs/local-verification.md`     | 開発・メンテナンス検証手順                             | release 前の local verification と手動確認の範囲を定義する                                                     |
 
 ## 3. 公式情報の位置づけ
 

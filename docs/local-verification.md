@@ -187,7 +187,7 @@ npm run lint:raycast -- --relaxed
 
 ## 9. GitHub Actions
 
-`Build` workflow は、branch push、Pull Request、手動実行、または他 workflow からの呼び出しで実行されます。
+`Build` workflow は、`main` branch への push、`main` branch を target とする Pull Request、手動実行、または他 workflow からの呼び出しで実行されます。Pull Request がない変更 branch への push では自動実行されないため、必要な場合は手動で実行します。
 
 現在の `Build` workflow は次を実行します。
 
