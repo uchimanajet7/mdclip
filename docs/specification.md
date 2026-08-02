@@ -121,12 +121,15 @@ symbolic link は対応対象外であり、辿りません。設定された Ma
 - subtitle: Markdown Source Folder からの relative parent path がある場合だけ表示
 - accessories: preview 非表示時に updated time と file size を表示
 
-一覧検索には [Raycast List の標準 filtering](https://developers.raycast.com/api-reference/user-interface/list) を使います。`filtering={{ keepSectionOrder: false }}` を明示し、検索中の section 順を固定せず、Raycast が item ranking に基づいて section 順を変更できる状態を維持します。各 item の検索 field は次のとおりです。
+一覧検索には [Raycast List の標準 filtering](https://developers.raycast.com/api-reference/user-interface/list) を使います。`filtering={{ keepSectionOrder: false }}` を明示し、検索中の section 順を固定せず、Raycast が item ranking に基づいて section 順を変更できる状態を維持します。各 item の検索 field は command の検索範囲に応じて次のとおりです。
 
-- title: file name
-- keywords: Markdown Source Folder からの relative path、relative parent path の各 segment、Markdown Source の表示名
+- title（すべての command）: file name
+- keywords（すべての command）: Markdown Source Folder からの relative path、relative parent path の各 segment
+- keywords（All Markdown Sources のみ）: 上記に加えて Markdown Source の表示名
 
 個別の Markdown Source command では file name または relative path から file を探します。All Markdown Sources では、これらに加えて Markdown Source の表示名からも file を探します。
+
+検索 bar の入力と、Raycast の filtering に渡す title および keywords は、比較前に Unicode NFC へ正規化します。これにより、同じ文字が composed form と decomposed form のどちらで保存または入力されても同じ検索結果になります。NFKC による compatibility character の同一化は行いません。正規化するのは検索用の文字列だけです。`file.path`、Markdown Source Folder からの relative path の保持値、item ID、および preview、open、copy、Finder 表示で参照する path は filesystem から取得した元の文字列を維持し、file や directory の名前を変更しません。読み込み失敗 item の title も同じ検索境界で NFC へ正規化します。
 
 Markdown file content は検索対象にしません。一覧検索のために content を読み込まず、選択中 file の preview または copy action が必要とする場合だけ読み込みます。
 

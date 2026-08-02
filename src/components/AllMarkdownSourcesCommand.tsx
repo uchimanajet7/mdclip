@@ -17,6 +17,7 @@ export function AllMarkdownSourcesCommand() {
   return (
     <MarkdownFileList
       markdownSources={markdownSources}
+      includeMarkdownSourceNameInSearch={true}
       searchBarPlaceholder="Search all Markdown files"
       emptyTitle="No Markdown files found in enabled Markdown Sources"
       loadErrorTitle="Could not load Markdown Sources"

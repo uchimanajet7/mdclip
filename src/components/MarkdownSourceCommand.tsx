@@ -32,6 +32,7 @@ export function MarkdownSourceCommand({ markdownSourceId }: Props) {
   return (
     <MarkdownFileList
       markdownSources={[configuredMarkdownSource]}
+      includeMarkdownSourceNameInSearch={false}
       searchBarPlaceholder={`Search ${configuredMarkdownSource.displayName}`}
       emptyTitle={`No Markdown files found in ${configuredMarkdownSource.displayName}`}
       loadErrorTitle="Could not load Markdown Source"

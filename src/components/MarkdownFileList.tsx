@@ -13,11 +13,16 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { ConfiguredMarkdownSource, MarkdownFile, MarkdownSourceLoadFailure } from "../types";
 import { copyMarkdownFile } from "../services/clipboard";
-import { getMarkdownFileSearchFields, listMarkdownFilesFromMarkdownSources } from "../services/markdownFiles";
+import {
+  getMarkdownFileSearchFields,
+  listMarkdownFilesFromMarkdownSources,
+  normalizeMarkdownSearchText,
+} from "../services/markdownFiles";
 import { getPreviewOptions, readMarkdownPreview, type MarkdownPreview, type PreviewOptions } from "../services/preview";
 
 type Props = {
   markdownSources: ConfiguredMarkdownSource[];
+  includeMarkdownSourceNameInSearch: boolean;
   searchBarPlaceholder: string;
   emptyTitle: string;
   loadErrorTitle: string;
@@ -39,10 +44,17 @@ const PREVIEW_TRUNCATION_NOTICE =
   "Preview truncated at the configured line or character limit. Open the file to view the full content.";
 const previewVisibilityCache = new Cache();
 
-export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyTitle, loadErrorTitle }: Props) {
+export function MarkdownFileList({
+  markdownSources,
+  includeMarkdownSourceNameInSearch,
+  searchBarPlaceholder,
+  emptyTitle,
+  loadErrorTitle,
+}: Props) {
   const [state, setState] = useState<LoadState>({ files: [], failures: [], isLoading: true });
   const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
   const [isPreviewEnabled, setIsPreviewEnabled] = useState(readInitialPreviewVisibility);
+  const [searchText, setSearchText] = useState("");
   const preferences = getPreferenceValues<ExtensionPreferences>();
   const previewOptions = getPreviewOptions(preferences, isPreviewEnabled);
 
@@ -128,7 +140,9 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
       filtering={{ keepSectionOrder: false }}
       isLoading={state.isLoading}
       isShowingDetail={previewOptions.isEnabled}
+      onSearchTextChange={(value) => setSearchText(normalizeMarkdownSearchText(value))}
       searchBarPlaceholder={searchBarPlaceholder}
+      searchText={searchText}
       searchBarAccessory={
         <List.Dropdown
           tooltip="Sort"
@@ -174,6 +188,7 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
                     key={file.path}
                     file={file}
                     editor={preferences.editor}
+                    includeMarkdownSourceNameInSearch={includeMarkdownSourceNameInSearch}
                     onTogglePreview={togglePreviewVisibility}
                     previewOptions={previewOptions}
                   />
@@ -195,6 +210,7 @@ export function MarkdownFileList({ markdownSources, searchBarPlaceholder, emptyT
               key={file.path}
               file={file}
               editor={preferences.editor}
+              includeMarkdownSourceNameInSearch={includeMarkdownSourceNameInSearch}
               onTogglePreview={togglePreviewVisibility}
               previewOptions={previewOptions}
             />
@@ -228,7 +244,7 @@ function MarkdownSourceFailureListItem({ failure }: { failure: MarkdownSourceLoa
     <List.Item
       id={`markdown-source-load-failure-${failure.markdownSource.id}`}
       icon={Icon.Warning}
-      title={failure.markdownSource.displayName}
+      title={normalizeMarkdownSearchText(failure.markdownSource.displayName)}
       subtitle={formatMarkdownSourceFailureSubtitle(failure)}
       actions={
         <ActionPanel>
@@ -242,16 +258,20 @@ function MarkdownSourceFailureListItem({ failure }: { failure: MarkdownSourceLoa
 function MarkdownFileListItem({
   file,
   editor,
+  includeMarkdownSourceNameInSearch,
   onTogglePreview,
   previewOptions,
 }: {
   file: MarkdownFile;
   editor: ExtensionPreferences["editor"];
+  includeMarkdownSourceNameInSearch: boolean;
   onTogglePreview: () => void | Promise<void>;
   previewOptions: PreviewOptions;
 }) {
   const isPreviewEnabled = previewOptions.isEnabled;
-  const searchFields = getMarkdownFileSearchFields(file);
+  const searchFields = getMarkdownFileSearchFields(file, {
+    includeMarkdownSourceName: includeMarkdownSourceNameInSearch,
+  });
 
   return (
     <List.Item

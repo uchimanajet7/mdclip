@@ -151,9 +151,13 @@ npm run dev
 - 配下で発生した `ENOENT` と `ENOTDIR`、およびその他の読み込み失敗を、root folder の消失と断定せず `source-read-failed` に分類できること
 - source load failure が Node.js の生の error message を利用者向け結果として保持しないこと
 - 横断検索で一部 source の読み込み失敗と成功分の Markdown files を分けて返せること
-- 検索 field が file name を title、relative path とその directory segment および Markdown Source 表示名を keywords として返すこと
+- 検索 field が file name を title、relative path とその directory segment をすべての command の keywords として返すこと
+- 個別の Markdown Source command が Markdown Source 表示名を検索 keywords から除外し、All Markdown Sources だけが追加すること
+- 検索入力、file name、relative path、directory segment、All Markdown Sources の Markdown Source 表示名、および読み込み失敗 item の title が検索境界で Unicode NFC へ正規化されること
+- decomposed form で保存した file name、directory name、Markdown Source 表示名が composed form の検索文字と同じ検索用文字列になり、NFKC による compatibility character の同一化は行わないこと
+- 検索用文字列を正規化しても、`file.path`、relative path の保持値、および file name の保持値は filesystem から取得した元の文字列を維持すること
 - 検索 keywords に absolute path と Markdown file content が含まれないこと
-- MarkdownFileList が Raycast 標準 filtering を明示的に有効化し、`keepSectionOrder: false` によって検索中の source section 順を item ranking に委ねること
+- MarkdownFileList が NFC 正規化した controlled search input と Raycast 標準 filtering を併用し、`keepSectionOrder: false` によって検索中の source section 順を item ranking に委ねること
 - preview が指定行数と Unicode code point 数による最大文字数に従って冒頭 content と省略有無を返せること
 - 行数または文字数の制限より後ろに content がある場合だけ preview を省略扱いにし、制限位置で終了する file、short file、empty file を省略扱いにしないこと
 - CRLF を含む file でも preview content と省略有無を正しく判定できること
@@ -214,6 +218,11 @@ Raycast アプリ上では、以下を人間が操作して確認します。
 - Preview と editor 起動が期待通りに動くこと
 - Preview detail metadata が上から `Markdown Source`、`Size`、`Updated`、`Full Path` の順で separator なしで表示され、`Relative Path` は metadata に重複表示されないこと
 - relative parent path の一覧表示、relative path 検索、`Path (A-Z)` sort が維持されていること
+- decomposed form の `レビュー` を含む file name に対して `レ`、`レビュ`、`レビュー`、`レビュー依頼` を通常入力しても途中で結果が消えず、decomposed form を貼り付けた場合も同じ file が一致すること
+- 上記 file を検索結果から preview、open、copy、Finder 表示でき、検索正規化によって実 file path が変更されていないこと
+- 個別の Markdown Source command では file name と relative path が検索に一致し、file name と relative path に含まれない Markdown Source 表示名だけでは file が一致しないこと
+- All Markdown Sources では Markdown Source 表示名でその source の files を検索できること
+- 有効かつ設定済みの source が 1 つだけの場合も、All Markdown Sources ではその Markdown Source 表示名で files を検索できること
 - All Markdown Sources で検索文字が空の場合は source sections が設定順で表示され、複数 source に一致する検索文字を入力した場合も各 file が所属 source の section 内に表示されること。検索中の section 順は Raycast の item ranking によって変わることを許容し、検索文字を消すと設定順へ戻ること
 - 設定済みの empty Markdown Source では個別 command からその folder を開けること
 - すべての設定済み source が empty の場合、All Markdown Sources から source ごとの folder を区別して開けること

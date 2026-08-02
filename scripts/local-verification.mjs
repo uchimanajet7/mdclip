@@ -55,10 +55,29 @@ async function verifyMarkdownSourcePreferences() {
 
 async function verifyListFilteringContract() {
   const listSource = await readText("src/components/MarkdownFileList.tsx");
+  const individualSourceCommand = await readText("src/components/MarkdownSourceCommand.tsx");
+  const allSourcesCommand = await readText("src/components/AllMarkdownSourcesCommand.tsx");
 
   assert(
     listSource.includes("filtering={{ keepSectionOrder: false }}"),
     "MarkdownFileList must explicitly allow Raycast filtering to rank source sections.",
+  );
+  assert(
+    listSource.includes("searchText={searchText}") &&
+      listSource.includes("setSearchText(normalizeMarkdownSearchText(value))"),
+    "MarkdownFileList must normalize controlled search input before Raycast filtering.",
+  );
+  assert(
+    listSource.includes("title={normalizeMarkdownSearchText(failure.markdownSource.displayName)}"),
+    "Markdown source failure item titles must use the same normalized search boundary.",
+  );
+  assert(
+    individualSourceCommand.includes("includeMarkdownSourceNameInSearch={false}"),
+    "Individual Markdown Source commands must exclude the Markdown Source name from search.",
+  );
+  assert(
+    allSourcesCommand.includes("includeMarkdownSourceNameInSearch={true}"),
+    "All Markdown Sources must include the Markdown Source name in search.",
   );
 }
 
@@ -101,20 +120,28 @@ async function verifyMarkdownFileListing() {
     getMarkdownFileSearchFields,
     listMarkdownFiles,
     listMarkdownFilesFromMarkdownSources,
+    normalizeMarkdownSearchText,
   } = await import(pathToFileURL(outputFile));
   const markdownSourceRoot = path.join(fixtureRoot, "markdown-source");
   const secondMarkdownSourceRoot = path.join(fixtureRoot, "second-markdown-source");
+  const unicodeMarkdownSourceRoot = path.join(fixtureRoot, "unicode-markdown-source");
   const missingMarkdownSourceRoot = path.join(fixtureRoot, "missing-markdown-source");
   const symbolicLinkRoot = path.join(fixtureRoot, "symbolic-link-root");
   const brokenSymbolicLinkRoot = path.join(fixtureRoot, "broken-symbolic-link-root");
   const ancestorTargetRoot = path.join(fixtureRoot, "ancestor-target");
   const ancestorSymbolicLink = path.join(fixtureRoot, "ancestor-symbolic-link");
   const sourceBelowSymbolicLinkAncestor = path.join(ancestorSymbolicLink, "source");
+  const decomposedReview = "レヒ\u3099ュー";
+  const composedReview = "レビュー";
+  const decomposedDirectoryName = `依頼-${decomposedReview}`;
+  const decomposedFileName = `${decomposedReview}依頼.md`;
+  const decomposedSourceName = `Markdown ${decomposedReview}`;
   await mkdir(path.join(markdownSourceRoot, "nested"), { recursive: true });
   await mkdir(path.join(markdownSourceRoot, ".hidden"), { recursive: true });
   await mkdir(path.join(markdownSourceRoot, ".git"), { recursive: true });
   await mkdir(path.join(markdownSourceRoot, "node_modules"), { recursive: true });
   await mkdir(secondMarkdownSourceRoot, { recursive: true });
+  await mkdir(path.join(unicodeMarkdownSourceRoot, decomposedDirectoryName), { recursive: true });
   await mkdir(path.join(ancestorTargetRoot, "source"), { recursive: true });
   await writeFile(path.join(markdownSourceRoot, "a.md"), "# A\n");
   await writeFile(path.join(markdownSourceRoot, "nested", "b.MD"), "# B\n");
@@ -123,6 +150,7 @@ async function verifyMarkdownFileListing() {
   await writeFile(path.join(markdownSourceRoot, ".git", "ignored.md"), "git\n");
   await writeFile(path.join(markdownSourceRoot, "node_modules", "ignored.md"), "node_modules\n");
   await writeFile(path.join(secondMarkdownSourceRoot, "second.md"), "# Second\n");
+  await writeFile(path.join(unicodeMarkdownSourceRoot, decomposedDirectoryName, decomposedFileName), "# Unicode\n");
   await writeFile(path.join(ancestorTargetRoot, "source", "ancestor.md"), "# Ancestor\n");
   await symlink("a.md", path.join(markdownSourceRoot, "linked-file.md"));
   await symlink("nested", path.join(markdownSourceRoot, "linked-directory"));
@@ -160,11 +188,64 @@ async function verifyMarkdownFileListing() {
   const nestedFile = files.find((file) => file.relativePath === path.join("nested", "b.MD"));
   assert(nestedFile);
 
-  const searchFields = getMarkdownFileSearchFields(nestedFile);
-  assert.equal(searchFields.title, "b.MD");
-  assert.deepEqual(searchFields.keywords, [path.join("nested", "b.MD"), "nested", "Fixture"]);
-  assert(!searchFields.keywords.includes(nestedFile.path));
-  assert(!searchFields.keywords.some((keyword) => keyword.includes("# B")));
+  const individualSourceSearchFields = getMarkdownFileSearchFields(nestedFile, {
+    includeMarkdownSourceName: false,
+  });
+  assert.equal(individualSourceSearchFields.title, "b.MD");
+  assert.deepEqual(individualSourceSearchFields.keywords, [path.join("nested", "b.MD"), "nested"]);
+  assert(!individualSourceSearchFields.keywords.includes("Fixture"));
+  assert(!individualSourceSearchFields.keywords.includes(nestedFile.path));
+  assert(!individualSourceSearchFields.keywords.some((keyword) => keyword.includes("# B")));
+
+  const allSourcesSearchFields = getMarkdownFileSearchFields(nestedFile, {
+    includeMarkdownSourceName: true,
+  });
+  assert.equal(allSourcesSearchFields.title, "b.MD");
+  assert.deepEqual(allSourcesSearchFields.keywords, [path.join("nested", "b.MD"), "nested", "Fixture"]);
+  assert(!allSourcesSearchFields.keywords.includes(nestedFile.path));
+  assert(!allSourcesSearchFields.keywords.some((keyword) => keyword.includes("# B")));
+
+  const unicodeFiles = await listMarkdownFiles({
+    id: 1,
+    commandTitle: "Markdown Source 1",
+    displayName: decomposedSourceName,
+    directory: unicodeMarkdownSourceRoot,
+  });
+  assert.equal(unicodeFiles.length, 1);
+
+  const unicodeFile = unicodeFiles[0];
+  const rawUnicodeRelativePath = path.join(decomposedDirectoryName, decomposedFileName);
+  assert.equal(unicodeFile.name, decomposedFileName);
+  assert.equal(unicodeFile.relativePath, rawUnicodeRelativePath);
+  assert.equal(unicodeFile.path, path.join(unicodeMarkdownSourceRoot, rawUnicodeRelativePath));
+  assert.notEqual(unicodeFile.path, unicodeFile.path.normalize("NFC"));
+  assert.equal(normalizeMarkdownSearchText(decomposedReview), composedReview);
+  assert.equal(normalizeMarkdownSearchText(decomposedReview), normalizeMarkdownSearchText(composedReview));
+  assert.equal(normalizeMarkdownSearchText("Ａ"), "Ａ");
+
+  const unicodeIndividualSearchFields = getMarkdownFileSearchFields(unicodeFile, {
+    includeMarkdownSourceName: false,
+  });
+  assert.equal(unicodeIndividualSearchFields.title, `${composedReview}依頼.md`);
+  assert.deepEqual(unicodeIndividualSearchFields.keywords, [
+    path.join(`依頼-${composedReview}`, `${composedReview}依頼.md`),
+    `依頼-${composedReview}`,
+  ]);
+  assert(!unicodeIndividualSearchFields.keywords.includes(`Markdown ${composedReview}`));
+
+  const unicodeAllSourcesSearchFields = getMarkdownFileSearchFields(unicodeFile, {
+    includeMarkdownSourceName: true,
+  });
+  assert.deepEqual(unicodeAllSourcesSearchFields.keywords, [
+    path.join(`依頼-${composedReview}`, `${composedReview}依頼.md`),
+    `依頼-${composedReview}`,
+    `Markdown ${composedReview}`,
+  ]);
+  assert(
+    [unicodeAllSourcesSearchFields.title, ...unicodeAllSourcesSearchFields.keywords].every(
+      (value) => value === value.normalize("NFC"),
+    ),
+  );
 
   const combinedResult = await listMarkdownFilesFromMarkdownSources([
     {
