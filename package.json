@@ -147,7 +147,7 @@
   ],
   "scripts": {
     "check": "npm run lint",
-    "check:dependencies": "node scripts/check-dependency-sources.mjs",
+    "check:dependencies": "node --test scripts/dependency-maintenance.test.mjs && node scripts/check-dependency-sources.mjs",
     "check:docs": "node --test scripts/check-documentation-language-contract.test.mjs && node scripts/check-documentation-language-contract.mjs",
     "check:release": "node --test scripts/release-manifest.test.mjs",
     "check:type": "tsc -p tsconfig.json --noEmit",
@@ -168,13 +168,13 @@
     "format": "node scripts/format.mjs --write"
   },
   "dependencies": {
-    "@raycast/api": "^1.104.23",
+    "@raycast/api": "^1.104.24",
     "react": "^19.2.8"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.2.0",
     "@types/node": "22.19.17",
-    "@types/react": "^19.2.17",
+    "@types/react": "^19.2.18",
     "esbuild": "^0.28.1",
     "eslint": "^10.8.0",
     "prettier": "^3.9.6",

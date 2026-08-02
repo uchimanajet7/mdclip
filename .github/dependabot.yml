@@ -12,10 +12,15 @@ updates:
     directory: "/"
     versioning-strategy: "increase"
     groups:
-      all-npm-version-updates:
+      non-major-npm-version-updates:
         applies-to: "version-updates"
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "@types/node"
     schedule:
       interval: "weekly"
       day: "monday"

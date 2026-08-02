@@ -190,9 +190,9 @@ Store publish を開始すると、script はrelease sourceでGitに追跡され
 
 ### 7.4 Dependency and toolchain maintenance
 
-Node.js selectionとdependencyは、Release workflowから独立したlocal maintenance operationとして `npm run update:dependencies` で一緒に更新・検証します。このcommandは、`engines.npm`を満たすnpmを同梱した最新stable Node.jsを選び、実行中Node.jsが一致する場合だけ `.node-version`、dependency、lockfileを更新して完全検証します。Node.js自体のinstallや切り替え、Git操作、Pull Request、Issue、Release、Raycast Store publicationは行いません。
+dependencyは、Release workflowから独立したlocal maintenance operationとして `npm run update:dependencies` で更新・検証します。このcommandは、実行中のNode.jsとnpmが`package.json`の`engines`範囲を満たすことを確認し、declared range内のdependency、manifest下限、lockfileを更新し、`@types/node`を解決済み`@raycast/api`のexact runtime contractへ同期して完全検証します。`@types/node`のregistry latestとの差は契約管理として表示し、それ以外のrange外latestはmaintainer decisionとして表示して自動採用しません。Node.jsの選定、install、切り替え、`.node-version`の更新、Git操作、Pull Request、Issue、Release、Raycast Store publicationは行いません。
 
-Release workflowは引き続きRelease sourceに記録された `.node-version` を使用し、release時にlatest Node.jsへ自動追従しません。Node.js selectionとdependencyの採用判断は、local maintenanceの差分と検証結果をmaintainerが確認した後に行います。
+Release workflowは引き続きRelease sourceに記録された `.node-version` を使用し、release時にlatest Node.jsへ自動追従しません。Node.js selectionはdependency maintenanceと分離し、どちらの採用判断も変更内容と検証結果をmaintainerが確認した後に行います。
 
 ## 8. Store publication prerequisites
 

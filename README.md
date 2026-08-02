@@ -30,7 +30,7 @@ npm ci
 npm run dev
 ```
 
-Use the Node.js version shown in `.node-version`; it includes a compatible npm version. MdClip does not install or replace npm globally. See [Getting Started](docs/getting-started.md) for the complete setup, update, and removal steps.
+Use Node.js and npm versions that satisfy the `engines` ranges in `package.json`. `.node-version` records the version tested in CI; it is not an exact local runtime requirement. MdClip does not install or replace npm globally. See [Getting Started](docs/getting-started.md) for the complete setup, update, and removal steps.
 
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
 

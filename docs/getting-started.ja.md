@@ -38,15 +38,15 @@ GitHub のリリースページからダウンロードし、Finder で展開で
 
 Finder で `mdclip` フォルダを開き、フォルダを右クリックして `フォルダに新規ターミナル` を選びます。
 
-依存関係を入れる前に、この MdClip リリースで使用する Node.js バージョンと、Mac で現在選択されている Node.js と npm のバージョンを確認します。
+依存関係を入れる前に、この MdClip リリースが要求する Node.js と npm の範囲、および Mac で現在選択されているバージョンを確認します。
 
 ```bash
-cat .node-version
+node -p "require('./package.json').engines"
 node -v
 npm -v
 ```
 
-`cat .node-version` に表示された Node.js バージョンを使用します。Node.js が未導入の場合、または `node -v` に別のバージョンが表示される場合は、[Node.js のインストール案内](https://nodejs.org/en/download)を使って、表示されたバージョンをインストールまたは切り替えます。
+表示された `engines` 範囲を満たす Node.js と npm を使用します。Node.js が未導入の場合、またはいずれかのバージョンが記載された最小値を下回る場合は、[Node.js のインストール案内](https://nodejs.org/en/download)から対応する Node.js を導入します。
 
 開いたターミナルで次を実行します。
 
@@ -54,7 +54,7 @@ npm -v
 npm ci
 ```
 
-`.node-version` に示された Node.js には、MdClip の最小要件を満たす npm が含まれています。MdClip がグローバル npm をインストールまたは置換することはありません。`npm ci` は、`package-lock.json` を使って、展開したソースフォルダに MdClip の依存関係をインストールします。
+`.node-version` は CI で検証する Node.js バージョンの記録ですが、ローカル環境へ完全一致を要求するものではありません。MdClip がグローバル npm をインストールまたは置換することはありません。`npm ci` は、`package-lock.json` を使って、展開したソースフォルダに MdClip の依存関係をインストールします。
 
 完了確認:
 
@@ -116,7 +116,7 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 完了確認:
 
 - ダウンロードした ZIP ファイルが、最新リリースのページにある `Source code (zip)` である。
-- 新しい `mdclip` フォルダで、`cat .node-version` に表示された Node.js バージョンが有効になっている。
+- 新しい `mdclip/package.json` の `engines` 範囲を、現在の Node.js と npm が満たしている。
 - 新しい `mdclip` フォルダで `npm ci` が失敗せずに終了する。
 - 新しい `mdclip` フォルダで `npm run dev` を実行し、Raycast から MdClip のコマンドを開ける。
 

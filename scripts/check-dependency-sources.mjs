@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
-import { compareVersions, parseMinimumNpmVersion } from "./toolchain.mjs";
+import { compareVersions, parseMinimumNodeVersion, parseMinimumNpmVersion } from "./toolchain.mjs";
+import { getDirectDependencyRangeDrift, getRaycastNodeTypesContract } from "./update-dependencies.mjs";
 
 const npmrcPath = ".npmrc";
 const nodeVersionPath = ".node-version";
@@ -8,6 +9,9 @@ const packageJsonPath = "package.json";
 const packageLockPath = "package-lock.json";
 const minimumNodeVersion = ">=22.22.2";
 const minimumNpmVersion = ">=11.17.0";
+const allowDirectRangeDriftArgument = "--allow-direct-range-drift";
+const unexpectedArguments = process.argv.slice(2).filter((argument) => argument !== allowDirectRangeDriftArgument);
+const allowDirectRangeDrift = process.argv.includes(allowDirectRangeDriftArgument);
 const expectedNpmrcLines = [
   "omit-lockfile-registry-resolved=true",
   "strict-peer-deps=true",
@@ -19,6 +23,12 @@ const nodeWorkflowVersionFiles = new Map([
   [".github/workflows/release.yml", [".node-version", ".node-version"]],
   [".github/workflows/publish-release-to-raycast.yml", ["release-source/.node-version"]],
 ]);
+
+assert.deepEqual(
+  unexpectedArguments,
+  [],
+  `unsupported dependency verification arguments: ${unexpectedArguments.join(", ")}`,
+);
 
 const npmrcLines = (await readFile(npmrcPath, "utf8"))
   .split(/\r?\n/)
@@ -33,11 +43,16 @@ assert.deepEqual(
 
 const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
 const selectedNodeVersion = (await readFile(nodeVersionPath, "utf8")).trim();
+const declaredMinimumNodeVersion = parseMinimumNodeVersion(packageJson.engines?.node);
 parseMinimumNpmVersion(packageJson.engines?.npm);
 
-assert.match(selectedNodeVersion, /^\d+\.\d+\.\d+$/, `${nodeVersionPath} must pin an exact stable Node.js version`);
+assert.match(
+  selectedNodeVersion,
+  /^\d+\.\d+\.\d+$/,
+  `${nodeVersionPath} must record an exact tested CI Node.js version`,
+);
 assert.equal(
-  compareVersions(selectedNodeVersion, minimumNodeVersion.slice(2)) >= 0,
+  compareVersions(selectedNodeVersion, declaredMinimumNodeVersion) >= 0,
   true,
   `${nodeVersionPath} must satisfy engines.node`,
 );
@@ -95,7 +110,6 @@ assert.equal(
 
 const packageLock = JSON.parse(await readFile(packageLockPath, "utf8"));
 const rootLockfilePackage = packageLock.packages?.[""];
-const raycastApiLockfilePackage = packageLock.packages?.["node_modules/@raycast/api"];
 const packageEntries = Object.entries(packageLock.packages ?? {});
 const resolvedEntries = packageEntries.filter(([, packageMetadata]) => packageMetadata.resolved !== undefined);
 const missingIntegrityEntries = packageEntries.filter(
@@ -124,32 +138,71 @@ assert.deepEqual(
   packageJson.engines,
   `${packageLockPath} root engines must match package.json`,
 );
+assert.deepEqual(
+  rootLockfilePackage?.dependencies,
+  packageJson.dependencies,
+  `${packageLockPath} root dependencies must match package.json`,
+);
+assert.deepEqual(
+  rootLockfilePackage?.devDependencies,
+  packageJson.devDependencies,
+  `${packageLockPath} root devDependencies must match package.json`,
+);
+if (!allowDirectRangeDrift) {
+  assert.deepEqual(
+    getDirectDependencyRangeDrift(packageJson, packageLock),
+    [],
+    `${packageJsonPath} direct dependency lower bounds must match the resolved versions recorded by ${packageLockPath}`,
+  );
+}
 
-const raycastNodeTypesContracts = [
-  raycastApiLockfilePackage?.dependencies?.["@types/node"],
-  raycastApiLockfilePackage?.peerDependencies?.["@types/node"],
-].filter(Boolean);
-const uniqueRaycastNodeTypesContracts = [...new Set(raycastNodeTypesContracts)];
+const raycastApiPackage = packageLock.packages?.["node_modules/@raycast/api"];
+const expectedNodeTypesVersion = getRaycastNodeTypesContract(raycastApiPackage ?? {});
+const declaredNodeTypesVersion = packageJson.devDependencies?.["@types/node"];
+const declaredReactTypesRange = packageJson.devDependencies?.["@types/react"];
+const resolvedNodeTypesVersion = packageLock.packages?.["node_modules/@types/node"]?.version;
+const resolvedReactTypesVersion = packageLock.packages?.["node_modules/@types/react"]?.version;
+const resolvedReactVersion = packageLock.packages?.["node_modules/react"]?.version;
 
 assert.equal(
-  uniqueRaycastNodeTypesContracts.length,
-  1,
-  `${packageLockPath} @raycast/api must declare one consistent @types/node runtime contract`,
-);
-assert.match(
-  uniqueRaycastNodeTypesContracts[0] ?? "",
-  /^\d+\.\d+\.\d+$/,
-  `${packageLockPath} @raycast/api must declare an exact @types/node runtime contract`,
-);
-assert.equal(
-  packageJson.devDependencies?.["@types/node"],
-  uniqueRaycastNodeTypesContracts[0],
-  `${packageJsonPath} @types/node must match the Raycast-managed extension runtime instead of the local maintenance Node.js`,
+  declaredNodeTypesVersion,
+  expectedNodeTypesVersion,
+  `${packageJsonPath} must directly own the exact @types/node contract declared by @raycast/api`,
 );
 assert.equal(
   rootLockfilePackage?.devDependencies?.["@types/node"],
-  uniqueRaycastNodeTypesContracts[0],
-  `${packageLockPath} root @types/node must match package.json and the @raycast/api runtime contract`,
+  expectedNodeTypesVersion,
+  `${packageLockPath} root must record the direct @types/node runtime contract`,
+);
+assert.equal(
+  resolvedNodeTypesVersion,
+  expectedNodeTypesVersion,
+  `${packageLockPath} must resolve the root @types/node runtime contract`,
+);
+assert.match(
+  declaredReactTypesRange ?? "",
+  /^\^\d+\.\d+\.\d+$/,
+  `${packageJsonPath} must directly own @types/react as a caret devDependency`,
+);
+assert.equal(
+  rootLockfilePackage?.devDependencies?.["@types/react"],
+  declaredReactTypesRange,
+  `${packageLockPath} root must record the direct @types/react development contract`,
+);
+assert.equal(
+  majorMinor(resolvedReactTypesVersion),
+  majorMinor(resolvedReactVersion),
+  `${packageLockPath} root @types/react must match the root React major and minor version`,
+);
+assert.equal(
+  projectDependencyNames.includes("csstype"),
+  false,
+  `${packageJsonPath} must leave csstype resolution to @types/react`,
+);
+assert.equal(
+  packageJson.overrides?.csstype,
+  undefined,
+  `${packageJsonPath} must not override the csstype version selected for @types/react`,
 );
 assert.deepEqual(
   resolvedEntries.map(([packagePath]) => packagePath),
@@ -172,14 +225,14 @@ const dependencyUpdater = await readFile("scripts/update-dependencies.mjs", "utf
 const toolchainHelper = await readFile("scripts/toolchain.mjs", "utf8");
 
 assert.equal(
-  toolchainHelper.includes("compareVersions(release.npm, minimumNpmVersion) >= 0"),
+  toolchainHelper.includes("parseMinimumNodeVersion") && toolchainHelper.includes("parseMinimumNpmVersion"),
   true,
-  "Node.js selection must choose a stable release whose bundled npm satisfies the project minimum",
+  "the toolchain helper must parse the Node.js and npm engine minimums used by dependency maintenance",
 );
 assert.equal(
-  toolchainHelper.includes("refusing to downgrade the project selection"),
-  true,
-  "Node.js selection must not turn a stale or inconsistent release index into a project downgrade",
+  /\b(?:fetch|nodeReleaseIndex|getLatestCompatibleLtsNode|selectLatestCompatibleLtsNode)\b/.test(toolchainHelper),
+  false,
+  "the toolchain helper must not select or fetch a replacement Node.js release",
 );
 assert.equal(
   /\b(?:writeFile|execFile|spawn)\b/.test(toolchainHelper) || /\b(?:mise|nvm|fnm|volta|asdf)\b/.test(toolchainHelper),
@@ -188,23 +241,23 @@ assert.equal(
 );
 
 const dependencyUpdateCommands = [
-  "const toolchainPlan = await getToolchainUpdatePlan(repoRoot)",
-  "if (runningNodeVersion !== toolchainPlan.target.nodeVersion)",
-  "await writeFile(toolchainPlan.selected.nodeVersionPath",
-  'await run("npm", ["run", "check:dependencies"])',
-  'await run("npm", ["ci"])',
-  'await run("npm", ["run", "migrate"])',
-  'await run("npx", ["--yes", "npm-check-updates@latest", "--reject", "@types/node"])',
-  '"--enginesNode"',
-  '"--upgrade"',
-  'await run("npm", ["update", "--ignore-scripts"])',
-  "if (await alignNodeTypesWithRaycastRuntime())",
-  'await run("npm", ["install", "--ignore-scripts"])',
-  'await run("npm", ["run", "check:dependencies"])',
-  'await run("npm", ["ci"])',
-  'await run("npm", ["run", "lint"])',
-  'await run("npm", ["run", "build"])',
-  'await run("npm", ["run", "lint:raycast"])',
+  "const runningNpmVersion = await readNpmVersion(execute)",
+  "assertMaintenanceRuntime({",
+  'await execute("npm", ["run", "check:dependencies", "--", "--allow-direct-range-drift"])',
+  'await execute("npm", ["ci"])',
+  'await execute("npm", ["run", "migrate"])',
+  "await readOutdated(execute)",
+  "await applyCompatibleDependencyUpdates(execute)",
+  "await alignNodeTypesWithRaycastRuntime(repoRootUrl)",
+  'await execute("npm", ["install", "--ignore-scripts"])',
+  "const rangeDrift = getDirectDependencyRangeDrift(packageJson, packageLock)",
+  "const directDependencyDowngrades = getDirectDependencyDowngrades(",
+  "const finalStatus = classifyOutdated(finalOutdated, {",
+  'await execute("npm", ["run", "check:dependencies"])',
+  'await execute("npm", ["ci"])',
+  'await execute("npm", ["run", "lint"])',
+  'await execute("npm", ["run", "build"])',
+  'await execute("npm", ["run", "lint:raycast"])',
 ];
 let previousDependencyUpdateCommandIndex = -1;
 const dependencyUpdateCommandIndices = dependencyUpdateCommands.map((command) => {
@@ -216,34 +269,46 @@ const dependencyUpdateCommandIndices = dependencyUpdateCommands.map((command) =>
 assert.equal(
   dependencyUpdateCommandIndices.every((index) => index !== -1),
   true,
-  "dependency updates must preserve the unified preflight, Node selection, policy, migration, candidate, Raycast runtime alignment, clean-install, and verification order",
+  "dependency updates must preserve the engines preflight, policy, baseline install, migration, candidate, resolution, postcondition, clean-install, and verification order",
 );
 assert.equal(
-  findAllIndices(dependencyUpdater, 'await run("npm", ["ci"])').length,
+  findAllIndices(dependencyUpdater, 'await execute("npm", ["ci"])').length,
   2,
   "dependency updates must verify one clean baseline and one clean resolved result",
 );
 assert.equal(
-  findAllIndices(dependencyUpdater, 'await run("npm", ["update", "--ignore-scripts"])').length,
+  findAllIndices(dependencyUpdater, '["update", "--save", "--ignore-scripts"]').length,
   1,
-  "dependency updates must refresh the complete compatible transitive graph once",
+  "dependency updates must refresh the compatible graph and persist direct dependency lower bounds once",
 );
 assert.equal(
-  findAllIndices(dependencyUpdater, 'await run("npm", ["install", "--ignore-scripts"])').length,
+  findAllIndices(dependencyUpdater, 'await execute("npm", ["install", "--ignore-scripts"])').length,
   1,
-  "dependency updates must re-resolve the manifest when Raycast runtime type alignment changes it",
+  "dependency updates must re-resolve once when the @raycast/api Node type contract changes",
 );
 assert.equal(
-  findAllIndices(dependencyUpdater, '"@types/node"').length >= 4 &&
-    dependencyUpdater.includes('"--reject", "@types/node"'),
-  true,
-  "dependency updates must keep @types/node out of generic latest-version selection and align it from @raycast/api",
+  dependencyUpdater.includes("npm-check-updates") ||
+    dependencyUpdater.includes('"--peer"') ||
+    dependencyUpdater.includes('"--enginesNode"'),
+  false,
+  "dependency updates must use the npm resolver and must not filter valid manifest updates through installed peer versions",
 );
 assert.equal(
-  dependencyUpdater.includes("Switch Node.js with your preferred version manager") &&
-    dependencyUpdater.includes("No files were changed."),
+  /(?:getToolchainUpdatePlan|Target LTS Node\.js|preferred version manager|\.node-version)/.test(dependencyUpdater),
+  false,
+  "dependency updates must neither require an exact Node.js selection nor modify .node-version",
+);
+assert.equal(
+  dependencyUpdater.includes("getDirectDependencyDowngrades") &&
+    dependencyUpdater.includes("would downgrade resolved direct dependencies"),
   true,
-  "dependency updates must leave local Node.js management to the maintainer and report the no-write preflight stop",
+  "dependency updates must stop instead of silently downgrading a resolved direct dependency",
+);
+assert.equal(
+  dependencyUpdater.includes("runtimeContractManagedDependencies") &&
+    dependencyUpdater.includes("Managed by the @raycast/api runtime contract"),
+  true,
+  "dependency updates must separate @types/node contract alignment from registry-latest maintainer decisions",
 );
 assert.equal(
   dependencyUpdater.includes("--legacy-peer-deps") ||
@@ -251,6 +316,25 @@ assert.equal(
     dependencyUpdater.includes("dangerously-allow-all-scripts"),
   false,
   "dependency updates must not bypass peer or install-script policy",
+);
+
+const dependabot = await readFile(".github/dependabot.yml", "utf8");
+assert.equal(
+  dependabot.includes('versioning-strategy: "increase"') &&
+    dependabot.includes("non-major-npm-version-updates:") &&
+    /update-types:\s*\n\s*- "minor"\s*\n\s*- "patch"/.test(dependabot),
+  true,
+  "Dependabot must persist reviewed lower bounds while grouping only npm minor and patch version updates",
+);
+assert.equal(
+  dependabot.includes("all-npm-version-updates:"),
+  false,
+  "npm major version updates must remain visible as individual maintainer decisions",
+);
+assert.equal(
+  dependabot.includes('dependency-name: "@types/node"'),
+  true,
+  "Dependabot must not update @types/node independently of the @raycast/api runtime contract",
 );
 
 const workflowPaths = (await readdir(".github/workflows"))
@@ -451,6 +535,12 @@ function packageNameFromLockfilePath(packagePath) {
   const packagePathSegments = packageLocation.split("/");
 
   return packageLocation.startsWith("@") ? packagePathSegments.slice(0, 2).join("/") : packagePathSegments[0];
+}
+
+function majorMinor(version) {
+  const match = typeof version === "string" && version.match(/^(\d+)\.(\d+)\.\d+$/);
+  assert.ok(match, `expected an exact semantic version; received ${version}`);
+  return `${match[1]}.${match[2]}`;
 }
 
 function findAllIndices(contents, value) {

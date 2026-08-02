@@ -38,15 +38,15 @@ Completion checks:
 
 Open the `mdclip` folder in Finder, right-click the folder, and select `New Terminal at Folder`.
 
-Before installing the dependencies, check the Node.js version selected for this MdClip release and the Node.js and npm versions currently active on your Mac.
+Before installing the dependencies, check the Node.js and npm requirements for this MdClip release and the versions currently active on your Mac.
 
 ```bash
-cat .node-version
+node -p "require('./package.json').engines"
 node -v
 npm -v
 ```
 
-Use the Node.js version shown by `cat .node-version`. If Node.js is not installed or `node -v` shows a different version, install or switch to the displayed version using the [Node.js installation page](https://nodejs.org/en/download).
+Use Node.js and npm versions that satisfy the displayed `engines` ranges. If Node.js is not installed or either version is below the stated minimum, install a supported Node.js release from the [Node.js installation page](https://nodejs.org/en/download).
 
 Run the following commands in the terminal.
 
@@ -54,7 +54,7 @@ Run the following commands in the terminal.
 npm ci
 ```
 
-The Node.js release shown in `.node-version` includes an npm version that meets MdClip's minimum requirement. MdClip does not install or replace npm globally. `npm ci` uses `package-lock.json` to install MdClip's dependencies in the extracted source folder.
+`.node-version` records the Node.js version tested in CI, but it is not an exact local runtime requirement. MdClip does not install or replace npm globally. `npm ci` uses `package-lock.json` to install MdClip's dependencies in the extracted source folder.
 
 Completion checks:
 
@@ -116,7 +116,7 @@ For details about Dynamic Placeholders, see [README](../README.md#dynamic-placeh
 Completion checks:
 
 - The downloaded ZIP file is `Source code (zip)` from the latest release page.
-- The Node.js version shown by `cat .node-version` is active in the new `mdclip` folder.
+- The active Node.js and npm versions satisfy the `engines` ranges in the new `mdclip/package.json`.
 - `npm ci` finishes without errors in the new `mdclip` folder.
 - After running `npm run dev` in the new `mdclip` folder, you can open the MdClip commands from Raycast.
 

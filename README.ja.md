@@ -30,7 +30,7 @@ npm ci
 npm run dev
 ```
 
-`.node-version` に示された Node.js を使用します。この Node.js には、MdClip に対応する npm が含まれています。MdClip がグローバル npm をインストールまたは置換することはありません。導入、更新、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
+`package.json` の `engines` 範囲を満たす Node.js と npm を使用します。`.node-version` は CI で検証するバージョンの記録であり、ローカル環境へ完全一致を要求するものではありません。MdClip がグローバル npm をインストールまたは置換することはありません。導入、更新、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
 `npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source にフォルダを設定します。
 
