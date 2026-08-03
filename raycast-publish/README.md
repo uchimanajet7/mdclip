@@ -59,7 +59,7 @@ Configure a folder for every Markdown Source you use. MdClip needs at least one 
 
 ## Dynamic Placeholders
 
-`Copy Expanded Content` replaces only the placeholders listed below. The original Markdown file is not modified.
+`Copy Expanded Content` replaces only the exact, case-sensitive placeholders listed below. All other text is copied unchanged. The original Markdown file is not modified.
 
 | Placeholder   | Replacement                                                |
 | ------------- | ---------------------------------------------------------- |
@@ -71,8 +71,6 @@ Configure a folder for every Markdown Source you use. MdClip needs at least one 
 | `{now}`       | Current date and time plus time zone                       |
 | `{uuid}`      | Random UUID generated separately for each occurrence       |
 | `{clipboard}` | Current clipboard text                                     |
-
-Reference: [Raycast Dynamic Placeholders](https://manual.raycast.com/dynamic-placeholders)
 
 ## Markdown File Handling
 

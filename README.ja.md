@@ -100,7 +100,7 @@ Markdown ファイルを選択した状態で、次のアクションを使え�
 
 ## Dynamic Placeholders
 
-MdClip は Raycast Dynamic Placeholders と同じ `{placeholder}` 形式の書き方を使います。`Copy Expanded Content` は、次の MdClip 対応プレースホルダーだけを置換します。元の Markdown ファイルは変更しません。
+`Copy Expanded Content` は、次の表に大文字・小文字まで完全一致するプレースホルダーだけを置換します。それ以外のテキストはそのままコピーし、元の Markdown ファイルは変更しません。
 
 | プレースホルダー | 置換内容                                          |
 | ---------------- | ------------------------------------------------- |
@@ -112,10 +112,6 @@ MdClip は Raycast Dynamic Placeholders と同じ `{placeholder}` 形式の書�
 | `{now}`          | 現在日時とタイムゾーン                            |
 | `{uuid}`         | 出現箇所ごとに個別生成する UUID                   |
 | `{clipboard}`    | 現在のクリップボードのテキスト                    |
-
-関連する置換方式: [Raycast Dynamic Placeholders](https://manual.raycast.com/dynamic-placeholders)
-
-MdClip のプレースホルダー展開は、上の表にある対応プレースホルダーについて Raycast Dynamic Placeholders の置換方式に合わせて設計しています。
 
 ## Markdown ファイルの扱い
 

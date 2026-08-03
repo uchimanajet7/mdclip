@@ -98,7 +98,7 @@ MdClip Preferences
 
 ## Dynamic Placeholders
 
-MdClip uses the same `{placeholder}` syntax style as Raycast Dynamic Placeholders. `Copy Expanded Content` expands only the MdClip-supported placeholders listed below. The original Markdown file is not modified.
+`Copy Expanded Content` replaces only the exact, case-sensitive placeholders listed below. All other text is copied unchanged. The original Markdown file is not modified.
 
 | Placeholder   | Replacement                                                |
 | ------------- | ---------------------------------------------------------- |
@@ -110,10 +110,6 @@ MdClip uses the same `{placeholder}` syntax style as Raycast Dynamic Placeholder
 | `{now}`       | Current date and time plus time zone                       |
 | `{uuid}`      | Random UUID generated separately for each occurrence       |
 | `{clipboard}` | Current clipboard text                                     |
-
-Related replacement model: [Raycast Dynamic Placeholders](https://manual.raycast.com/dynamic-placeholders)
-
-MdClip's placeholder expansion is designed to match the Raycast Dynamic Placeholders replacement model for the supported placeholders listed above.
 
 ## Markdown File Handling
 

@@ -208,7 +208,7 @@ preview visibility は Raycast Cache に `mdclip.preview.enabled` として保�
 
 ## 12. Dynamic Placeholders
 
-MdClip は Raycast Dynamic Placeholders と同じ `{placeholder}` 形式の記法を使います。`Copy Expanded Content` は、元の Markdown file を変更せず、copy 結果だけを置換します。
+`Copy Expanded Content` は、次の表に大文字・小文字まで完全一致する placeholder だけを copy result で置換します。表にない text はそのまま保持し、元の Markdown file は変更しません。
 
 | Placeholder   | 置換内容                                      |
 | ------------- | --------------------------------------------- |
@@ -221,19 +221,13 @@ MdClip は Raycast Dynamic Placeholders と同じ `{placeholder}` 形式の記�
 | `{uuid}`      | 出現箇所ごとに個別生成する UUID               |
 | `{clipboard}` | 現在の clipboard text                         |
 
-この表にない placeholder は置換せず、そのまま copy result に残します。
-
 `{clipboard}` は、copy 対象 Markdown 本文内に `{clipboard}` が存在する場合だけ読み取ります。
 
-Clipboard text を取得できた場合は、その text で `{clipboard}` を置換します。Clipboard に text がなく `Clipboard.readText()` が `undefined` を返した場合は、Raycast Dynamic Placeholders と同様に `{clipboard}` を削除して copy を続行します。
+Clipboard text を取得できた場合は、その text で `{clipboard}` を置換します。Clipboard に text がなく `Clipboard.readText()` が `undefined` を返した場合は、`{clipboard}` を削除して copy を続行します。
 
 Clipboard text の読み取りが error になった場合、`Copy Expanded Content` は placeholder 展開を中止します。Clipboard への書き込みと success HUD は実行せず、`Could not copy expanded content` と `MdClip could not read the Clipboard. Try again.` を Failure Toast で表示します。error は空の Clipboard text として扱いません。
 
 copy の成功は `Clipboard.copy()` の完了で確定します。成功後の HUD は結果通知であり、HUD の表示に失敗しても完了済みの copy を失敗へ変更せず、Failure Toast も表示しません。file の読み取り、Clipboard text の読み取り、Clipboard への書き込み、およびその他の copy 処理は、利用者が次に行う操作が異なる範囲だけを内部で区別します。元の file、Clipboard、HUD error は利用者向け表示には含めず、開発用 console にだけ記録します。
-
-Related replacement model: https://manual.raycast.com/dynamic-placeholders
-
-MdClip の placeholder 展開は、上の表にある対応 placeholder について Raycast Dynamic Placeholders の置換方式に合わせて設計しています。
 
 ## 13. Error states
 
