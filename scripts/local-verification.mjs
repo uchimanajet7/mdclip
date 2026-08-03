@@ -17,8 +17,11 @@ await mkdir(distRoot, { recursive: true });
 await verifyCommandEntryPoints();
 await verifyMarkdownSourcePreferences();
 await verifyListFilteringContract();
+await verifyUserFacingFailureContract();
 await verifyMarkdownFileListing();
 await verifyPreview();
+await verifyPreviewVisibility();
+await verifyFeedback();
 await verifyDynamicPlaceholdersExpansion();
 
 console.log("local verification passed");
@@ -79,6 +82,49 @@ async function verifyListFilteringContract() {
     allSourcesCommand.includes("includeMarkdownSourceNameInSearch={true}"),
     "All Markdown Sources must include the Markdown Source name in search.",
   );
+}
+
+async function verifyUserFacingFailureContract() {
+  const listSource = await readText("src/components/MarkdownFileList.tsx");
+  const clipboardSource = await readText("src/services/clipboard.ts");
+  const dynamicPlaceholdersSource = await readText("src/services/dynamicPlaceholders.ts");
+  const feedbackSource = await readText("src/services/feedback.ts");
+  const previewVisibilitySource = await readText("src/services/previewVisibility.ts");
+
+  assert(!listSource.includes("getErrorMessage"));
+  assert(!listSource.includes("String(error)"));
+  assert(!listSource.includes("error.message"));
+  assert(!listSource.includes("Failed to copy content"));
+  assert(!listSource.includes("Failed to save preview setting"));
+  assert(
+    listSource.includes(
+      "MdClip could not read the file for preview. Check the file and its Markdown Source folder, then open the command again.",
+    ),
+  );
+  assert(
+    listSource.includes(
+      "MdClip could not read the file. Check the file and its Markdown Source folder, then open the command again.",
+    ),
+  );
+  assert(listSource.includes("MdClip could not read the Clipboard. Try again."));
+  assert(listSource.includes("MdClip could not write to the Clipboard. Try again."));
+  assert(listSource.includes("MdClip could not complete the copy. Try again."));
+  assert(listSource.includes("The previous setting is still in use. Try again."));
+  assert(listSource.includes("MdClip could not load Markdown files. Open the command again."));
+  assert(!listSource.includes("Check the configured folders and open the command again."));
+  assert(!listSource.includes("showToast("));
+  assert(!clipboardSource.includes("showHUD("));
+  assert(clipboardSource.includes("CopyMarkdownFileError"));
+  assert(dynamicPlaceholdersSource.includes("ClipboardReadError"));
+  assert(feedbackSource.includes("showToast({ style: Toast.Style.Failure, title, message })"));
+  assert(feedbackSource.includes("await showHUD(title)"));
+  assert(previewVisibilitySource.includes("return DEFAULT_PREVIEW_ENABLED"));
+
+  const successfulFileStateIndex = listSource.indexOf(
+    "setState({ files: result.files, failures: result.failures, isLoading: false })",
+  );
+  const partialFailureToastIndex = listSource.indexOf('title: "Some Markdown Sources could not be loaded"');
+  assert(successfulFileStateIndex >= 0 && successfulFileStateIndex < partialFailureToastIndex);
 }
 
 async function verifyPreviewPreferences() {
@@ -575,6 +621,92 @@ async function verifyPreview() {
   });
 }
 
+async function verifyPreviewVisibility() {
+  const outputFile = path.join(distRoot, "previewVisibility.mjs");
+
+  await build({
+    entryPoints: [path.join(repoRoot, "src", "services", "previewVisibility.ts")],
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    outfile: outputFile,
+    plugins: [createRaycastApiStubPlugin()],
+  });
+
+  const { readPreviewVisibility, savePreviewVisibility } = await import(pathToFileURL(outputFile));
+
+  resetRaycastApiStub("text", { cacheConstructorMode: "error" });
+  const constructorDiagnostics = await captureConsoleErrors(async () => {
+    assert.equal(readPreviewVisibility(), true);
+  });
+  assert.equal(constructorDiagnostics.length, 1);
+  assert.equal(constructorDiagnostics[0][0], "[MdClip] Could not read the preview setting.");
+
+  resetRaycastApiStub("text");
+  assert.equal(readPreviewVisibility(), true);
+  assert.equal(savePreviewVisibility(false), true);
+  assert.equal(readPreviewVisibility(), false);
+  assert.equal(globalThis.__mdclipCacheValues["mdclip.preview.enabled"], "false");
+
+  globalThis.__mdclipCacheValues["mdclip.preview.enabled"] = "invalid";
+  assert.equal(readPreviewVisibility(), true);
+
+  globalThis.__mdclipCacheGetMode = "error";
+  const readDiagnostics = await captureConsoleErrors(async () => {
+    assert.equal(readPreviewVisibility(), true);
+  });
+  assert.equal(readDiagnostics.length, 1);
+  assert.equal(readDiagnostics[0][0], "[MdClip] Could not read the preview setting.");
+
+  globalThis.__mdclipCacheGetMode = "success";
+  globalThis.__mdclipCacheSetMode = "error";
+  const writeDiagnostics = await captureConsoleErrors(async () => {
+    assert.equal(savePreviewVisibility(true), false);
+  });
+  assert.equal(writeDiagnostics.length, 1);
+  assert.equal(writeDiagnostics[0][0], "[MdClip] Could not save the preview setting.");
+  assert.equal(globalThis.__mdclipCacheValues["mdclip.preview.enabled"], "invalid");
+}
+
+async function verifyFeedback() {
+  const outputFile = path.join(distRoot, "feedback.mjs");
+
+  await build({
+    entryPoints: [path.join(repoRoot, "src", "services", "feedback.ts")],
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    outfile: outputFile,
+    plugins: [createRaycastApiStubPlugin()],
+  });
+
+  const { showCopySuccessHUD, showFailureToast } = await import(pathToFileURL(outputFile));
+
+  resetRaycastApiStub("text");
+  await showFailureToast({ title: "Could not complete operation", message: "Try again." });
+  assert.deepEqual(globalThis.__mdclipToasts, [
+    { style: "failure", title: "Could not complete operation", message: "Try again." },
+  ]);
+
+  globalThis.__mdclipToastMode = "error";
+  const toastDiagnostics = await captureConsoleErrors(async () => {
+    await showFailureToast({ title: "Could not complete operation", message: "Try again." });
+  });
+  assert.equal(toastDiagnostics.length, 1);
+  assert.equal(toastDiagnostics[0][0], "[MdClip] Could not show a failure notification.");
+
+  resetRaycastApiStub("text");
+  await showCopySuccessHUD("Copied Raw Content: copy.md");
+  assert.deepEqual(globalThis.__mdclipHudMessages, ["Copied Raw Content: copy.md"]);
+
+  globalThis.__mdclipHudMode = "error";
+  const hudDiagnostics = await captureConsoleErrors(async () => {
+    await showCopySuccessHUD("Copied Raw Content: copy.md");
+  });
+  assert.equal(hudDiagnostics.length, 1);
+  assert.equal(hudDiagnostics[0][0], "[MdClip] Could not show the copy confirmation.");
+}
+
 async function verifyDynamicPlaceholdersExpansion() {
   const dynamicPlaceholdersOutputFile = path.join(distRoot, "dynamicPlaceholders.mjs");
   const clipboardOutputFile = path.join(distRoot, "clipboard.mjs");
@@ -597,8 +729,8 @@ async function verifyDynamicPlaceholdersExpansion() {
     plugins: [createRaycastApiStubPlugin()],
   });
 
-  const { expandDynamicPlaceholders } = await import(pathToFileURL(dynamicPlaceholdersOutputFile));
-  const { copyMarkdownFile } = await import(pathToFileURL(clipboardOutputFile));
+  const { ClipboardReadError, expandDynamicPlaceholders } = await import(pathToFileURL(dynamicPlaceholdersOutputFile));
+  const { CopyMarkdownFileError, copyMarkdownFile } = await import(pathToFileURL(clipboardOutputFile));
 
   resetRaycastApiStub("text");
   const expanded = await expandDynamicPlaceholders(
@@ -627,7 +759,16 @@ async function verifyDynamicPlaceholdersExpansion() {
   assert.equal(globalThis.__mdclipClipboardReadCount, 1);
 
   resetRaycastApiStub("error");
-  await assert.rejects(expandDynamicPlaceholders("clipboard={clipboard}"), /CLIPBOARD_READ_FAILED/);
+  const placeholderReadDiagnostics = await captureConsoleErrors(async () => {
+    await assert.rejects(expandDynamicPlaceholders("clipboard={clipboard}"), (error) => {
+      assert(error instanceof ClipboardReadError);
+      assert.equal(error.message, "MdClip could not read the Clipboard.");
+      assert(!error.message.includes("CLIPBOARD_READ_FAILED"));
+      return true;
+    });
+  });
+  assert.equal(placeholderReadDiagnostics.length, 1);
+  assert.equal(placeholderReadDiagnostics[0][0], "[MdClip] Could not read the Clipboard.");
   assert.equal(globalThis.__mdclipClipboardReadCount, 1);
 
   resetRaycastApiStub("error");
@@ -649,8 +790,58 @@ async function verifyDynamicPlaceholdersExpansion() {
   assert.deepEqual(globalThis.__mdclipHudMessages, ["Copied Expanded Content: copy.md"]);
 
   resetRaycastApiStub("error");
-  await assert.rejects(copyMarkdownFile(markdownFile, { expand: true }), /CLIPBOARD_READ_FAILED/);
+  const copyClipboardReadDiagnostics = await captureConsoleErrors(async () => {
+    await assert.rejects(copyMarkdownFile(markdownFile, { expand: true }), (error) => {
+      assert(error instanceof CopyMarkdownFileError);
+      assert.equal(error.reason, "clipboard-read");
+      assert.equal(error.message, "MdClip could not copy content.");
+      assert(!error.message.includes("CLIPBOARD_READ_FAILED"));
+      return true;
+    });
+  });
+  assert.equal(copyClipboardReadDiagnostics.length, 1);
+  assert.equal(copyClipboardReadDiagnostics[0][0], "[MdClip] Could not read the Clipboard.");
   assert.deepEqual(globalThis.__mdclipClipboardCopies, []);
+  assert.deepEqual(globalThis.__mdclipHudMessages, []);
+
+  resetRaycastApiStub("text");
+  const missingMarkdownFile = { name: "missing.md", path: path.join(fixtureRoot, "missing-copy.md") };
+  const copyFileReadDiagnostics = await captureConsoleErrors(async () => {
+    await assert.rejects(copyMarkdownFile(missingMarkdownFile, { expand: false }), (error) => {
+      assert(error instanceof CopyMarkdownFileError);
+      assert.equal(error.reason, "file-read");
+      assert.equal(error.message, "MdClip could not copy content.");
+      assert(!error.message.includes(missingMarkdownFile.path));
+      return true;
+    });
+  });
+  assert.equal(copyFileReadDiagnostics.length, 1);
+  assert.equal(copyFileReadDiagnostics[0][0], "[MdClip] Could not read a Markdown file for copy.");
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, []);
+  assert.deepEqual(globalThis.__mdclipHudMessages, []);
+
+  resetRaycastApiStub("text", { clipboardCopyMode: "error" });
+  const copyWriteDiagnostics = await captureConsoleErrors(async () => {
+    await assert.rejects(copyMarkdownFile(markdownFile, { expand: false }), (error) => {
+      assert(error instanceof CopyMarkdownFileError);
+      assert.equal(error.reason, "clipboard-write");
+      assert.equal(error.message, "MdClip could not copy content.");
+      assert(!error.message.includes("CLIPBOARD_COPY_FAILED"));
+      return true;
+    });
+  });
+  assert.equal(copyWriteDiagnostics.length, 1);
+  assert.equal(copyWriteDiagnostics[0][0], "[MdClip] Could not write Markdown content to the Clipboard.");
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, []);
+  assert.deepEqual(globalThis.__mdclipHudMessages, []);
+
+  resetRaycastApiStub("text", { hudMode: "error" });
+  const copyHudDiagnostics = await captureConsoleErrors(async () => {
+    await copyMarkdownFile(markdownFile, { expand: false });
+  });
+  assert.equal(copyHudDiagnostics.length, 1);
+  assert.equal(copyHudDiagnostics[0][0], "[MdClip] Could not show the copy confirmation.");
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, ["clipboard={clipboard}"]);
   assert.deepEqual(globalThis.__mdclipHudMessages, []);
 
   resetRaycastApiStub("error");
@@ -672,8 +863,16 @@ function createRaycastApiStubPlugin() {
         contents: `
 globalThis.__mdclipClipboardReadCount ??= 0;
 globalThis.__mdclipClipboardReadMode ??= "text";
+globalThis.__mdclipClipboardCopyMode ??= "success";
 globalThis.__mdclipClipboardCopies ??= [];
+globalThis.__mdclipHudMode ??= "success";
 globalThis.__mdclipHudMessages ??= [];
+globalThis.__mdclipToastMode ??= "success";
+globalThis.__mdclipToasts ??= [];
+globalThis.__mdclipCacheConstructorMode ??= "success";
+globalThis.__mdclipCacheGetMode ??= "success";
+globalThis.__mdclipCacheSetMode ??= "success";
+globalThis.__mdclipCacheValues ??= {};
 
 export const Clipboard = {
   readText: async () => {
@@ -687,11 +886,53 @@ export const Clipboard = {
     return "CLIPBOARD_TEXT";
   },
   copy: async (content) => {
+    if (globalThis.__mdclipClipboardCopyMode === "error") {
+      throw new Error("CLIPBOARD_COPY_FAILED");
+    }
     globalThis.__mdclipClipboardCopies.push(content);
   },
 };
 
+export const Toast = {
+  Style: {
+    Failure: "failure",
+  },
+};
+
+export class Cache {
+  constructor() {
+    if (globalThis.__mdclipCacheConstructorMode === "error") {
+      throw new Error("CACHE_CONSTRUCTOR_FAILED");
+    }
+  }
+
+  get(key) {
+    if (globalThis.__mdclipCacheGetMode === "error") {
+      throw new Error("CACHE_GET_FAILED");
+    }
+    return globalThis.__mdclipCacheValues[key];
+  }
+
+  set(key, value) {
+    if (globalThis.__mdclipCacheSetMode === "error") {
+      throw new Error("CACHE_SET_FAILED");
+    }
+    globalThis.__mdclipCacheValues[key] = value;
+  }
+}
+
+export async function showToast(options) {
+  if (globalThis.__mdclipToastMode === "error") {
+    throw new Error("TOAST_FAILED");
+  }
+  globalThis.__mdclipToasts.push(options);
+  return options;
+}
+
 export async function showHUD(message) {
+  if (globalThis.__mdclipHudMode === "error") {
+    throw new Error("HUD_FAILED");
+  }
   globalThis.__mdclipHudMessages.push(message);
 }
 `,
@@ -701,11 +942,43 @@ export async function showHUD(message) {
   };
 }
 
-function resetRaycastApiStub(readMode) {
+function resetRaycastApiStub(
+  readMode,
+  {
+    clipboardCopyMode = "success",
+    hudMode = "success",
+    toastMode = "success",
+    cacheConstructorMode = "success",
+    cacheGetMode = "success",
+    cacheSetMode = "success",
+  } = {},
+) {
   globalThis.__mdclipClipboardReadCount = 0;
   globalThis.__mdclipClipboardReadMode = readMode;
+  globalThis.__mdclipClipboardCopyMode = clipboardCopyMode;
   globalThis.__mdclipClipboardCopies = [];
+  globalThis.__mdclipHudMode = hudMode;
   globalThis.__mdclipHudMessages = [];
+  globalThis.__mdclipToastMode = toastMode;
+  globalThis.__mdclipToasts = [];
+  globalThis.__mdclipCacheConstructorMode = cacheConstructorMode;
+  globalThis.__mdclipCacheGetMode = cacheGetMode;
+  globalThis.__mdclipCacheSetMode = cacheSetMode;
+  globalThis.__mdclipCacheValues = {};
+}
+
+async function captureConsoleErrors(callback) {
+  const originalConsoleError = console.error;
+  const entries = [];
+  console.error = (...args) => entries.push(args);
+
+  try {
+    await callback();
+  } finally {
+    console.error = originalConsoleError;
+  }
+
+  return entries;
 }
 
 async function readText(relativePath) {

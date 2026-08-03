@@ -1,6 +1,13 @@
 import { Clipboard } from "@raycast/api";
 import { randomUUID } from "crypto";
 
+export class ClipboardReadError extends Error {
+  constructor() {
+    super("MdClip could not read the Clipboard.");
+    this.name = "ClipboardReadError";
+  }
+}
+
 export async function expandDynamicPlaceholders(content: string): Promise<string> {
   const now = new Date();
   const clipboardText = content.includes("{clipboard}") ? await readClipboardText() : undefined;
@@ -18,7 +25,12 @@ export async function expandDynamicPlaceholders(content: string): Promise<string
 }
 
 async function readClipboardText(): Promise<string> {
-  return (await Clipboard.readText()) ?? "";
+  try {
+    return (await Clipboard.readText()) ?? "";
+  } catch (error) {
+    console.error("[MdClip] Could not read the Clipboard.", error);
+    throw new ClipboardReadError();
+  }
 }
 
 function formatDate(date: Date): string {

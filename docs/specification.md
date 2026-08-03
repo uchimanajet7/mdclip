@@ -181,7 +181,7 @@ preview 読み込みは、正規化後の行制限超過または code point 上
 
 制限によって表示されない content が実際に残る場合だけ、preview の末尾に `Preview truncated at the configured line or character limit. Open the file to view the full content.` と表示します。file 全体が制限内に収まる場合、制限位置で file が終了する場合、または empty file の場合は表示しません。
 
-preview visibility は Raycast Cache に `mdclip.preview.enabled` として保存します。旧 key の migration は行いません。
+preview visibility は Raycast Cache に `mdclip.preview.enabled` として保存します。旧 key の migration は行いません。Cache の初期読み取りに失敗した場合は preview enabled の既定値で command を継続し、利用者向けの追加表示は行いません。Cache への保存に失敗した場合は表示状態を変更前へ戻し、`Could not save preview setting` と `The previous setting is still in use. Try again.` を Failure Toast で表示します。いずれの場合も、元の Cache error は利用者向け表示には含めず、開発用 console にだけ記録します。
 
 ## 11. Actions
 
@@ -227,7 +227,9 @@ MdClip は Raycast Dynamic Placeholders と同じ `{placeholder}` 形式の記�
 
 Clipboard text を取得できた場合は、その text で `{clipboard}` を置換します。Clipboard に text がなく `Clipboard.readText()` が `undefined` を返した場合は、Raycast Dynamic Placeholders と同様に `{clipboard}` を削除して copy を続行します。
 
-Clipboard text の読み取りが error になった場合、`Copy Expanded Content` は placeholder 展開を中止します。Clipboard への書き込みと success HUD は実行せず、既存の copy failure handler が Failure Toast を表示します。error は空の Clipboard text として扱いません。
+Clipboard text の読み取りが error になった場合、`Copy Expanded Content` は placeholder 展開を中止します。Clipboard への書き込みと success HUD は実行せず、`Could not copy expanded content` と `MdClip could not read the Clipboard. Try again.` を Failure Toast で表示します。error は空の Clipboard text として扱いません。
+
+copy の成功は `Clipboard.copy()` の完了で確定します。成功後の HUD は結果通知であり、HUD の表示に失敗しても完了済みの copy を失敗へ変更せず、Failure Toast も表示しません。file の読み取り、Clipboard text の読み取り、Clipboard への書き込み、およびその他の copy 処理は、利用者が次に行う操作が異なる範囲だけを内部で区別します。元の file、Clipboard、HUD error は利用者向け表示には含めず、開発用 console にだけ記録します。
 
 Related replacement model: https://manual.raycast.com/dynamic-placeholders
 
@@ -235,22 +237,40 @@ MdClip の placeholder 展開は、上の表にある対応 placeholder につ�
 
 ## 13. Error states
 
-| 状態                                                | 表示                                                                                       |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| source disabled                                     | 設定確認画面と `Open Extension Preferences`                                                |
-| source folder unset                                 | 設定確認画面と `Open Extension Preferences`                                                |
-| configured source path is a symbolic link           | symbolic link が非対応であること、実体 folder の選択、`Open Extension Preferences`         |
-| configured source folder is unavailable             | source 名、folder が利用不能であること、復旧方法、`Open Extension Preferences`             |
-| configured source folder or its contents unreadable | source 名、すべての files を読み取れないこと、復旧方法、`Open Extension Preferences`       |
-| source contents changed or another read failure     | source 名、すべての files を読み取れなかったこと、再確認方法、`Open Extension Preferences` |
-| no Markdown files                                   | empty state、source folder を開く primary action、`Open Extension Preferences`             |
-| partial load failure in All Markdown Sources        | 読み込める files を表示し、失敗 source を `Could Not Load` section と Toast で表示         |
-| clipboard read failure during expanded copy         | copy を開始せず、success HUD を表示せず、Failure Toast を表示                              |
-| copy failure                                        | failure Toast                                                                              |
+| 状態                                                | 表示                                                                                                           |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| source disabled                                     | 設定確認画面と `Open Extension Preferences`                                                                    |
+| source folder unset                                 | 設定確認画面と `Open Extension Preferences`                                                                    |
+| configured source path is a symbolic link           | symbolic link が非対応であること、実体 folder の選択、`Open Extension Preferences`                             |
+| configured source folder is unavailable             | source 名、folder が利用不能であること、復旧方法、`Open Extension Preferences`                                 |
+| configured source folder or its contents unreadable | source 名、すべての files を読み取れないこと、復旧方法、`Open Extension Preferences`                           |
+| source contents changed or another read failure     | source 名、すべての files を読み取れなかったこと、再確認方法、`Open Extension Preferences`                     |
+| unexpected source load failure                      | `Could not load Markdown files` と command の開き直し                                                          |
+| no Markdown files                                   | empty state、source folder を開く primary action、`Open Extension Preferences`                                 |
+| partial load failure in All Markdown Sources        | 読み込める files と `Could Not Load` section を維持し、失敗 source を Toast でも通知                           |
+| preview file read failure                           | preview 内の固定説明と、file および Markdown Source folder の確認後に command を開き直す案内                   |
+| preview visibility Cache read failure               | preview enabled の既定値で継続し、利用者向けの追加表示なし                                                     |
+| preview visibility Cache write failure              | 変更前の表示状態へ戻し、固定文言の Failure Toast                                                               |
+| Markdown file read failure during copy              | Clipboard へ書き込まず、file と Markdown Source folder の確認および command の開き直しを案内する Failure Toast |
+| clipboard read failure during expanded copy         | Clipboard へ書き込まず、success HUD を表示せず、再実行を案内する Failure Toast                                 |
+| clipboard write failure                             | success HUD を表示せず、再実行を案内する Failure Toast                                                         |
+| another copy failure                                | success HUD を表示せず、再実行を案内する Failure Toast                                                         |
+| success HUD failure after copy                      | 完了済み copy を成功のまま維持し、Failure Toast は表示しない                                                   |
+| Toast failure                                       | files、preview visibility、copy の結果を変更せず、元の Toast error を別の利用者向け表示へ変換しない            |
 
 個別の Markdown Source command ですべての files を読み込めない場合は、`Could not load Markdown Source` を表示します。All Markdown Sources ですべての source を読み込めない場合は、`Could not load Markdown Sources` を表示します。
 
-利用者向けの読み込み失敗表示には、Markdown Source の表示名、利用者が理解できる失敗状態、実行可能な復旧方法だけを含めます。Node.js の system error message、error code、system call、stack trace、absolute path は表示しません。
+MdClip が expected failure として捕捉する error は、操作、利用者が理解できる失敗状態、および実行可能な復旧方法に変換します。元の `Error.message`、Node.js の system error message、error code、system call、stack trace、absolute path、Raycast API の error message は利用者向け表示に含めません。元の error は Markdown content または Clipboard content を付加せず、開発用 console にだけ記録します。予期しない未捕捉 error はこの変換対象を無制限に広げず、Raycast の unhandled error 境界に残します。
+
+これは、すべての製品で `Error.message` を隠すという一般則ではありません。Raycast の Best Practices は expected error を command 内で処理し、多くの場合は Toast で知らせることを推奨する一方、例では `error.message` も使用しています。MdClip では、file system、Clipboard、Cache の元 error detail が preview または copy の復旧操作を安定して区別せず、local path や実装用語を主画面へ持ち込むため、捕捉済みの expected failure だけを固定文言へ変換します。診断は Raycast の Debug guidance に従って development console へ分離します。Failure Toast は失敗通知、HUD は Clipboard copy 完了後の確認として Raycast の各 API の役割に合わせます。表示文は、何が失敗したかと利用者が次にできる操作を短く示し、技術用語を避ける Microsoft の error-message guidance に合わせます。追加の Toast action は、MdClip が正しい file location または修正値を一意に特定して一操作で解決できる状態ではないため追加しません。
+
+References: [Raycast Best Practices](https://developers.raycast.com/information/best-practices), [Raycast Debug an Extension](https://developers.raycast.com/basics/debug-an-extension), [Raycast Toast](https://developers.raycast.com/api-reference/feedback/toast), [Raycast HUD](https://developers.raycast.com/api-reference/feedback/hud), [Microsoft error-message guidance](https://learn.microsoft.com/en-us/office/dev/add-ins/design/voice-guidelines), [Microsoft actionable errors](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-actionable-errors)
+
+予期しない source 全体の読み込み失敗は `MdClip could not load Markdown files. Open the command again.` と表示します。部分読み込み失敗の Toast が表示できない場合も、読み込めた files と `Could Not Load` section は維持します。
+
+preview file を読み込めない場合は、preview 内に `Could not load preview.` と `MdClip could not read the file for preview. Check the file and its Markdown Source folder, then open the command again.` を表示します。
+
+copy 時に Markdown file を読み込めない場合は `Could not copy content` と `MdClip could not read the file. Check the file and its Markdown Source folder, then open the command again.`、Clipboard へ書き込めない場合は `Could not copy content` と `MdClip could not write to the Clipboard. Try again.`、その他の copy 処理に失敗した場合は `Could not copy content` と `MdClip could not complete the copy. Try again.` を表示します。
 
 設定された source path の最後の entry 自体が symbolic link の場合は、link target の状態にかかわらず `Symbolic links are not supported. Select the original folder.` と表示します。切れた symbolic link も、単なる folder 消失ではなく同じ symbolic link 非対応状態として扱います。
 
@@ -291,6 +311,7 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 | Dependency registry       | registry endpointは環境設定を使い、lockfileには`integrity`を保持してregistry固有`resolved` URLを記録しない  |
 | Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                   |
 | Dependency updates        | non-major grouped候補、major個別判断、Raycast型契約同期、npm解決、後条件、clean install、完全検証を接続する |
+| Expected error boundary   | 操作単位の最小理由だけを内部で識別し、固定の利用者向け表示と開発用 console 診断を分離する                   |
 
 application dependencyとGitHub Actionsの定期更新候補は `.github/dependabot.yml` のweekly Dependabot version updatesが提示します。npm patch/minor updatesは一つのgrouped Pull Requestにまとめ、major updatesはdependencyごとの個別Pull Requestとして明示的なmaintainer decisionに残します。Raycast拡張runtimeと結合する`@types/node`はregistry latestへの単独更新から除外し、`@raycast/api`のexact contractと同じ更新単位で扱います。最終的な互換性と採用判断はmaintainerが担当し、自動merge、自動publish、自動releaseを行いません。
 
@@ -365,7 +386,7 @@ manual UI verification:
 npm run dev
 ```
 
-manual UI verification では、command names、preferences、list behavior、copy actions、preview、editor actions、error states が MdClip / Markdown Source model と一致することを確認します。current screenshot / UI evidence と README media の確認は、共通手順である `docs/screenshot-media.md` の `MdClip Screenshot and UI Evidence Procedure` に従います。
+manual UI verification では、command names、preferences、list behavior、copy actions、preview、editor actions、error states が MdClip / Markdown Source model と一致することを確認します。error states は、source の全失敗と部分失敗、preview file 読み込み失敗、copy の file・Clipboard 読み書き失敗、preview visibility の保存失敗、および利用者向け表示に元の error detail が含まれないことを対象にします。current screenshot / UI evidence と README media の確認は、共通手順である `docs/screenshot-media.md` の `MdClip Screenshot and UI Evidence Procedure` に従います。
 
 ## 18. Documentation language contract
 
@@ -478,9 +499,11 @@ repository-root
     ├── services
     │   ├── clipboard.ts
     │   ├── dynamicPlaceholders.ts
+    │   ├── feedback.ts
     │   ├── markdownFiles.ts
     │   ├── preferences.ts
-    │   └── preview.ts
+    │   ├── preview.ts
+    │   └── previewVisibility.ts
     └── types.ts
 ```
 

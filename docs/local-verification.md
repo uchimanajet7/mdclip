@@ -128,7 +128,7 @@ npm run dev
 - package manifest と command entry point の整合性
 - Markdown Source preferences の構造
 - Preview preferences の type、required、default、利用者向け description
-- Raycast に依存しない Markdown file listing、preview、Dynamic Placeholders の動作
+- Raycast に依存しない Markdown file listing、preview、preview visibility Cache、Dynamic Placeholders、copy failure boundary、Toast/HUD feedback boundary の動作
 
 ## 7. `npm run check:local` の確認内容
 
@@ -164,11 +164,16 @@ npm run dev
 - surrogate pair、combining sequence、ZWJ emoji、regional-indicator flag、Indic conjunct を extended grapheme cluster の途中で分割しないこと
 - UTF-8 code point が 4096-byte read chunk の境界をまたぐ場合も、code point 数と extended grapheme cluster boundary を正しく判定できること
 - code point 上限より長い単一 extended grapheme cluster を読み続けたり分割表示したりせず、cluster 全体を省略扱いにすること
+- Preview、copy、preview visibility の利用者向け失敗文言が固定され、元の `Error.message`、error code、system call、stack trace、absolute path を利用者向け表示へ連結しないこと
+- preview visibility Cache を読み取れない場合は preview enabled の既定値を返し、保存できない場合は失敗結果を返して以前の保存値を変更しないこと
+- failure Toast と copy success HUD の表示に失敗しても元の error を再throwせず、本体処理の結果を変更しないこと
 - `{date}`、`{time}`、`{datetime}`、`{day}`、`{timezone}`、`{now}`、`{uuid}`、`{clipboard}` を置換できること
 - 複数の `{uuid}` を出現箇所ごとに別々の UUID へ置換できること
 - `{clipboard}` を含まない Markdown 本文では clipboard を読み取らないこと
 - clipboard text がない場合は `{clipboard}` を削除し、expanded content の copy と success HUD を完了できること
-- clipboard text の読み取りが error になった場合は error を伝播し、Clipboard への書き込みと success HUD を実行しないこと
+- clipboard text の読み取りが error になった場合は固定 message の typed error へ変換し、Clipboard への書き込みと success HUD を実行しないこと
+- copy 時に Markdown file を読み取れない場合と Clipboard へ書き込めない場合を内部で区別し、元の error detail を typed error の message に保持しないこと
+- Clipboard への書き込み完了後に success HUD が失敗しても copy を成功のまま完了すること
 - `Copy Raw Content` は clipboard text を読み取らず、元の `{clipboard}` を変更せずに copy できること
 
 この単体確認は `local-verification/local-verification-fixtures` と `local-verification/local-verification-dist` を作成または更新します。
@@ -231,6 +236,12 @@ Raycast アプリ上では、以下を人間が操作して確認します。
 - All Markdown Sources のすべての source を読み込めない場合は `Could not load Markdown Sources` と source ごとの利用者向け説明が表示されること
 - All Markdown Sources の一部だけを読み込めない場合は、成功した files、失敗 source 名の Toast、`Could Not Load` section、`Symbolic links are not supported.`、`Folder is no longer available.`、または `Some files could not be read.`、`Open Extension Preferences` が同時に確認できること
 - source 読み込み失敗の表示に Node.js の error code、system call、stack trace、absolute path が含まれないこと
+- 予期しない source 全体失敗では `MdClip could not load Markdown files. Open the command again.` が表示されること
+- 部分読み込み失敗の Toast を表示できない場合も、読み込めた files と `Could Not Load` section が失敗状態へ置き換わらないこと
+- preview file を読み込めない場合は `Could not load preview.`、file と Markdown Source folder の確認、および command を開き直す案内が表示され、元の error detail が含まれないこと
+- copy の file 読み込み、Clipboard text 読み取り、Clipboard 書き込み、およびその他の失敗で、それぞれ仕様の固定 Failure Toast が表示され、元の error detail が含まれないこと
+- preview visibility の保存に失敗した場合は変更前の表示状態へ戻り、`Could not save preview setting` と `The previous setting is still in use. Try again.` が表示されること
+- Clipboard への書き込み後に success HUD だけが失敗しても、完了済みの copy が失敗として表示されないこと
 - 実際に省略された preview だけに省略案内が表示され、short file と empty file には表示されないこと
 - 無効な source、未設定 folder、読み込み失敗時の状態が理解できること
 

@@ -1,24 +1,20 @@
-import {
-  Action,
-  ActionPanel,
-  Cache,
-  Icon,
-  Keyboard,
-  List,
-  Toast,
-  getPreferenceValues,
-  openExtensionPreferences,
-  showToast,
-} from "@raycast/api";
+import { Action, ActionPanel, Icon, Keyboard, List, getPreferenceValues, openExtensionPreferences } from "@raycast/api";
 import { useEffect, useMemo, useState } from "react";
-import type { ConfiguredMarkdownSource, MarkdownFile, MarkdownSourceLoadFailure } from "../types";
-import { copyMarkdownFile } from "../services/clipboard";
+import type {
+  ConfiguredMarkdownSource,
+  MarkdownFile,
+  MarkdownFileLoadResult,
+  MarkdownSourceLoadFailure,
+} from "../types";
+import { CopyMarkdownFileError, copyMarkdownFile } from "../services/clipboard";
+import { showFailureToast } from "../services/feedback";
 import {
   getMarkdownFileSearchFields,
   listMarkdownFilesFromMarkdownSources,
   normalizeMarkdownSearchText,
 } from "../services/markdownFiles";
 import { getPreviewOptions, readMarkdownPreview, type MarkdownPreview, type PreviewOptions } from "../services/preview";
+import { readPreviewVisibility, savePreviewVisibility } from "../services/previewVisibility";
 
 type Props = {
   markdownSources: ConfiguredMarkdownSource[];
@@ -37,12 +33,9 @@ type LoadState = {
 
 type SortMode = "updated-desc" | "updated-asc" | "name-asc" | "path-asc";
 
-const DEFAULT_PREVIEW_ENABLED = true;
 const DEFAULT_SORT_MODE: SortMode = "updated-desc";
-const PREVIEW_ENABLED_CACHE_KEY = "mdclip.preview.enabled";
 const PREVIEW_TRUNCATION_NOTICE =
   "Preview truncated at the configured line or character limit. Open the file to view the full content.";
-const previewVisibilityCache = new Cache();
 
 export function MarkdownFileList({
   markdownSources,
@@ -53,7 +46,7 @@ export function MarkdownFileList({
 }: Props) {
   const [state, setState] = useState<LoadState>({ files: [], failures: [], isLoading: true });
   const [sortMode, setSortMode] = useState<SortMode>(DEFAULT_SORT_MODE);
-  const [isPreviewEnabled, setIsPreviewEnabled] = useState(readInitialPreviewVisibility);
+  const [isPreviewEnabled, setIsPreviewEnabled] = useState(readPreviewVisibility);
   const [searchText, setSearchText] = useState("");
   const preferences = getPreferenceValues<ExtensionPreferences>();
   const previewOptions = getPreviewOptions(preferences, isPreviewEnabled);
@@ -63,14 +56,11 @@ export function MarkdownFileList({
     const nextIsEnabled = !isPreviewEnabled;
     setIsPreviewEnabled(nextIsEnabled);
 
-    try {
-      previewVisibilityCache.set(PREVIEW_ENABLED_CACHE_KEY, String(nextIsEnabled));
-    } catch (error) {
+    if (!savePreviewVisibility(nextIsEnabled)) {
       setIsPreviewEnabled(previousIsEnabled);
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to save preview setting",
-        message: getErrorMessage(error),
+      await showFailureToast({
+        title: "Could not save preview setting",
+        message: "The previous setting is still in use. Try again.",
       });
     }
   }
@@ -79,40 +69,47 @@ export function MarkdownFileList({
     let isMounted = true;
 
     async function loadFiles() {
+      let result: MarkdownFileLoadResult;
+
       try {
-        const result = await listMarkdownFilesFromMarkdownSources(markdownSources);
-        const successfulMarkdownSourceCount = markdownSources.length - result.failures.length;
+        result = await listMarkdownFilesFromMarkdownSources(markdownSources);
+      } catch (error) {
+        console.error("[MdClip] Could not load Markdown files.", error);
 
-        if (isMounted) {
-          if (result.failures.length > 0 && successfulMarkdownSourceCount === 0) {
-            setState({
-              files: [],
-              failures: result.failures,
-              error: formatMarkdownSourceFailureMessages(result.failures),
-              isLoading: false,
-            });
-            return;
-          }
-
-          setState({ files: result.files, failures: result.failures, isLoading: false });
-        }
-
-        if (isMounted && result.failures.length > 0) {
-          await showToast({
-            style: Toast.Style.Failure,
-            title: "Some Markdown Sources could not be loaded",
-            message: formatMarkdownSourceFailureNames(result.failures),
-          });
-        }
-      } catch {
         if (isMounted) {
           setState({
             files: [],
             failures: [],
-            error: "MdClip could not load Markdown files. Check the configured folders and open the command again.",
+            error: "MdClip could not load Markdown files. Open the command again.",
             isLoading: false,
           });
         }
+
+        return;
+      }
+
+      if (!isMounted) {
+        return;
+      }
+
+      const successfulMarkdownSourceCount = markdownSources.length - result.failures.length;
+      if (result.failures.length > 0 && successfulMarkdownSourceCount === 0) {
+        setState({
+          files: [],
+          failures: result.failures,
+          error: formatMarkdownSourceFailureMessages(result.failures),
+          isLoading: false,
+        });
+        return;
+      }
+
+      setState({ files: result.files, failures: result.failures, isLoading: false });
+
+      if (result.failures.length > 0) {
+        await showFailureToast({
+          title: "Some Markdown Sources could not be loaded",
+          message: formatMarkdownSourceFailureNames(result.failures),
+        });
       }
     }
 
@@ -323,8 +320,12 @@ function MarkdownFilePreviewDetail({ file, previewOptions }: { file: MarkdownFil
           setMarkdown(formatPreviewMarkdown(file, preview));
         }
       } catch (error) {
+        console.error("[MdClip] Could not load a Markdown file preview.", error);
+
         if (isMounted) {
-          setMarkdown(`# ${file.name}\n\nCould not load preview.\n\n${getErrorMessage(error)}`);
+          setMarkdown(
+            `# ${file.name}\n\nCould not load preview.\n\nMdClip could not read the file for preview. Check the file and its Markdown Source folder, then open the command again.`,
+          );
         }
       }
     }
@@ -355,12 +356,42 @@ async function handleCopy(file: MarkdownFile, expand: boolean): Promise<void> {
   try {
     await copyMarkdownFile(file, { expand });
   } catch (error) {
-    await showToast({
-      style: Toast.Style.Failure,
-      title: "Failed to copy content",
-      message: getErrorMessage(error),
-    });
+    await showFailureToast(getCopyFailureToast(error));
   }
+}
+
+function getCopyFailureToast(error: unknown): { title: string; message: string } {
+  if (error instanceof CopyMarkdownFileError) {
+    switch (error.reason) {
+      case "file-read":
+        return {
+          title: "Could not copy content",
+          message:
+            "MdClip could not read the file. Check the file and its Markdown Source folder, then open the command again.",
+        };
+      case "clipboard-read":
+        return {
+          title: "Could not copy expanded content",
+          message: "MdClip could not read the Clipboard. Try again.",
+        };
+      case "clipboard-write":
+        return {
+          title: "Could not copy content",
+          message: "MdClip could not write to the Clipboard. Try again.",
+        };
+      case "copy-failed":
+        return {
+          title: "Could not copy content",
+          message: "MdClip could not complete the copy. Try again.",
+        };
+    }
+  }
+
+  console.error("[MdClip] Could not copy Markdown content.", error);
+  return {
+    title: "Could not copy content",
+    message: "MdClip could not complete the copy. Try again.",
+  };
 }
 
 function formatFileSize(size: number): string {
@@ -470,28 +501,6 @@ function formatMarkdownSourceFailureSubtitle(failure: MarkdownSourceLoadFailure)
     case "source-read-failed":
       return "Some files could not be read.";
   }
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
-}
-
-function readInitialPreviewVisibility(): boolean {
-  const storedValue = previewVisibilityCache.get(PREVIEW_ENABLED_CACHE_KEY);
-
-  if (storedValue === "true") {
-    return true;
-  }
-
-  if (storedValue === "false") {
-    return false;
-  }
-
-  return DEFAULT_PREVIEW_ENABLED;
 }
 
 function formatPreviewMarkdown(file: MarkdownFile, preview: MarkdownPreview): string {
