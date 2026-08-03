@@ -4,7 +4,7 @@
 
 この文書は、MdClip の開発、修正、メンテナンス、release 準備で使う検証手順を定義します。
 
-MdClip を利用するための導入、更新、削除手順は [使い始める手順](getting-started.ja.md) にまとめています。この文書では、repository checkout や source archive 上で変更確認、release 前確認、Raycast CLI 検証、手動 UI 確認を行う場合の確認範囲を扱います。
+MdClip を利用するための導入、通常更新、クリーン再インストール、削除手順は [使い始める手順](getting-started.ja.md) にまとめています。この文書では、repository checkout や source archive 上で変更確認、release 前確認、Raycast CLI 検証、手動 UI 確認を行う場合の確認範囲を扱います。
 
 ## 2. 検証方針
 
@@ -72,7 +72,7 @@ npm run update:dependencies
 
 どの段階でも失敗した場合は処理を停止し、互換性を無視した更新、古いversionの独自探索、強制適用、自動復元を行いません。既存の未コミット変更と更新途中の変更が同じworking treeに残る場合があるため、maintainerはcommand outputと現在のGit diffを確認し、変更単位で次の対応を判断します。このcommand自体は変更をstash、commit、reset、restore、破棄しません。`@raycast/api`、React、runtime dependency、またはmigrationによるsource変更がある場合だけ、続けて `npm run dev` でMdClipのprimary taskを人間が確認します。development toolingだけの更新では、利用者向け動作に変化がなければGUI確認を必須にしません。[Raycast migration](https://developers.raycast.com/misc/migration) は現在使用しているAPI versionから利用可能なmigrationを検出し、適用後の差分確認を求めています。
 
-`npm run check:docs` は、`README.md`、`README.ja.md`、`docs/`、`raycast-publish/`、`.github/release-changelog/`を製品文書面として正方向に定義し、宣言済みの英日文書ペア、H1直後の相互言語link、canonical path、paired documentを参照する全Markdown linkをNode.js標準機能だけで検査します。Gitや個人環境のignore設定を必要としないため、repository checkoutとGitHub Releaseのsource archiveで同じ対象を検査します。翻訳文の意味や文章の一致は機械判定せず、導入、更新、削除、完了確認のtask coverageをmaintainerが両言語で確認します。
+`npm run check:docs` は、`README.md`、`README.ja.md`、`docs/`、`raycast-publish/`、`.github/release-changelog/`を製品文書面として正方向に定義し、宣言済みの英日文書ペア、H1直後の相互言語link、canonical path、paired documentを参照する全Markdown linkをNode.js標準機能だけで検査します。Gitや個人環境のignore設定を必要としないため、repository checkoutとGitHub Releaseのsource archiveで同じ対象を検査します。翻訳文の意味や文章の一致は機械判定せず、導入、通常更新、クリーン再インストール、削除、完了確認のtask coverageをmaintainerが両言語で確認します。
 
 project `.npmrc` は registry host や認証情報を固定せず、registry dependency の `resolved` URL を `package-lock.json` から省略し、peer dependency override を禁止し、必要な npm version と install-script review を厳格化します。local、CI、dependency update、toolchain、Store補助経路はそれぞれの実行環境のnpm registry設定を使い、lockfileのversionと`integrity`を共有します。[npm config の `omit-lockfile-registry-resolved`](https://docs.npmjs.com/cli/v11/using-npm/config/#omit-lockfile-registry-resolved) は、registry dependencyのtarball endpointを後続install時のregistry設定から解決する構成です。
 

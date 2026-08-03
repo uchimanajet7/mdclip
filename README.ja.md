@@ -30,7 +30,7 @@ npm ci
 npm run dev
 ```
 
-`package.json` の `engines` 範囲を満たす Node.js と npm を使用します。`.node-version` は CI で検証するバージョンの記録であり、ローカル環境へ完全一致を要求するものではありません。MdClip がグローバル npm をインストールまたは置換することはありません。導入、更新、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
+`package.json` の `engines` 範囲を満たす Node.js と npm を使用します。`.node-version` は CI で検証するバージョンの記録であり、ローカル環境へ完全一致を要求するものではありません。MdClip がグローバル npm をインストールまたは置換することはありません。導入、更新、クリーン再インストール、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
 `npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source にフォルダを設定します。
 
@@ -136,7 +136,7 @@ Markdown 本文は、利用者がコピーアクションを実行した場合�
 
 ## ヘルプ
 
-導入、更新、削除については [使い始める手順](docs/getting-started.ja.md) を参照してください。解決しない MdClip の問題は [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues) で報告してください。
+導入、更新、クリーン再インストール、削除については [使い始める手順](docs/getting-started.ja.md) を参照してください。解決しない MdClip の問題は [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues) で報告してください。
 
 再現手順、実際の結果、期待する結果、MdClip、Raycast、macOS のバージョンを記載してください。非公開の Markdown 本文、クリップボードの内容、その他の機密情報は記載しないでください。
 

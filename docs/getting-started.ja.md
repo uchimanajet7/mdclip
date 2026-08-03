@@ -6,7 +6,7 @@
 
 MdClip は現在、Raycast Store ではなく、GitHub Release のソースコードから導入するローカル Raycast 拡張機能です。初回導入には Node.js とターミナルを使用し、更新時は最新リリースを取得して手順を再実行します。
 
-この文書では、ソースコードの取得、依存関係の導入、Raycast 開発モードでの起動、Markdown Source の設定、動作確認、更新、削除の各手順を説明します。取得したソースアーカイブは、対応するリリースタグに固定されています。
+この文書では、ソースコードの取得、依存関係の導入、Raycast 開発モードでの起動、Markdown Source の設定、動作確認、更新、クリーン再インストール、削除の各手順を説明します。取得したソースアーカイブは、対応するリリースタグに固定されています。
 
 ## 2. 必要なもの
 
@@ -26,12 +26,12 @@ GitHub のリリースページからダウンロードし、Finder で展開で
 1. ウェブブラウザで `https://github.com/uchimanajet7/mdclip/releases/latest` を開く。
 2. 表示された最新リリースの `Source code (zip)` をダウンロードする。
 3. Finder でダウンロードした ZIP ファイルを開いて展開する。
-4. 展開された `mdclip` フォルダを、自分で管理しやすい場所へ移動する。
+4. 展開されたフォルダの名前を `mdclip` に変更し、自分で管理しやすい場所へ移動する。
 
 完了確認:
 
 - ダウンロードした ZIP ファイルが、最新リリースのページにある `Source code (zip)` である。
-- Finder で `mdclip` フォルダを開ける。
+- Finder で名前を変更した `mdclip` フォルダを開ける。
 - そのフォルダの中に `package.json` がある。
 
 ## 4. 依存関係を入れる
@@ -106,25 +106,41 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 
 ## 8. 更新する
 
+通常の更新では、Raycast に読み込まれている MdClip を残したまま、ソースフォルダを最新リリースのものへ入れ替えます。
+
 1. ウェブブラウザで `https://github.com/uchimanajet7/mdclip/releases/latest` を開く。
 2. 表示された最新リリースの `Source code (zip)` をダウンロードする。
 3. Finder で展開する。
-4. 必要なら古い `mdclip` フォルダと入れ替える。
-5. 新しい `mdclip` フォルダで、[4. 依存関係を入れる](#4-依存関係を入れる)の手順を実行する。
-6. 新しい `mdclip` フォルダで `npm run dev` を実行する。
+4. 古い `mdclip` フォルダで `npm run dev` を実行中の場合は、`Control + C` で停止する。
+5. 古い `mdclip` フォルダを削除する。
+6. 展開されたフォルダの名前を `mdclip` に変更し、古いフォルダがあった場所へ移動する。
+7. 新しい `mdclip` フォルダで、[4. 依存関係を入れる](#4-依存関係を入れる)の手順を再実行する。
+8. 新しい `mdclip` フォルダで、[5. Raycast の開発モードで起動する](#5-raycast-の開発モードで起動する)の手順を再実行する。
+9. [7. 動作確認する](#7-動作確認する)の手順を再実行する。
 
 完了確認:
 
 - ダウンロードした ZIP ファイルが、最新リリースのページにある `Source code (zip)` である。
 - 新しい `mdclip/package.json` の `engines` 範囲を、現在の Node.js と npm が満たしている。
+- 古いソースフォルダが残っておらず、新しい `mdclip` フォルダが以前と同じ場所にある。
 - 新しい `mdclip` フォルダで `npm ci` が失敗せずに終了する。
-- 新しい `mdclip` フォルダで `npm run dev` を実行し、Raycast から MdClip のコマンドを開ける。
+- 新しい `mdclip` フォルダで `npm run dev` を実行した後、セクション 7 の動作確認が完了する。
 
-## 9. 使うのをやめる
+## 9. クリーン再インストールする
+
+既存の MdClip 拡張機能とソースコードを削除してから最新リリースを導入し直す場合は、クリーン再インストールします。
+
+1. Raycast で `Manage Extensions` を開き、MdClip を選択して、アンインストールまたは削除のアクションを実行する。
+2. Finder で古い `mdclip` ソースフォルダを削除する。
+3. [3. ソースコードを取得する](#3-ソースコードを取得する)から[7. 動作確認する](#7-動作確認する)までの手順を再実行する。
+
+MdClip の削除によって Raycast の設定またはホットキーが消えた場合は、再設定してください。MdClip のソースフォルダを削除しても、Markdown Source に設定したフォルダ内の Markdown ファイルは削除されません。
+
+## 10. 使うのをやめる
 
 削除対象は、Raycast に読み込んだ MdClip 拡張機能、取得したソースコード、必要に応じて追加したツールです。
 
-### 9.1 Raycast から MdClip を削除する
+### 10.1 Raycast から MdClip を削除する
 
 1. Raycast で `Manage Extensions` を開く。
 2. MdClip を選択する。
@@ -132,13 +148,13 @@ Dynamic Placeholders の詳細は [README](../README.ja.md#dynamic-placeholders)
 
 Raycast から MdClip を削除できない場合は、[GitHub Issues](https://github.com/uchimanajet7/mdclip/issues) で問題を報告してください。
 
-### 9.2 ソースコードを削除する
+### 10.2 ソースコードを削除する
 
 Finder で展開した `mdclip` フォルダを削除します。
 
 ソースコードのフォルダを削除すると、`npm ci` で作成された `node_modules` も一緒に削除されます。
 
-## 10. MdClip を削除できたことを確認する
+## 11. MdClip を削除できたことを確認する
 
 導入前の状態に戻す場合は、次を確認します。
 

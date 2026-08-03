@@ -30,7 +30,7 @@ npm ci
 npm run dev
 ```
 
-Use Node.js and npm versions that satisfy the `engines` ranges in `package.json`. `.node-version` records the version tested in CI; it is not an exact local runtime requirement. MdClip does not install or replace npm globally. See [Getting Started](docs/getting-started.md) for the complete setup, update, and removal steps.
+Use Node.js and npm versions that satisfy the `engines` ranges in `package.json`. `.node-version` records the version tested in CI; it is not an exact local runtime requirement. MdClip does not install or replace npm globally. See [Getting Started](docs/getting-started.md) for the complete setup, update, clean reinstallation, and removal steps.
 
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
 
@@ -134,7 +134,7 @@ MdClip does not make network requests during normal extension use.
 
 ## Help
 
-For setup, update, and removal instructions, see [Getting Started](docs/getting-started.md). Report unresolved MdClip problems through [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues).
+For setup, update, clean reinstallation, and removal instructions, see [Getting Started](docs/getting-started.md). Report unresolved MdClip problems through [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues).
 
 Include the reproduction steps, the actual and expected results, and the MdClip, Raycast, and macOS versions. Do not include private Markdown content, clipboard content, or other sensitive data.
 

@@ -6,7 +6,7 @@ English | [日本語](getting-started.ja.md)
 
 MdClip is currently installed from GitHub Release source code as a local Raycast extension, not from the Raycast Store. Initial setup uses Node.js and Terminal, and updates are applied manually from a newer release.
 
-This guide provides the corresponding download, dependency installation, Raycast development-mode startup, Markdown Source configuration, verification, update, and removal steps. Each downloaded source archive is fixed to its release tag.
+This guide provides the corresponding download, dependency installation, Raycast development-mode startup, Markdown Source configuration, verification, update, clean reinstallation, and removal steps. Each downloaded source archive is fixed to its release tag.
 
 ## 2. Requirements
 
@@ -26,12 +26,12 @@ You can complete the download with the GitHub Web UI and Finder.
 1. Open `https://github.com/uchimanajet7/mdclip/releases/latest` in a web browser.
 2. Download `Source code (zip)` from the displayed latest release.
 3. Open the downloaded ZIP file in Finder to extract it.
-4. Move the extracted `mdclip` folder to a location you can manage easily.
+4. Rename the extracted folder to `mdclip`, then move it to a location you can manage easily.
 
 Completion checks:
 
 - The downloaded ZIP file is `Source code (zip)` from the latest release page.
-- You can open the `mdclip` folder in Finder.
+- You can open the renamed `mdclip` folder in Finder.
 - The folder contains `package.json`.
 
 ## 4. Install the Dependencies
@@ -106,25 +106,41 @@ For details about Dynamic Placeholders, see [README](../README.md#dynamic-placeh
 
 ## 8. Update MdClip
 
+For a normal update, keep MdClip in Raycast and replace its source folder with the source from the latest release.
+
 1. Open `https://github.com/uchimanajet7/mdclip/releases/latest` in the GitHub Web UI.
 2. Download `Source code (zip)` from the displayed latest release.
 3. Extract the ZIP file in Finder.
-4. Replace the old `mdclip` folder if needed.
-5. In the new `mdclip` folder, repeat [4. Install the Dependencies](#4-install-the-dependencies).
-6. Run `npm run dev` in the new `mdclip` folder.
+4. If `npm run dev` is running in the old `mdclip` folder, press `Control + C` to stop it.
+5. Delete the old `mdclip` folder.
+6. Rename the extracted folder to `mdclip`, then move it to the same location where the old folder was stored.
+7. In the new `mdclip` folder, repeat [4. Install the Dependencies](#4-install-the-dependencies).
+8. In the new `mdclip` folder, repeat [5. Start in Raycast Development Mode](#5-start-in-raycast-development-mode).
+9. Repeat [7. Verify the Behavior](#7-verify-the-behavior).
 
 Completion checks:
 
 - The downloaded ZIP file is `Source code (zip)` from the latest release page.
 - The active Node.js and npm versions satisfy the `engines` ranges in the new `mdclip/package.json`.
+- The old source folder is gone, and the new `mdclip` folder is in its previous location.
 - `npm ci` finishes without errors in the new `mdclip` folder.
-- After running `npm run dev` in the new `mdclip` folder, you can open the MdClip commands from Raycast.
+- After running `npm run dev` in the new `mdclip` folder, the checks in Section 7 pass.
 
-## 9. Stop Using MdClip
+## 9. Clean Reinstall MdClip
+
+Use a clean reinstall when you want to remove the existing MdClip extension and its source code before installing the latest release.
+
+1. Open `Manage Extensions` in Raycast, select MdClip, and run the uninstall or remove action.
+2. Delete the old `mdclip` source folder in Finder.
+3. Repeat Sections [3. Download the Source Code](#3-download-the-source-code) through [7. Verify the Behavior](#7-verify-the-behavior).
+
+If removing MdClip clears its Raycast preferences or hotkeys, configure them again. Deleting the MdClip source folder does not delete Markdown files in the folders configured as Markdown Sources.
+
+## 10. Stop Using MdClip
 
 Remove the MdClip extension imported into Raycast, the downloaded source code, and any additional tools you installed only if you no longer need them.
 
-### 9.1 Remove MdClip from Raycast
+### 10.1 Remove MdClip from Raycast
 
 1. Open `Manage Extensions` in Raycast.
 2. Select MdClip.
@@ -132,13 +148,13 @@ Remove the MdClip extension imported into Raycast, the downloaded source code, a
 
 If Raycast cannot remove MdClip, report the problem through [GitHub Issues](https://github.com/uchimanajet7/mdclip/issues).
 
-### 9.2 Delete the Source Code
+### 10.2 Delete the Source Code
 
 Delete the extracted `mdclip` folder in Finder.
 
 Deleting the source-code folder also removes the `node_modules` folder created by `npm ci`.
 
-## 10. Confirm Removal
+## 11. Confirm Removal
 
 To confirm that your Mac has returned to its state before MdClip was installed, check the following.
 

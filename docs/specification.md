@@ -400,7 +400,7 @@ MdClip の public source-use documentation は英語をprimary languageとし、
 - repository内の相互linkとpaired documentへの参照にはrelative pathを使う。
 - English reader向けsurfaceは英語のGetting Started、日本語reader向けsurfaceは日本語のGetting Startedを参照する。
 
-Getting Started の両言語は、必要環境、source code取得、dependency setup、Raycast起動、Markdown Source設定、動作確認、update、removal、completion checksの同じuser taskを扱います。見出し文言、段落数、行数、逐語訳の一致は要求せず、それぞれの言語で自然かつ正確な説明を使います。日本語の利用者向け文書では一般説明を自然な日本語で記述し、UIラベル、コマンド、パス、ファイル名、製品名、コード識別子は、利用者が実際の画面やターミナルと照合できる表記を使います。
+Getting Started の両言語は、必要環境、source code取得、dependency setup、Raycast起動、Markdown Source設定、動作確認、通常update、clean reinstall、removal、completion checksの同じuser taskを扱います。見出し文言、段落数、行数、逐語訳の一致は要求せず、それぞれの言語で自然かつ正確な説明を使います。日本語の利用者向け文書では一般説明を自然な日本語で記述し、UIラベル、コマンド、パス、ファイル名、製品名、コード識別子は、利用者が実際の画面やターミナルと照合できる表記を使います。
 
 `scripts/check-documentation-language-contract.mjs` は、`README.md`、`README.ja.md`、`docs/`、`raycast-publish/`、`.github/release-changelog/`を製品文書面として正方向に定義し、その中で宣言済みfamilyの存在、canonical path、H1直後の相互language link、paired documentを参照する全Markdown linkの登録とtargetを検査します。Git repositoryや個人環境のignore設定には依存せず、repository checkoutとGitHub Releaseのsource archiveで同じ対象を検査します。新しい製品文書面を追加する場合は、checkerの対象登録と検出testを同じ変更単位で更新します。正常、欠落、各製品文書directoryの旧pathによる迂回、面外のlocal Markdown、未登録参照、部分migration、recoveryは `scripts/check-documentation-language-contract.test.mjs` で検証し、`npm run check:docs`を`npm run lint`に含めます。
 
@@ -416,7 +416,11 @@ Reference:
 
 ## 19. Release path and Store publication prerequisites
 
-Active public release unit は GitHub Release です。通常利用者の導入、更新、削除は、英語では `docs/getting-started.md`、日本語では `docs/getting-started.ja.md` を正とし、latest GitHub Release の `Source code (zip)` を取得します。
+Active public release unit は GitHub Release です。通常利用者の導入、通常更新、clean reinstall、削除は、英語では `docs/getting-started.md`、日本語では `docs/getting-started.ja.md` を正とし、latest GitHub Release の `Source code (zip)` を取得します。
+
+通常更新では、Raycast上の既存のMdClipを削除せず、latest releaseのsource archiveを展開した後、実行中の旧development modeを停止し、旧source folderを削除して、新source folderを`mdclip`へrenameしたうえで以前と同じ場所へ配置します。その後、新releaseの`package.json`にある`engines`確認、`npm ci`、`npm run dev`、primary taskの動作確認を再実行します。clean reinstallは別の利用者taskとし、RaycastからMdClipを削除し、旧source folderを削除してから、source code取得から動作確認までを再実行します。標準手順では、旧sourceの保持、backup、rollback、複数pathからの同名extension読み込み、custom archive、custom updaterを要求しません。MdClipのsource folderと利用者がMarkdown Sourceに設定するfolderは別であり、source folderの削除対象に利用者のMarkdown fileを含めません。
+
+この経路は、local development extensionを利用者自身が管理するという[Raycast Extensions Manual](https://manual.raycast.com/extensions)、`ray develop`が未登録のextensionをimportするという[Raycast CLI](https://developers.raycast.com/information/developer-tools/cli)、Release tagのsource snapshotを自動提供する[GitHub source archive](https://docs.github.com/en/repositories/working-with-files/using-files/downloading-source-code-archives)、lockfileに基づいてclean installを行う[`npm ci`](https://docs.npmjs.com/cli/v11/commands/npm-ci/)の現在のcontractに基づきます。
 
 README と Getting Started の両言語では、具体的な操作手順より前に、Raycast Store 経由ではないローカル拡張機能であること、GitHub Release のソースコードから導入すること、初回導入では Node.js とターミナルを使用すること、更新は新しい Release から手動で行うことを簡潔に示します。詳細手順は Getting Started に集約し、GitHub Release body は Release 固有の利用者操作だけを扱い、Store 公開用の内部情報は利用者向け導入説明に混在させません。
 
@@ -503,16 +507,16 @@ repository-root
 
 主要 documentation roles:
 
-| Path                         | Role                                                |
-| ---------------------------- | --------------------------------------------------- |
-| `README.md`                  | GitHub/source-use English README                    |
-| `README.ja.md`               | GitHub/source-use Japanese README                   |
-| `docs/getting-started.md`    | English user onboarding, update, and removal guide  |
-| `docs/getting-started.ja.md` | Japanese user onboarding, update, and removal guide |
-| `docs/local-verification.md` | Development and maintenance verification guide      |
-| `docs/release-management.md` | Release owner / maintainer release operation guide  |
-| `docs/screenshot-media.md`   | Canonical screenshot and UI evidence procedure      |
-| `raycast-publish/`           | Store publication resource set                      |
+| Path                         | Role                                                                 |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `README.md`                  | GitHub/source-use English README                                     |
+| `README.ja.md`               | GitHub/source-use Japanese README                                    |
+| `docs/getting-started.md`    | English user onboarding, update, clean reinstall, and removal guide  |
+| `docs/getting-started.ja.md` | Japanese user onboarding, update, clean reinstall, and removal guide |
+| `docs/local-verification.md` | Development and maintenance verification guide                       |
+| `docs/release-management.md` | Release owner / maintainer release operation guide                   |
+| `docs/screenshot-media.md`   | Canonical screenshot and UI evidence procedure                       |
+| `raycast-publish/`           | Store publication resource set                                       |
 
 Generated or local-only paths include:
 
