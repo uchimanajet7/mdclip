@@ -53,34 +53,16 @@ Raycast Root Search のコマンド順は利用状況に応じて変わります
 
 使用する Markdown Source ごとにフォルダを設定してください。MdClip を利用するには、少なくとも 1 つの Markdown Source にフォルダが必要です。使わない Markdown Source にはフォルダを設定する必要はありません。
 
-```text
-MdClip Preferences
-├── Markdown Source 1
-│   ├── Enable Markdown Source 1
-│   ├── Markdown Source 1 Folder
-│   └── Markdown Source 1 Name
-├── Markdown Source 2
-│   ├── Enable Markdown Source 2
-│   ├── Markdown Source 2 Folder
-│   └── Markdown Source 2 Name
-├── Markdown Source 3
-│   ├── Enable Markdown Source 3
-│   ├── Markdown Source 3 Folder
-│   └── Markdown Source 3 Name
-└── Shared Preferences
-    ├── Editor
-    ├── Preview Line Count
-    └── Preview Max Characters
-```
+3 つの Markdown Source にはそれぞれ有効／無効、フォルダ、表示名の設定があり、Editor とプレビュー設定は共通です。
 
-| 設定項目               | 必要になる条件                      | 説明                                                                                                                                                                                  |
-| ---------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enable Markdown Source | 任意の切り替え                      | フォルダ設定済みの Markdown Source を個別コマンドと All Markdown Sources の対象に含める。使用しない場合はオフにする                                                                   |
-| Markdown Source Folder | 使用する Markdown Source ごとに必須 | その Markdown Source が読み取る Markdown ファイルのフォルダ                                                                                                                           |
-| Markdown Source Name   | 任意                                | MdClip 内の一覧、セクション、メタデータで使う Markdown Source の表示名。Raycast Root Search のコマンド名は変わらない。空の場合はフォルダ名を使う                                      |
-| Editor                 | 任意                                | Open in Editor で使うエディタ                                                                                                                                                         |
-| Preview Line Count     | 任意                                | プレビューに表示する冒頭行数。初期値は `10`、上限は `100`。正の整数として読めない値は初期値を使う                                                                                     |
-| Preview Max Characters | 任意                                | プレビューの最大長。上限位置をまたぐ表示文字は分割せず全体を省略するため、表示が設定値より短くなる場合がある。初期値は `4000`、上限は `20000`。正の整数として読めない値は初期値を使う |
+| 設定項目               | 必要になる条件                      | 説明                                                                                                                                             |
+| ---------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Enable Markdown Source | 任意の切り替え                      | フォルダ設定済みの Markdown Source を個別コマンドと All Markdown Sources の対象に含める。使用しない場合はオフにする                              |
+| Markdown Source Folder | 使用する Markdown Source ごとに必須 | その Markdown Source が読み取る Markdown ファイルのフォルダ                                                                                      |
+| Markdown Source Name   | 任意                                | MdClip 内の一覧、セクション、メタデータで使う Markdown Source の表示名。Raycast Root Search のコマンド名は変わらない。空の場合はフォルダ名を使う |
+| Editor                 | 任意                                | Open in Editor で使うエディタ                                                                                                                    |
+| Preview Line Count     | 任意                                | プレビューに表示する冒頭行数。範囲は `1`～`100`、初期値は `10`                                                                                   |
+| Preview Max Characters | 任意                                | プレビューの最大長。範囲は `1`～`20000`、初期値は `4000`                                                                                         |
 
 ## アクション
 

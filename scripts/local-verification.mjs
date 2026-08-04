@@ -146,7 +146,7 @@ async function verifyPreviewPreferences() {
   assert.equal(preferences.previewMaxCharacters.default, "4000");
   assert.equal(
     preferences.previewMaxCharacters.description,
-    "Maximum preview characters. A displayed character that crosses the limit is omitted instead of split. Enter a whole number from 1 to 20000. Invalid values use 4000; higher values use 20000.",
+    "Maximum preview length. Enter a whole number from 1 to 20000. Invalid values use 4000; higher values use 20000.",
   );
 }
 

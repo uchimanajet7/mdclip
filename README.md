@@ -53,34 +53,16 @@ Raycast Root Search learns from your usage, so command order can change. If the 
 
 Configure a folder for every Markdown Source you use. MdClip needs at least one configured Markdown Source; unused sources do not need a folder.
 
-```text
-MdClip Preferences
-├── Markdown Source 1
-│   ├── Enable Markdown Source 1
-│   ├── Markdown Source 1 Folder
-│   └── Markdown Source 1 Name
-├── Markdown Source 2
-│   ├── Enable Markdown Source 2
-│   ├── Markdown Source 2 Folder
-│   └── Markdown Source 2 Name
-├── Markdown Source 3
-│   ├── Enable Markdown Source 3
-│   ├── Markdown Source 3 Folder
-│   └── Markdown Source 3 Name
-└── Shared Preferences
-    ├── Editor
-    ├── Preview Line Count
-    └── Preview Max Characters
-```
+Each of the three Markdown Sources has an enable switch, folder, and display name. Editor and preview settings are shared.
 
-| Preference             | When needed                      | Description                                                                                                                                                                                                                              |
-| ---------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enable Markdown Source | Optional control                 | Allows a configured source to load files in its command and All Markdown Sources. Turn it off when you do not want to use that source                                                                                                    |
-| Markdown Source Folder | Required for each source you use | Folder containing Markdown files for that source                                                                                                                                                                                         |
-| Markdown Source Name   | Optional                         | Source display name used inside MdClip lists, sections, and metadata. It does not rename the Raycast Root Search command. The folder name is used when empty                                                                             |
-| Editor                 | Optional                         | App used by Open in Editor                                                                                                                                                                                                               |
-| Preview Line Count     | Optional                         | Number of leading lines shown in the preview. Default is `10`, maximum is `100`. Values that cannot be read as a positive integer use the default                                                                                        |
-| Preview Max Characters | Optional                         | Maximum preview length. A displayed character that crosses the limit is omitted instead of split, so the preview may be shorter. Default is `4000`, maximum is `20000`. Values that cannot be read as a positive integer use the default |
+| Preference             | When needed                      | Description                                                                                                                                                  |
+| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Enable Markdown Source | Optional control                 | Allows a configured source to load files in its command and All Markdown Sources. Turn it off when you do not want to use that source                        |
+| Markdown Source Folder | Required for each source you use | Folder containing Markdown files for that source                                                                                                             |
+| Markdown Source Name   | Optional                         | Source display name used inside MdClip lists, sections, and metadata. It does not rename the Raycast Root Search command. The folder name is used when empty |
+| Editor                 | Optional                         | App used by Open in Editor                                                                                                                                   |
+| Preview Line Count     | Optional                         | Number of leading lines shown in the preview. Range: `1`–`100`; default: `10`                                                                                |
+| Preview Max Characters | Optional                         | Maximum preview length. Range: `1`–`20000`; default: `4000`                                                                                                  |
 
 ## Actions
 
