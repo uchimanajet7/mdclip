@@ -290,24 +290,26 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 
 ## 15. Implementation
 
-| Area                      | 方針                                                                                                        |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Framework                 | Raycast Extension, TypeScript, React, Raycast API                                                           |
-| File traversal            | Node.js standard library                                                                                    |
-| Placeholder replacement   | extension 内の明示的な置換処理                                                                              |
-| Preferences type          | Raycast CLI が生成する `raycast-env.d.ts` を信頼する                                                        |
-| Runtime source model      | `MarkdownSource*` と `MarkdownFile*`                                                                        |
-| Compatibility migration   | 旧 identity 用 migration は追加しない                                                                       |
-| Node.js toolchain         | `engines.node`で対応minimumを宣言し、`.node-version`はCIとrelease sourceで検証する選択値として分離する      |
-| npm toolchain             | 実行環境のnpmを使い、`engines.npm`にはinstall-script policyに必要なminimumだけを宣言する                    |
-| npm environment           | npmのexact versionを独立して固定せず、MdClipからglobal npmをインストール、更新、置換しない                  |
-| Toolchain maintenance     | dependency maintenanceは`engines`範囲だけを前提とし、Node.js選定や`.node-version`更新とは分離する           |
-| Dependency registry       | registry endpointは環境設定を使い、lockfileには`integrity`を保持してregistry固有`resolved` URLを記録しない  |
-| Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                   |
-| Dependency updates        | non-major grouped候補、major個別判断、Raycast型契約同期、npm解決、後条件、clean install、完全検証を接続する |
-| Expected error boundary   | 操作単位の最小理由だけを内部で識別し、固定の利用者向け表示と開発用 console 診断を分離する                   |
+| Area                      | 方針                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Framework                 | Raycast Extension, TypeScript, React, Raycast API                                                             |
+| File traversal            | Node.js standard library                                                                                      |
+| Placeholder replacement   | extension 内の明示的な置換処理                                                                                |
+| Preferences type          | Raycast CLI が生成する `raycast-env.d.ts` を信頼する                                                          |
+| Runtime source model      | `MarkdownSource*` と `MarkdownFile*`                                                                          |
+| Compatibility migration   | 旧 identity 用 migration は追加しない                                                                         |
+| Node.js toolchain         | `engines.node`で対応minimumを宣言し、`.node-version`には同梱npmが要件を満たすサポート中LTSを選択する          |
+| npm toolchain             | 選択したNode.jsの同梱npmを検証経路で使い、`engines.npm`にはinstall-script policyに必要なminimumだけを宣言する |
+| npm environment           | npmのexact versionを独立して固定せず、MdClipからglobal npmをインストール、更新、置換しない                    |
+| Toolchain maintenance     | dependency maintenanceは`engines`範囲だけを前提とし、Node.js選定や`.node-version`更新とは分離する             |
+| Dependency registry       | registry endpointは環境設定を使い、lockfileには`integrity`を保持してregistry固有`resolved` URLを記録しない    |
+| Dependency install script | `allowScripts` で package name 単位に review し、未 review script は install error にする                     |
+| Dependency updates        | non-major grouped候補、major個別判断、Raycast型契約同期、npm解決、後条件、clean install、完全検証を接続する   |
+| Expected error boundary   | 操作単位の最小理由だけを内部で識別し、固定の利用者向け表示と開発用 console 診断を分離する                     |
 
 application dependencyとGitHub Actionsの定期更新候補は `.github/dependabot.yml` のweekly Dependabot version updatesが提示します。npm patch/minor updatesは一つのgrouped Pull Requestにまとめ、major updatesはdependencyごとの個別Pull Requestとして明示的なmaintainer decisionに残します。Raycast拡張runtimeと結合する`@types/node`はregistry latestへの単独更新から除外し、`@raycast/api`のexact contractと同じ更新単位で扱います。最終的な互換性と採用判断はmaintainerが担当し、自動merge、自動publish、自動releaseを行いません。
+
+このreleaseでは、`.node-version` にNode.js 24.19.0 Active LTSを選択し、公式配布物に同梱されるnpm 11.17.0をCI、release、Raycast publish helperの共通npmとして使用します。Node.js selectionはlatest Currentへの自動追従ではなく、LTS status、同梱npmのminimum、Raycast API contract、全検証経路をmaintainerが確認して更新します。`package.json`の`engines`は利用可能範囲、`.node-version`は検証する一つの構成という役割を維持します。
 
 `npm run update:dependencies` は、Raycast migration、direct・transitive dependency、manifest、lockfile、clean install、verificationを一つのlocal maintenance operationとして実行します。このcommandはGitのclean/dirty状態に依存せず、Git statusの検査、commit、stash、reset、restoreを行いません。
 

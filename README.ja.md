@@ -30,7 +30,7 @@ npm ci
 npm run dev
 ```
 
-`package.json` の `engines` 範囲を満たす Node.js と npm を使用します。`.node-version` は CI で検証するバージョンの記録であり、ローカル環境へ完全一致を要求するものではありません。MdClip がグローバル npm をインストールまたは置換することはありません。導入、更新、クリーン再インストール、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
+ローカルでの開発と利用では、現在有効な Node.js と npm が `package.json` の `engines` 範囲を両方満たしていれば、そのまま使用し、`.node-version` に切り替える必要はありません。Node.js が未導入の場合、またはいずれかが範囲を満たさない場合は、npm 11.17.0 を同梱する Active LTS の Node.js 24.19.0 を導入します。`.node-version` は CI とリリース検証で使用する構成の記録です。MdClip がグローバル npm をインストール、更新、置換することはありません。ツールチェーン、導入、更新、クリーン再インストール、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
 `npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source にフォルダを設定します。
 

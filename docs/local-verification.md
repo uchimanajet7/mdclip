@@ -24,11 +24,11 @@ Raycast CLI lint は `npm run lint:raycast` として明示的に分離します
 npm ci
 ```
 
-ローカル作業では `package.json` の `engines.node` と `engines.npm` を満たすNode.jsとnpmを使用します。`.node-version` はCIとrelease sourceで実際に検証するNode.js選択値であり、ローカル保守commandの完全一致条件ではありません。MdClipはnpmのexact versionを独立して固定せず、global npmをインストール、更新、置換しません。`npm ci` は、初回セットアップ、`package-lock.json` 変更後、依存関係を入れ直す場合に実行します。
+ローカル作業では、現在有効なNode.jsとnpmが `package.json` の `engines.node` と `engines.npm` を満たしていれば、そのまま使用します。`.node-version` に合わせるための切り替えは行いません。Node.jsが未導入の場合、またはいずれかが範囲を満たさない場合は、`.node-version` のNode.js 24.19.0 Active LTSを導入できます。その公式配布物にはnpm 11.17.0が同梱されます。`.node-version` はCI、release source、Raycast publish helperで検証するNode.js選択値です。MdClipはnpmのexact versionを独立して固定せず、global npmをインストール、更新、置換しません。`npm ci` は、初回セットアップ、`package-lock.json` 変更後、依存関係を入れ直す場合に実行します。[Node.js release policy](https://nodejs.org/en/about/previous-releases)は一般運用にActive LTSまたはMaintenance LTSを推奨し、[official distribution index](https://nodejs.org/dist/index.json)はNode.js 24.19.0にnpm 11.17.0が同梱されることを記録しています。
 
 install-script policyのtoolingとhardeningを含むnpm 11.17.0以上が必要です。`package.json` の `engines.npm` とproject `.npmrc` の `engine-strict=true` により、policy minimumを満たさないinstallを停止します。npmの特定patch versionは要求しません。[npm `engines`](https://docs.npmjs.com/cli/v11/configuring-npm/package-json/#engines) は対応範囲を宣言でき、[`engine-strict`](https://docs.npmjs.com/cli/v11/using-npm/config/#engine-strict) はengine不一致をinstall errorにします。[npm 11.17.0 release](https://github.com/npm/cli/releases/tag/v11.17.0) は `allowScripts` tooling、`inBundle` hardening、およびinstall-script policyを関連commandへ適用する修正を含みます。
 
-`.node-version` の更新はdependency maintenanceから独立した、CIで検証するNode.js選択値の変更です。`npm run update:dependencies` はこのファイルを読み書きせず、実行中のNode.jsとnpmが`engines`のminimumを満たすことだけを開始前に確認します。Node.js selectionを変更する場合は、CI、build、release、Raycast CLIとの互換性を変更単位として別途確認します。
+`.node-version` の更新はdependency maintenanceから独立した、CIで検証するNode.js選択値の変更です。選択時は、サポート中のLTS lineであること、その公式配布物に同梱されるnpmが`engines.npm`を満たすこと、およびCI、build、release、Raycast CLIの全経路が成立することを一つの変更単位で確認します。`npm run update:dependencies` はこのファイルを読み書きせず、実行中のNode.jsとnpmが`engines`のminimumを満たすことだけを開始前に確認します。
 
 ## 4. npm scripts
 

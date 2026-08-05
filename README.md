@@ -30,7 +30,7 @@ npm ci
 npm run dev
 ```
 
-Use Node.js and npm versions that satisfy the `engines` ranges in `package.json`. `.node-version` records the version tested in CI; it is not an exact local runtime requirement. MdClip does not install or replace npm globally. See [Getting Started](docs/getting-started.md) for the complete setup, update, clean reinstallation, and removal steps.
+For local development and use, keep the active Node.js and npm when both satisfy the `engines` ranges in `package.json`; you do not need to switch to `.node-version`. If Node.js is not installed or either version does not satisfy the ranges, install Node.js 24.19.0 Active LTS, whose official distribution bundles npm 11.17.0. `.node-version` records the toolchain used by CI and release validation. MdClip does not install, update, or replace npm globally. See [Getting Started](docs/getting-started.md) for the complete toolchain, setup, update, clean reinstallation, and removal steps.
 
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
 

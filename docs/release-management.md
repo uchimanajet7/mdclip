@@ -164,7 +164,7 @@ GitHub Release が正常に公開された後は、manifest を未確定の次�
 5. `npm run lint`
 6. `npm run lint:raycast`
 
-すべてのexternal actionはfull commit SHAへ固定し、DependabotのGitHub Actions updateで新しいreleaseを検知します。`setup-node`のnpm cacheは無効化し、`.node-version`のNode.jsに同梱されるnpmでproject commandを実行します。
+すべてのexternal actionはfull commit SHAへ固定し、DependabotのGitHub Actions updateで新しいreleaseを検知します。`setup-node`のnpm cacheは無効化し、`.node-version`のNode.jsに同梱されるnpmでproject commandを実行します。このreleaseではNode.js 24.19.0 Active LTSと同梱npm 11.17.0をBuild、Release、Store publicationの共通検証構成にします。
 
 ### 7.2 Release
 
@@ -192,7 +192,7 @@ Store publish を開始すると、script はrelease sourceでGitに追跡され
 
 dependencyは、Release workflowから独立したlocal maintenance operationとして `npm run update:dependencies` で更新・検証します。このcommandは、実行中のNode.jsとnpmが`package.json`の`engines`範囲を満たすことを確認し、declared range内のdependency、manifest下限、lockfileを更新し、`@types/node`を解決済み`@raycast/api`のexact runtime contractへ同期して完全検証します。`@types/node`のregistry latestとの差は契約管理として表示し、それ以外のrange外latestはmaintainer decisionとして表示して自動採用しません。Node.jsの選定、install、切り替え、`.node-version`の更新、Git操作、Pull Request、Issue、Release、Raycast Store publicationは行いません。
 
-Release workflowは引き続きRelease sourceに記録された `.node-version` を使用し、release時にlatest Node.jsへ自動追従しません。Node.js selectionはdependency maintenanceと分離し、どちらの採用判断も変更内容と検証結果をmaintainerが確認した後に行います。
+Release workflowは引き続きRelease sourceに記録された `.node-version` を使用し、release時にlatest Node.jsへ自動追従しません。Node.js selectionはdependency maintenanceと分離し、サポート中のLTS lineであること、同梱npmが`engines.npm`を満たすこと、Build、Release、Store publicationの全経路が成立することを同じ変更単位で確認します。どちらの採用判断も変更内容と検証結果をmaintainerが確認した後に行います。
 
 ## 8. Store publication prerequisites
 

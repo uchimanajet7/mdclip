@@ -46,7 +46,9 @@ node -v
 npm -v
 ```
 
-Use Node.js and npm versions that satisfy the displayed `engines` ranges. If Node.js is not installed or either version is below the stated minimum, install a supported Node.js release from the [Node.js installation page](https://nodejs.org/en/download).
+If the active Node.js and npm versions both satisfy the displayed `engines` ranges, continue with them. You do not need to switch Node.js or npm to match `.node-version`.
+
+If Node.js is not installed or either active version does not satisfy the displayed ranges, install [Node.js 24.19.0](https://nodejs.org/en/download/archive/v24.19.0), the Active LTS release used by CI and release validation for this MdClip release. Its official distribution bundles npm 11.17.0, so both requirements are satisfied without changing npm separately. Official Node.js 22 distributions bundle npm 10 and therefore do not satisfy this release's npm requirement as installed. Do not update a shared global npm installation only for MdClip. Node.js recommends Active LTS or Maintenance LTS releases for production use in its [release policy](https://nodejs.org/en/about/previous-releases).
 
 Run the following commands in the terminal.
 
@@ -54,12 +56,13 @@ Run the following commands in the terminal.
 npm ci
 ```
 
-`.node-version` records the Node.js version tested in CI, but it is not an exact local runtime requirement. MdClip does not install or replace npm globally. `npm ci` uses `package-lock.json` to install MdClip's dependencies in the extracted source folder.
+`.node-version` records the Node.js version used by CI, release validation, and the Raycast publication helper. It does not select, install, or replace the active local Node.js or npm. `npm ci` uses `package-lock.json` to install MdClip's dependencies in the extracted source folder.
 
 Completion checks:
 
 - `npm ci` finishes without errors.
 - The `mdclip/node_modules` folder is created.
+- The active Node.js and npm versions satisfy the displayed `engines` ranges.
 
 ## 5. Start in Raycast Development Mode
 

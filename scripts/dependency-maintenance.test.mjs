@@ -14,8 +14,8 @@ const engines = { node: ">=22.22.2", npm: ">=11.17.0" };
 test("accepts any dependency-maintenance runtime that satisfies package.json engines", () => {
   for (const [nodeVersion, npmVersion] of [
     ["22.22.2", "11.17.0"],
-    ["24.18.1", "11.18.0"],
-    ["26.5.1", "11.17.0"],
+    ["24.19.0", "11.17.0"],
+    ["26.6.0", "11.18.0"],
   ]) {
     assert.doesNotThrow(() => assertMaintenanceRuntime({ nodeVersion, npmVersion, engines }));
   }
@@ -30,7 +30,7 @@ test("rejects a Node.js version below package.json engines", () => {
 
 test("rejects an npm version below package.json engines", () => {
   assert.throws(
-    () => assertMaintenanceRuntime({ nodeVersion: "26.5.1", npmVersion: "11.16.9", engines }),
+    () => assertMaintenanceRuntime({ nodeVersion: "24.19.0", npmVersion: "11.16.9", engines }),
     /npm 11\.16\.9 does not satisfy >=11\.17\.0/,
   );
 });

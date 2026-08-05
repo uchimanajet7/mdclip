@@ -46,7 +46,9 @@ node -v
 npm -v
 ```
 
-表示された `engines` 範囲を満たす Node.js と npm を使用します。Node.js が未導入の場合、またはいずれかのバージョンが記載された最小値を下回る場合は、[Node.js のインストール案内](https://nodejs.org/en/download)から対応する Node.js を導入します。
+現在有効な Node.js と npm が、表示された `engines` 範囲を両方満たしていれば、そのまま使用します。`.node-version` に合わせて Node.js または npm を切り替える必要はありません。
+
+Node.js が未導入の場合、またはいずれかの有効なバージョンが表示された範囲を満たさない場合は、この MdClip リリースの CI とリリース検証で使用する Active LTS の [Node.js 24.19.0](https://nodejs.org/en/download/archive/v24.19.0) を導入します。公式配布物には npm 11.17.0 が同梱されるため、npm だけを変更せずに両方の要件を満たします。Node.js 22 の公式配布物に同梱される npm 10 は、このリリースの npm 要件を導入時点では満たしません。MdClip のためだけに共有のグローバル npm を更新しないでください。Node.js 公式も一般運用には Active LTS または Maintenance LTS を推奨しています。詳しくは [Node.js のリリース方針](https://nodejs.org/en/about/previous-releases)を参照してください。
 
 開いたターミナルで次を実行します。
 
@@ -54,12 +56,13 @@ npm -v
 npm ci
 ```
 
-`.node-version` は CI で検証する Node.js バージョンの記録ですが、ローカル環境へ完全一致を要求するものではありません。MdClip がグローバル npm をインストールまたは置換することはありません。`npm ci` は、`package-lock.json` を使って、展開したソースフォルダに MdClip の依存関係をインストールします。
+`.node-version` は、CI、リリース検証、Raycast 公開補助経路で使用する Node.js バージョンの記録です。ローカルで有効な Node.js または npm を選択、インストール、置換するものではありません。`npm ci` は、`package-lock.json` を使って、展開したソースフォルダに MdClip の依存関係をインストールします。
 
 完了確認:
 
 - コマンドが失敗せずに終了する。
 - `mdclip/node_modules` フォルダが作成される。
+- 現在有効な Node.js と npm が、表示された `engines` 範囲を満たしている。
 
 ## 5. Raycast の開発モードで起動する
 
