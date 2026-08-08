@@ -21,18 +21,20 @@ MdClip は Markdown ファイルを新規作成、編集、移動、名前変更
 
 ## 使い始める
 
-MdClip は現在、Raycast Store ではなく、GitHub Release のソースコードから導入するローカル Raycast 拡張機能です。初回導入には Node.js とターミナルを使用し、更新時は最新リリースを取得して手順を再実行します。
+MdClip は、Raycast Store ではなく、GitHub Release のソースコードから導入するローカル Raycast 拡張機能です。導入には macOS、Raycast、ターミナル、および取得したリリースが対応する Node.js と npm が必要です。更新時は新しいリリースを取得して手順を再実行します。
 
 通常利用では、[最新の GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest) から `Source code (zip)` を取得します。取得するソースアーカイブは、最新のリリースタグに紐づくソースです。
+
+展開した `mdclip` フォルダで、[使い始める手順](docs/getting-started.ja.md)に従ってそのリリースの Node.js と npm の条件を確認してから、次を実行します。
 
 ```bash
 npm ci
 npm run dev
 ```
 
-ローカルでの開発と利用では、現在有効な Node.js と npm が `package.json` の `engines` 範囲を両方満たしていれば、そのまま使用し、`.node-version` に切り替える必要はありません。Node.js が未導入の場合、またはいずれかが範囲を満たさない場合は、npm 11.17.0 を同梱する Active LTS の Node.js 24.19.0 を導入します。`.node-version` は CI とリリース検証で使用する構成の記録です。MdClip がグローバル npm をインストール、更新、置換することはありません。ツールチェーン、導入、更新、クリーン再インストール、削除の詳しい手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
-
 `npm run dev` が起動したら、Raycast の拡張機能設定で少なくとも 1 つの Markdown Source にフォルダを設定します。
+
+正確な動作条件と、導入、更新、クリーン再インストール、削除の全手順は [使い始める手順](docs/getting-started.ja.md) を参照してください。
 
 ## コマンド
 

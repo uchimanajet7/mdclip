@@ -21,18 +21,20 @@ MdClip does not create, edit, move, rename, or delete your Markdown files.
 
 ## Get Started
 
-MdClip is currently installed from GitHub Release source code as a local Raycast extension, not from the Raycast Store. Initial setup uses Node.js and Terminal, and updates are applied manually from a newer release.
+MdClip is installed from GitHub Release source code as a local Raycast extension, not from the Raycast Store. Setup requires macOS, Raycast, Terminal, and versions of Node.js and npm supported by the downloaded release. Updates are applied manually from a newer release.
 
 For normal use, download `Source code (zip)` from the [latest GitHub Release](https://github.com/uchimanajet7/mdclip/releases/latest). The downloaded source archive is tied to the latest release tag.
+
+In the extracted `mdclip` folder, confirm the release's Node.js and npm requirements in [Getting Started](docs/getting-started.md), then run:
 
 ```bash
 npm ci
 npm run dev
 ```
 
-For local development and use, keep the active Node.js and npm when both satisfy the `engines` ranges in `package.json`; you do not need to switch to `.node-version`. If Node.js is not installed or either version does not satisfy the ranges, install Node.js 24.19.0 Active LTS, whose official distribution bundles npm 11.17.0. `.node-version` records the toolchain used by CI and release validation. MdClip does not install, update, or replace npm globally. See [Getting Started](docs/getting-started.md) for the complete toolchain, setup, update, clean reinstallation, and removal steps.
-
 After `npm run dev` starts, open Raycast and configure at least one Markdown Source folder in the extension preferences.
+
+See [Getting Started](docs/getting-started.md) for the exact requirements and complete setup, update, clean reinstallation, and removal steps.
 
 ## Commands
 

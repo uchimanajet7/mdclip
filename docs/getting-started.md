@@ -48,7 +48,16 @@ npm -v
 
 If the active Node.js and npm versions both satisfy the displayed `engines` ranges, continue with them. You do not need to switch Node.js or npm to match `.node-version`.
 
-If Node.js is not installed or either active version does not satisfy the displayed ranges, install [Node.js 24.19.0](https://nodejs.org/en/download/archive/v24.19.0), the Active LTS release used by CI and release validation for this MdClip release. Its official distribution bundles npm 11.17.0, so both requirements are satisfied without changing npm separately. Official Node.js 22 distributions bundle npm 10 and therefore do not satisfy this release's npm requirement as installed. Do not update a shared global npm installation only for MdClip. Node.js recommends Active LTS or Maintenance LTS releases for production use in its [release policy](https://nodejs.org/en/about/previous-releases).
+If Node.js is not installed or either active version does not satisfy the displayed ranges, display the known-compatible Node.js version recorded in this source archive:
+
+```bash
+cat .node-version
+open "https://nodejs.org/en/download/archive/v$(cat .node-version)"
+```
+
+The first command displays the version, and the second opens its official Node.js download archive page. Install the displayed version and use the npm version bundled with it. This is one known-compatible configuration for the downloaded MdClip release, not an exact local requirement when another active Node.js and npm combination already satisfies `engines`. `.node-version` does not install or switch the active Node.js version. Do not update a shared global npm installation only for MdClip.
+
+After installing or switching Node.js, repeat the version checks above and confirm that both active versions satisfy `engines`.
 
 Run the following commands in the terminal.
 
@@ -56,7 +65,7 @@ Run the following commands in the terminal.
 npm ci
 ```
 
-`.node-version` records the Node.js version used by CI, release validation, and the Raycast publication helper. It does not select, install, or replace the active local Node.js or npm. `npm ci` uses `package-lock.json` to install MdClip's dependencies in the extracted source folder.
+`npm ci` uses `package-lock.json` to install MdClip's dependencies in the extracted source folder without changing the declared dependency versions.
 
 Completion checks:
 
