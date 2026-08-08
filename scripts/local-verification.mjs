@@ -82,6 +82,12 @@ async function verifyListFilteringContract() {
     allSourcesCommand.includes("includeMarkdownSourceNameInSearch={true}"),
     "All Markdown Sources must include the Markdown Source name in search.",
   );
+  assert(
+    listSource.includes("id={getMarkdownFileListItemId(file)}") &&
+      listSource.includes("key={getMarkdownFileListItemId(file)}"),
+    "Markdown file list items must retain source identity in their Raycast and React identifiers.",
+  );
+  assert(!listSource.includes("id={file.path}"), "A file path alone cannot identify a source-specific occurrence.");
 }
 
 async function verifyUserFacingFailureContract() {
@@ -168,6 +174,7 @@ async function verifyMarkdownFileListing() {
 
   const {
     classifyMarkdownSourceLoadFailure,
+    getMarkdownFileListItemId,
     getMarkdownFileSearchFields,
     listMarkdownFiles,
     listMarkdownFilesFromMarkdownSources,
@@ -224,6 +231,71 @@ async function verifyMarkdownFileListing() {
   assert(files.every((file) => file.size > 0));
   assert(files.every((file) => file.updatedAt instanceof Date));
 
+  const duplicateSourceResult = await listMarkdownFilesFromMarkdownSources([
+    {
+      id: 1,
+      commandTitle: "Markdown Source 1",
+      displayName: "First Logical Source",
+      directory: markdownSourceRoot,
+    },
+    {
+      id: 2,
+      commandTitle: "Markdown Source 2",
+      displayName: "Second Logical Source",
+      directory: markdownSourceRoot,
+    },
+  ]);
+  assert.equal(duplicateSourceResult.failures.length, 0);
+  assert.deepEqual(
+    duplicateSourceResult.files.map((file) => [file.markdownSource.id, file.relativePath]),
+    [
+      [1, "a.md"],
+      [1, path.join("nested", "b.MD")],
+      [2, "a.md"],
+      [2, path.join("nested", "b.MD")],
+    ],
+  );
+  const duplicateFileOccurrences = duplicateSourceResult.files.filter((file) => file.relativePath === "a.md");
+  assert.equal(duplicateFileOccurrences.length, 2);
+  assert.equal(duplicateFileOccurrences[0].path, duplicateFileOccurrences[1].path);
+  assert.notEqual(
+    getMarkdownFileListItemId(duplicateFileOccurrences[0]),
+    getMarkdownFileListItemId(duplicateFileOccurrences[1]),
+  );
+  assert.equal(
+    getMarkdownFileListItemId(duplicateFileOccurrences[0]),
+    JSON.stringify([duplicateFileOccurrences[0].markdownSource.id, duplicateFileOccurrences[0].path]),
+  );
+
+  const overlappingSourceResult = await listMarkdownFilesFromMarkdownSources([
+    {
+      id: 1,
+      commandTitle: "Markdown Source 1",
+      displayName: "Parent Source",
+      directory: markdownSourceRoot,
+    },
+    {
+      id: 2,
+      commandTitle: "Markdown Source 2",
+      displayName: "Nested Source",
+      directory: path.join(markdownSourceRoot, "nested"),
+    },
+  ]);
+  assert.equal(overlappingSourceResult.failures.length, 0);
+  const overlappingFileOccurrences = overlappingSourceResult.files.filter((file) => file.name === "b.MD");
+  assert.deepEqual(
+    overlappingFileOccurrences.map((file) => [file.markdownSource.id, file.relativePath]),
+    [
+      [1, path.join("nested", "b.MD")],
+      [2, "b.MD"],
+    ],
+  );
+  assert.equal(overlappingFileOccurrences[0].path, overlappingFileOccurrences[1].path);
+  assert.notEqual(
+    getMarkdownFileListItemId(overlappingFileOccurrences[0]),
+    getMarkdownFileListItemId(overlappingFileOccurrences[1]),
+  );
+
   const filesBelowSymbolicLinkAncestor = await listMarkdownFiles({
     id: 1,
     commandTitle: "Markdown Source 1",
@@ -270,6 +342,7 @@ async function verifyMarkdownFileListing() {
   assert.equal(unicodeFile.relativePath, rawUnicodeRelativePath);
   assert.equal(unicodeFile.path, path.join(unicodeMarkdownSourceRoot, rawUnicodeRelativePath));
   assert.notEqual(unicodeFile.path, unicodeFile.path.normalize("NFC"));
+  assert.notEqual(getMarkdownFileListItemId(unicodeFile), getMarkdownFileListItemId(unicodeFile).normalize("NFC"));
   assert.equal(normalizeMarkdownSearchText(decomposedReview), composedReview);
   assert.equal(normalizeMarkdownSearchText(decomposedReview), normalizeMarkdownSearchText(composedReview));
   assert.equal(normalizeMarkdownSearchText("Ａ"), "Ａ");

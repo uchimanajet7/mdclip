@@ -25,6 +25,10 @@ export function normalizeMarkdownSearchText(value: string): string {
   return value.normalize("NFC");
 }
 
+export function getMarkdownFileListItemId(file: MarkdownFile): string {
+  return JSON.stringify([file.markdownSource.id, file.path]);
+}
+
 export function getMarkdownFileSearchFields(
   file: MarkdownFile,
   { includeMarkdownSourceName }: MarkdownFileSearchOptions,

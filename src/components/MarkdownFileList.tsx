@@ -9,6 +9,7 @@ import type {
 import { CopyMarkdownFileError, copyMarkdownFile } from "../services/clipboard";
 import { showFailureToast } from "../services/feedback";
 import {
+  getMarkdownFileListItemId,
   getMarkdownFileSearchFields,
   listMarkdownFilesFromMarkdownSources,
   normalizeMarkdownSearchText,
@@ -184,7 +185,7 @@ export function MarkdownFileList({
               <List.Section key={group.markdownSource.id} title={group.markdownSource.displayName}>
                 {group.files.map((file) => (
                   <MarkdownFileListItem
-                    key={file.path}
+                    key={getMarkdownFileListItemId(file)}
                     file={file}
                     editor={preferences.editor}
                     includeMarkdownSourceNameInSearch={includeMarkdownSourceNameInSearch}
@@ -206,7 +207,7 @@ export function MarkdownFileList({
         filesByMarkdownSource.flatMap((group) =>
           group.files.map((file) => (
             <MarkdownFileListItem
-              key={file.path}
+              key={getMarkdownFileListItemId(file)}
               file={file}
               editor={preferences.editor}
               includeMarkdownSourceNameInSearch={includeMarkdownSourceNameInSearch}
@@ -274,7 +275,7 @@ function MarkdownFileListItem({
 
   return (
     <List.Item
-      id={file.path}
+      id={getMarkdownFileListItemId(file)}
       title={searchFields.title}
       keywords={searchFields.keywords}
       subtitle={getListItemSubtitle(file)}

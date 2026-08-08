@@ -145,6 +145,12 @@ preview 表示中は detail pane に情報を集約し、一覧側の過密表�
 
 All Markdown Sources では、Markdown Source ごとの section を維持します。検索文字が空の場合は、有効かつ設定済みの Markdown Sources の設定順で section を表示します。検索文字がある場合は、Raycast の item ranking に基づく section 順の変更を許可します。Markdown Source の番号と設定順は検索優先度を表しません。検索結果の各 file は、section 順が変わった場合も所属する Markdown Source の section 内に表示します。
 
+各 Markdown Source は独立した論理的な検索範囲です。同じ folder を複数の Markdown Sources に設定することと、一方の Source folder 配下にある子孫 folder を別の Source に設定することを許可します。MdClip は path の一致、実体 path、または親子関係を理由に設定を拒否せず、警告を表示せず、Source 間で file を重複排除しません。All Markdown Sources では、各 Source をそれぞれ走査し、同じ実体 file が複数の Source に含まれる場合も、各 Source の section に 1 件ずつ表示します。relative path と Markdown Source metadata は、それぞれの Source folder を基準にします。
+
+一覧 item の内部 ID は、Markdown Source ID と filesystem から取得した未変更の absolute file path の組み合わせです。同じ absolute path が複数の Source に属する場合も Raycast 上では別の item として識別し、表示中の Source section、検索、選択、preview、および action の対応を維持します。内部 ID は利用者には表示しません。file を開く、Finder で表示する、preview する、または copy する action は、どの Source section から実行しても同じ実体 file path を対象にします。[Raycast List API](https://developers.raycast.com/api-reference/user-interface/list)
+
+この扱いは、複数 root の検索結果を folder ごとに grouping し、folder 名で曖昧さを解消する Visual Studio Code の multi-root search と同じく、物理 file だけでなく論理的な root context を保持する考え方です。一方、同期 product における nested folder の制約は、循環共有、競合、上書き、data loss など書き込みと分散状態に由来します。MdClip は Source folder を同期または変更しない read-only product であるため、その制約を転用しません。[Visual Studio Code: Multi-root Workspaces](https://code.visualstudio.com/docs/editing/workspaces/multi-root-workspaces) [Syncthing FAQ: nested shared folders](https://docs.syncthing.net/users/faq.html#am-i-able-to-nest-shared-folders-in-syncthing)
+
 読み込めない source がある場合は、読み込める source の files を表示し、失敗 source を `Could Not Load` section と Toast で通知します。Toast は読み込み失敗の発生と対象 source を通知し、`Could Not Load` section は継続確認と `Open Extension Preferences` による復旧操作を提供します。`Could Not Load` は filtering 前の構造では通常の Markdown Source sections の後に置きます。検索文字がある場合は、他の sections と同様に Raycast の filtering と ranking の対象となります。
 
 ## 9. Sort
