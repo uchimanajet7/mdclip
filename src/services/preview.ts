@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import { createStrictUtf8Decoder, decodeUtf8Chunk } from "./utf8";
 
 const READ_CHUNK_SIZE = 4096;
 const DEFAULT_PREVIEW_LINE_COUNT = 10;
@@ -42,7 +43,7 @@ export async function readMarkdownPreview(filePath: string, options: PreviewLimi
   const safeLineCount = Math.max(1, options.lineCount);
   const safeMaxCharacters = Math.max(1, options.maxCharacters);
   const file = await fs.open(filePath, "r");
-  const decoder = new TextDecoder("utf-8");
+  const decoder = createStrictUtf8Decoder();
   const buffer = Buffer.alloc(READ_CHUNK_SIZE);
   let content = "";
 
@@ -56,11 +57,11 @@ export async function readMarkdownPreview(filePath: string, options: PreviewLimi
       const { bytesRead } = await file.read(buffer, 0, buffer.length, null);
 
       if (bytesRead === 0) {
-        content += decoder.decode();
+        content += decodeUtf8Chunk(decoder);
         break;
       }
 
-      content += decoder.decode(buffer.subarray(0, bytesRead), { stream: true });
+      content += decodeUtf8Chunk(decoder, buffer.subarray(0, bytesRead), { stream: true });
     }
   } finally {
     await file.close();

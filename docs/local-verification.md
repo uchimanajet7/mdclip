@@ -163,6 +163,9 @@ npm run dev
 - CRLF を含む file でも preview content と省略有無を正しく判定できること
 - surrogate pair、combining sequence、ZWJ emoji、regional-indicator flag、Indic conjunct を extended grapheme cluster の途中で分割しないこと
 - UTF-8 code point が 4096-byte read chunk の境界をまたぐ場合も、code point 数と extended grapheme cluster boundary を正しく判定できること
+- 先頭の UTF-8 BOM を preview と copy の本文から除外し、本文中の U+FEFF と valid UTF-8 の U+FFFD REPLACEMENT CHARACTER は保持すること
+- preview が実際に読む byte 範囲の不正 UTF-8 と EOF 時の未完了 sequence を固定 message の typed error として拒否すること
+- preview 上限によって読み込まない範囲だけに不正 byte がある場合は bounded preview を維持し、file 全体を読む copy で検出すること
 - code point 上限より長い単一 extended grapheme cluster を読み続けたり分割表示したりせず、cluster 全体を省略扱いにすること
 - Preview、copy、preview visibility の利用者向け失敗文言が固定され、元の `Error.message`、error code、system call、stack trace、absolute path を利用者向け表示へ連結しないこと
 - preview visibility Cache を読み取れない場合は preview enabled の既定値を返し、保存できない場合は失敗結果を返して以前の保存値を変更しないこと
@@ -173,6 +176,7 @@ npm run dev
 - clipboard text がない場合は `{clipboard}` を削除し、expanded content の copy と success HUD を完了できること
 - clipboard text の読み取りが error になった場合は固定 message の typed error へ変換し、Clipboard への書き込みと success HUD を実行しないこと
 - copy 時に Markdown file を読み取れない場合と Clipboard へ書き込めない場合を内部で区別し、元の error detail を typed error の message に保持しないこと
+- Raw と Expanded の copy が file 全体を strict UTF-8 decoding し、不正な場合は `invalid-utf8` として Clipboard text の読み取り、Clipboard への書き込み、success HUD をすべて実行しないこと
 - Clipboard への書き込み完了後に success HUD が失敗しても copy を成功のまま完了すること
 - `Copy Raw Content` は clipboard text を読み取らず、元の `{clipboard}` を変更せずに copy できること
 

@@ -98,7 +98,7 @@ After configuring it, open the `Markdown Source 1` command in Raycast and confir
 
 Select a Markdown file and confirm the following behavior.
 
-- `Copy Raw Content` copies the Markdown file contents without changes.
+- `Copy Raw Content` copies the Markdown file contents.
 - `Copy Expanded Content` expands the supported Dynamic Placeholders and copies the result.
 - The preview pane shows the beginning of the Markdown file.
 - An individual Markdown Source command finds files by file name or relative path.

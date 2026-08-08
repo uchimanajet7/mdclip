@@ -98,7 +98,7 @@ Markdown Source 1 Folder:
 
 Markdown ファイルを選択し、次を確認します。
 
-- `Copy Raw Content` で Markdown ファイルの本文をそのままコピーできる。
+- `Copy Raw Content` で Markdown ファイルの本文をコピーできる。
 - `Copy Expanded Content` で対応する Dynamic Placeholders を展開してコピーできる。
 - プレビューペインで Markdown ファイルの冒頭を確認できる。
 - 個別の Markdown Source コマンドで、ファイル名または相対パスからファイルを探せる。

@@ -15,6 +15,7 @@ import {
 } from "../services/markdownFiles";
 import { getPreviewOptions, readMarkdownPreview, type MarkdownPreview, type PreviewOptions } from "../services/preview";
 import { readPreviewVisibility, savePreviewVisibility } from "../services/previewVisibility";
+import { InvalidUtf8Error } from "../services/utf8";
 
 type Props = {
   markdownSources: ConfiguredMarkdownSource[];
@@ -36,6 +37,7 @@ type SortMode = "updated-desc" | "updated-asc" | "name-asc" | "path-asc";
 const DEFAULT_SORT_MODE: SortMode = "updated-desc";
 const PREVIEW_TRUNCATION_NOTICE =
   "Preview truncated at the configured line or character limit. Open the file to view the full content.";
+const INVALID_UTF8_MESSAGE = "Open the file in a text editor, save it as UTF-8, and try again.";
 
 export function MarkdownFileList({
   markdownSources,
@@ -320,12 +322,19 @@ function MarkdownFilePreviewDetail({ file, previewOptions }: { file: MarkdownFil
           setMarkdown(formatPreviewMarkdown(file, preview));
         }
       } catch (error) {
-        console.error("[MdClip] Could not load a Markdown file preview.", error);
+        const isInvalidUtf8 = error instanceof InvalidUtf8Error;
+        console.error(
+          isInvalidUtf8
+            ? "[MdClip] Markdown file preview content is not valid UTF-8."
+            : "[MdClip] Could not load a Markdown file preview.",
+          error,
+        );
 
         if (isMounted) {
-          setMarkdown(
-            `# ${file.name}\n\nCould not load preview.\n\nMdClip could not read the file for preview. Check the file and its Markdown Source folder, then open the command again.`,
-          );
+          const message = isInvalidUtf8
+            ? INVALID_UTF8_MESSAGE
+            : "MdClip could not read the file for preview. Check the file and its Markdown Source folder, then open the command again.";
+          setMarkdown(`# ${file.name}\n\nCould not load preview.\n\n${message}`);
         }
       }
     }
@@ -368,6 +377,11 @@ function getCopyFailureToast(error: unknown): { title: string; message: string }
           title: "Could not copy content",
           message:
             "MdClip could not read the file. Check the file and its Markdown Source folder, then open the command again.",
+        };
+      case "invalid-utf8":
+        return {
+          title: "Could not copy content",
+          message: INVALID_UTF8_MESSAGE,
         };
       case "clipboard-read":
         return {

@@ -2,7 +2,7 @@
 
 MdClip helps you find local Markdown files in Raycast and copy their contents for reuse.
 
-Your Markdown files remain the source of truth. MdClip adds a fast Raycast workflow on top of folders you already manage, so you can keep editing, versioning, and organizing the files with your existing tools.
+MdClip works with the Markdown folders you already manage, so you can keep editing, versioning, and organizing the files with your existing tools.
 
 ![MdClip showing a Markdown Source preview in Raycast](media/mdclip-1.png)
 
@@ -11,7 +11,7 @@ Your Markdown files remain the source of truth. MdClip adds a fast Raycast workf
 - Browse local Markdown files from up to three configured Markdown Sources.
 - Find Markdown files by file name or relative path, and search across all enabled Markdown Sources from one command.
 - Preview Markdown file contents before copying.
-- Copy raw Markdown file contents.
+- Copy Markdown file contents.
 - Copy expanded contents with supported placeholders replaced at copy time.
 - Open the selected file in an editor, another app, or Finder.
 
@@ -47,7 +47,7 @@ Configure a folder for every Markdown Source you use. MdClip needs at least one 
 
 | Action                | Description                                                                       |
 | --------------------- | --------------------------------------------------------------------------------- |
-| Copy Raw Content      | Copies the full Markdown file content without changes                             |
+| Copy Raw Content      | Copies the Markdown file contents                                                 |
 | Copy Expanded Content | Replaces supported placeholders in the full Markdown file content, then copies it |
 | Show/Hide Preview     | Toggles the preview pane                                                          |
 | Open in Editor        | Opens the selected file in the configured editor                                  |

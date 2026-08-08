@@ -2,9 +2,9 @@
 
 ## 1. 目的
 
-MdClip は、利用者がローカルで管理している Markdown files を Raycast から素早く探し、本文をそのまま、または対応する Dynamic Placeholders を展開してコピーするための personal/local Raycast extension です。
+MdClip は、利用者がローカルで管理している Markdown files を Raycast から素早く探し、本文をコピーし、必要に応じて対応する Dynamic Placeholders を展開するための personal/local Raycast extension です。
 
-MdClip は Markdown file の編集、note 管理、Markdown rendering を主目的にしません。中心価値は、既存の Markdown files を source of truth としたまま、Raycast から検索、preview、copy できることです。
+MdClip は Markdown file の編集、note 管理、Markdown rendering を主目的にしません。中心価値は、普段使っている Markdown files を Raycast から検索、preview、copy できることです。
 
 ## 2. Product direction
 
@@ -113,6 +113,14 @@ symbolic link は対応対象外であり、辿りません。設定された Ma
 
 この判定対象は、設定された path の最後の entry と Markdown Source 配下です。設定 path より上位にある ancestor path component は判定対象にせず、OS が解決した先の最後の entry が実体 directory なら読み込みます。symbolic link を許可する preference は設けません。
 
+### Content encoding
+
+MdClip は preview と copy の本文を UTF-8 として読み込み、先頭の UTF-8 BOM は本文に含めません。不正な byte sequence は置換せず、preview または copy を停止します。preview は実際に読み込んだ範囲、copy は file 全体を検証します。valid UTF-8 の U+FFFD REPLACEMENT CHARACTER は通常の本文として扱います。
+
+通常利用では encoding 情報を表示しません。本文を読み取れない場合だけ、file を text editor で UTF-8 として保存して再実行する案内を表示します。encoding の自動判定、自動変換、preference、一覧での badge は追加せず、file 自体も書き換えません。自動判定では元の encoding を確実に特定できず、誤った本文を copy する可能性があるためです。
+
+この contract は、invalid sequence を置換する既定動作と `fatal` error mode を分ける標準 `TextDecoder`、UTF-8 BOM を signature として扱う Unicode Standard、および encoding を指定して reopen/save できる Visual Studio Code の方針に基づきます。[WHATWG Encoding Standard](https://encoding.spec.whatwg.org/) [Node.js `TextDecoder`](https://nodejs.org/api/util.html#class-utiltextdecoder) [Unicode Standard 17.0, Chapter 23](https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-23/) [Visual Studio Code: File encoding support](https://code.visualstudio.com/docs/editing/codebasics#_file-encoding-support)
+
 ## 8. List UI
 
 一覧 item は、検索と選択に必要な情報を優先します。
@@ -189,7 +197,7 @@ preview visibility は Raycast Cache に `mdclip.preview.enabled` として保�
 
 | Action                      | icon               | 説明                                           |
 | --------------------------- | ------------------ | ---------------------------------------------- |
-| Copy Raw Content            | `Icon.Clipboard`   | file content を変更せずに clipboard へコピー   |
+| Copy Raw Content            | `Icon.Clipboard`   | file content を clipboard へコピー             |
 | Copy Expanded Content       | `Icon.Replace`     | 対応 placeholder を置換して clipboard へコピー |
 | Show Preview                | `Icon.Eye`         | preview pane を表示                            |
 | Hide Preview                | `Icon.EyeDisabled` | preview pane を非表示                          |
@@ -243,9 +251,11 @@ copy の成功は `Clipboard.copy()` の完了で確定します。成功後の 
 | no Markdown files                                   | empty state、source folder を開く primary action、`Open Extension Preferences`                                 |
 | partial load failure in All Markdown Sources        | 読み込める files と `Could Not Load` section を維持し、失敗 source を Toast でも通知                           |
 | preview file read failure                           | preview 内の固定説明と、file および Markdown Source folder の確認後に command を開き直す案内                   |
+| preview content is not valid UTF-8                  | preview 内で UTF-8 非対応を示し、正しい encoding で開いて UTF-8 として保存する案内                             |
 | preview visibility Cache read failure               | preview enabled の既定値で継続し、利用者向けの追加表示なし                                                     |
 | preview visibility Cache write failure              | 変更前の表示状態へ戻し、固定文言の Failure Toast                                                               |
 | Markdown file read failure during copy              | Clipboard へ書き込まず、file と Markdown Source folder の確認および command の開き直しを案内する Failure Toast |
+| Markdown content is not valid UTF-8 during copy     | Clipboard 関連処理を実行せず、正しい encoding で開いて UTF-8 として保存する案内の Failure Toast                |
 | clipboard read failure during expanded copy         | Clipboard へ書き込まず、success HUD を表示せず、再実行を案内する Failure Toast                                 |
 | clipboard write failure                             | success HUD を表示せず、再実行を案内する Failure Toast                                                         |
 | another copy failure                                | success HUD を表示せず、再実行を案内する Failure Toast                                                         |
@@ -262,9 +272,9 @@ References: [Raycast Best Practices](https://developers.raycast.com/information/
 
 予期しない source 全体の読み込み失敗は `MdClip could not load Markdown files. Open the command again.` と表示します。部分読み込み失敗の Toast が表示できない場合も、読み込めた files と `Could Not Load` section は維持します。
 
-preview file を読み込めない場合は、preview 内に `Could not load preview.` と `MdClip could not read the file for preview. Check the file and its Markdown Source folder, then open the command again.` を表示します。
+preview file を読み込めない場合は、preview 内に `Could not load preview.` と `MdClip could not read the file for preview. Check the file and its Markdown Source folder, then open the command again.` を表示します。読み込んだ本文が UTF-8 として不正な場合は、同じ `Could not load preview.` の下に `Open the file in a text editor, save it as UTF-8, and try again.` を表示します。
 
-copy 時に Markdown file を読み込めない場合は `Could not copy content` と `MdClip could not read the file. Check the file and its Markdown Source folder, then open the command again.`、Clipboard へ書き込めない場合は `Could not copy content` と `MdClip could not write to the Clipboard. Try again.`、その他の copy 処理に失敗した場合は `Could not copy content` と `MdClip could not complete the copy. Try again.` を表示します。
+copy 時に Markdown file を読み込めない場合は `Could not copy content` と `MdClip could not read the file. Check the file and its Markdown Source folder, then open the command again.`、本文が UTF-8 として不正な場合は `Could not copy content` と `Open the file in a text editor, save it as UTF-8, and try again.`、Clipboard へ書き込めない場合は `Could not copy content` と `MdClip could not write to the Clipboard. Try again.`、その他の copy 処理に失敗した場合は `Could not copy content` と `MdClip could not complete the copy. Try again.` を表示します。
 
 設定された source path の最後の entry 自体が symbolic link の場合は、link target の状態にかかわらず `Symbolic links are not supported. Select the original folder.` と表示します。切れた symbolic link も、単なる folder 消失ではなく同じ symbolic link 非対応状態として扱います。
 
@@ -294,6 +304,7 @@ MdClip は Markdown files を作成、編集、rename、移動、削除しませ
 | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | Framework                 | Raycast Extension, TypeScript, React, Raycast API                                                             |
 | File traversal            | Node.js standard library                                                                                      |
+| Content decoding          | standard `TextDecoder` の UTF-8 `fatal` mode と streaming mode。先頭 BOM は signature として除外              |
 | Placeholder replacement   | extension 内の明示的な置換処理                                                                                |
 | Preferences type          | Raycast CLI が生成する `raycast-env.d.ts` を信頼する                                                          |
 | Runtime source model      | `MarkdownSource*` と `MarkdownFile*`                                                                          |

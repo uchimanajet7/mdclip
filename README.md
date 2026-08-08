@@ -10,12 +10,12 @@ Use MdClip when you keep reusable text in Markdown files and want to search, pre
 
 ## What It Does
 
-MdClip treats your Markdown files as the source of truth.
+MdClip works with the Markdown files you already manage.
 
 - You keep reusable text in normal `.md` files.
 - You group those files into up to three Markdown Sources.
 - You open a Markdown Source command in Raycast, find a file by its name or relative path, preview it, and copy its contents.
-- You can copy the raw file contents or copy an expanded version where supported placeholders are replaced at copy time.
+- You can copy Markdown file contents or expand supported placeholders while copying.
 
 MdClip does not create, edit, move, rename, or delete your Markdown files.
 
@@ -68,7 +68,7 @@ Each of the three Markdown Sources has an enable switch, folder, and display nam
 
 | Action                | Description                                                                       |
 | --------------------- | --------------------------------------------------------------------------------- |
-| Copy Raw Content      | Copies the full Markdown file content without changes                             |
+| Copy Raw Content      | Copies the Markdown file contents                                                 |
 | Copy Expanded Content | Replaces supported placeholders in the full Markdown file content, then copies it |
 | Show/Hide Preview     | Toggles the preview pane                                                          |
 | Open in Editor        | Opens the selected file in the configured editor                                  |

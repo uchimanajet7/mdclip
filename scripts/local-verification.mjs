@@ -90,6 +90,7 @@ async function verifyUserFacingFailureContract() {
   const dynamicPlaceholdersSource = await readText("src/services/dynamicPlaceholders.ts");
   const feedbackSource = await readText("src/services/feedback.ts");
   const previewVisibilitySource = await readText("src/services/previewVisibility.ts");
+  const utf8Source = await readText("src/services/utf8.ts");
 
   assert(!listSource.includes("getErrorMessage"));
   assert(!listSource.includes("String(error)"));
@@ -109,16 +110,20 @@ async function verifyUserFacingFailureContract() {
   assert(listSource.includes("MdClip could not read the Clipboard. Try again."));
   assert(listSource.includes("MdClip could not write to the Clipboard. Try again."));
   assert(listSource.includes("MdClip could not complete the copy. Try again."));
+  assert(listSource.includes("Open the file in a text editor, save it as UTF-8, and try again."));
   assert(listSource.includes("The previous setting is still in use. Try again."));
   assert(listSource.includes("MdClip could not load Markdown files. Open the command again."));
   assert(!listSource.includes("Check the configured folders and open the command again."));
   assert(!listSource.includes("showToast("));
   assert(!clipboardSource.includes("showHUD("));
   assert(clipboardSource.includes("CopyMarkdownFileError"));
+  assert(clipboardSource.includes('"invalid-utf8"'));
   assert(dynamicPlaceholdersSource.includes("ClipboardReadError"));
   assert(feedbackSource.includes("showToast({ style: Toast.Style.Failure, title, message })"));
   assert(feedbackSource.includes("await showHUD(title)"));
   assert(previewVisibilitySource.includes("return DEFAULT_PREVIEW_ENABLED"));
+  assert(utf8Source.includes('new TextDecoder("utf-8", { fatal: true, ignoreBOM: false })'));
+  assert(!utf8Source.includes('includes("�")'));
 
   const successfulFileStateIndex = listSource.indexOf(
     "setState({ files: result.files, failures: result.failures, isLoading: false })",
@@ -545,6 +550,44 @@ async function verifyPreview() {
     isTruncated: false,
   });
 
+  await writeFile(
+    previewFilePath,
+    Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from("heading\nbody", "utf8")]),
+  );
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1000 }), {
+    content: "heading\nbody",
+    isTruncated: false,
+  });
+
+  const validReplacementCharacterContent = "replacement=�\ninterior-bom=\uFEFF";
+  await writeFile(previewFilePath, validReplacementCharacterContent);
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1000 }), {
+    content: validReplacementCharacterContent,
+    isTruncated: false,
+  });
+
+  await writeFile(previewFilePath, Buffer.from([0x93, 0xfa, 0x96, 0x7b]));
+  await assert.rejects(readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1000 }), (error) => {
+    assert.equal(error.name, "InvalidUtf8Error");
+    assert.equal(error.message, "MdClip could not decode Markdown content as UTF-8.");
+    assert(!error.message.includes(previewFilePath));
+    return true;
+  });
+
+  await writeFile(previewFilePath, Buffer.from([0xe2, 0x82]));
+  await assert.rejects(readMarkdownPreview(previewFilePath, { lineCount: 10, maxCharacters: 1000 }), (error) => {
+    assert.equal(error.name, "InvalidUtf8Error");
+    return true;
+  });
+
+  const boundedPreviewPrefix = Buffer.from(`line1\n${"a".repeat(4090)}`, "utf8");
+  assert.equal(boundedPreviewPrefix.length, 4096);
+  await writeFile(previewFilePath, Buffer.concat([boundedPreviewPrefix, Buffer.from([0x80])]));
+  assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 1, maxCharacters: 20000 }), {
+    content: "line1",
+    isTruncated: true,
+  });
+
   await writeFile(previewFilePath, "line1\r\nline2\r\nline3");
   assert.deepEqual(await readMarkdownPreview(previewFilePath, { lineCount: 2, maxCharacters: 1000 }), {
     content: "line1\nline2",
@@ -788,6 +831,39 @@ async function verifyDynamicPlaceholdersExpansion() {
   await copyMarkdownFile(markdownFile, { expand: true });
   assert.deepEqual(globalThis.__mdclipClipboardCopies, ["clipboard="]);
   assert.deepEqual(globalThis.__mdclipHudMessages, ["Copied Expanded Content: copy.md"]);
+
+  const validRawUnicodeContent = "replacement=�\ninterior-bom=\uFEFF";
+  await writeFile(
+    copyFilePath,
+    Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(validRawUnicodeContent, "utf8")]),
+  );
+  resetRaycastApiStub("error");
+  await copyMarkdownFile(markdownFile, { expand: false });
+  assert.equal(globalThis.__mdclipClipboardReadCount, 0);
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, [validRawUnicodeContent]);
+  assert.deepEqual(globalThis.__mdclipHudMessages, ["Copied Raw Content: copy.md"]);
+
+  await writeFile(
+    copyFilePath,
+    Buffer.concat([Buffer.from("clipboard={clipboard}\n", "utf8"), Buffer.from([0x93, 0xfa, 0x96, 0x7b])]),
+  );
+  resetRaycastApiStub("text");
+  const invalidUtf8Diagnostics = await captureConsoleErrors(async () => {
+    await assert.rejects(copyMarkdownFile(markdownFile, { expand: true }), (error) => {
+      assert(error instanceof CopyMarkdownFileError);
+      assert.equal(error.reason, "invalid-utf8");
+      assert.equal(error.message, "MdClip could not copy content.");
+      assert(!error.message.includes(copyFilePath));
+      return true;
+    });
+  });
+  assert.equal(invalidUtf8Diagnostics.length, 1);
+  assert.equal(invalidUtf8Diagnostics[0][0], "[MdClip] Markdown file content is not valid UTF-8.");
+  assert.equal(globalThis.__mdclipClipboardReadCount, 0);
+  assert.deepEqual(globalThis.__mdclipClipboardCopies, []);
+  assert.deepEqual(globalThis.__mdclipHudMessages, []);
+
+  await writeFile(copyFilePath, "clipboard={clipboard}");
 
   resetRaycastApiStub("error");
   const copyClipboardReadDiagnostics = await captureConsoleErrors(async () => {

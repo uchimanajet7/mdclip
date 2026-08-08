@@ -3,8 +3,10 @@ import fs from "fs/promises";
 import type { MarkdownFile } from "../types";
 import { ClipboardReadError, expandDynamicPlaceholders } from "./dynamicPlaceholders";
 import { showCopySuccessHUD } from "./feedback";
+import { decodeUtf8, InvalidUtf8Error } from "./utf8";
 
-export type CopyMarkdownFileFailureReason = "file-read" | "clipboard-read" | "clipboard-write" | "copy-failed";
+export type CopyMarkdownFileFailureReason =
+  "file-read" | "invalid-utf8" | "clipboard-read" | "clipboard-write" | "copy-failed";
 
 export class CopyMarkdownFileError extends Error {
   constructor(readonly reason: CopyMarkdownFileFailureReason) {
@@ -14,13 +16,27 @@ export class CopyMarkdownFileError extends Error {
 }
 
 export async function copyMarkdownFile(file: MarkdownFile, options: { expand: boolean }): Promise<void> {
-  let rawContent: string;
+  let fileBytes: Buffer;
 
   try {
-    rawContent = await fs.readFile(file.path, "utf8");
+    fileBytes = await fs.readFile(file.path);
   } catch (error) {
     console.error("[MdClip] Could not read a Markdown file for copy.", error);
     throw new CopyMarkdownFileError("file-read");
+  }
+
+  let rawContent: string;
+
+  try {
+    rawContent = decodeUtf8(fileBytes);
+  } catch (error) {
+    if (error instanceof InvalidUtf8Error) {
+      console.error("[MdClip] Markdown file content is not valid UTF-8.", error);
+      throw new CopyMarkdownFileError("invalid-utf8");
+    }
+
+    console.error("[MdClip] Could not decode Markdown content for copy.", error);
+    throw new CopyMarkdownFileError("copy-failed");
   }
 
   let content: string;
