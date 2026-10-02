@@ -168,17 +168,17 @@
     "format": "node scripts/format.mjs --write"
   },
   "dependencies": {
-    "@raycast/api": "^2.2.0",
-    "react": "^19.2.8"
+    "@raycast/api": "^2.6.1",
+    "react": "^19.3.0"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.2.0",
     "@types/node": "22.19.17",
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "esbuild": "^0.28.2",
-    "eslint": "^10.10.0",
-    "prettier": "^3.9.6",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "allowScripts": {
