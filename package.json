@@ -168,8 +168,8 @@
     "format": "node scripts/format.mjs --write"
   },
   "dependencies": {
-    "@raycast/api": "^2.7.3",
-    "react": "^19.3.0"
+    "@raycast/api": "^2.8.0",
+    "react": "^19.3.1"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.2.0",
