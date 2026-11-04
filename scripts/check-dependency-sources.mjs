@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import { compareVersions, parseMinimumNodeVersion, parseMinimumNpmVersion } from "./toolchain.mjs";
-import { getDirectDependencyRangeDrift, getRaycastNodeTypesContract } from "./update-dependencies.mjs";
+import { getDirectDependencyRangeDrift, getRaycastDependencyContracts } from "./update-dependencies.mjs";
 
 const npmrcPath = ".npmrc";
 const nodeVersionPath = ".node-version";
@@ -164,47 +164,29 @@ if (!allowDirectRangeDrift) {
 }
 
 const raycastApiPackage = packageLock.packages?.["node_modules/@raycast/api"];
-const expectedNodeTypesVersion = getRaycastNodeTypesContract(raycastApiPackage ?? {});
-const declaredNodeTypesVersion = packageJson.devDependencies?.["@types/node"];
-const declaredReactTypesRange = packageJson.devDependencies?.["@types/react"];
-const resolvedNodeTypesVersion = packageLock.packages?.["node_modules/@types/node"]?.version;
-const resolvedReactTypesVersion = packageLock.packages?.["node_modules/@types/react"]?.version;
-const resolvedReactVersion = packageLock.packages?.["node_modules/react"]?.version;
+const raycastContracts = getRaycastDependencyContracts(raycastApiPackage ?? {});
 const declaredTypeScriptRange = packageJson.devDependencies?.typescript;
 const declaredNativeTypeScriptRange = packageJson.devDependencies?.["@typescript/native"];
 const resolvedTypeScriptPackage = packageLock.packages?.["node_modules/typescript"];
 const resolvedNativeTypeScriptPackage = packageLock.packages?.["node_modules/@typescript/native"];
 
-assert.equal(
-  declaredNodeTypesVersion,
-  expectedNodeTypesVersion,
-  `${packageJsonPath} must directly own the exact @types/node contract declared by @raycast/api`,
-);
-assert.equal(
-  rootLockfilePackage?.devDependencies?.["@types/node"],
-  expectedNodeTypesVersion,
-  `${packageLockPath} root must record the direct @types/node type contract`,
-);
-assert.equal(
-  resolvedNodeTypesVersion,
-  expectedNodeTypesVersion,
-  `${packageLockPath} must resolve the root @types/node type contract`,
-);
-assert.match(
-  declaredReactTypesRange ?? "",
-  /^\^\d+\.\d+\.\d+$/,
-  `${packageJsonPath} must directly own @types/react as a caret devDependency`,
-);
-assert.equal(
-  rootLockfilePackage?.devDependencies?.["@types/react"],
-  declaredReactTypesRange,
-  `${packageLockPath} root must record the direct @types/react development contract`,
-);
-assert.equal(
-  majorMinor(resolvedReactTypesVersion),
-  majorMinor(resolvedReactVersion),
-  `${packageLockPath} root @types/react must match the root React major and minor version`,
-);
+for (const [name, { section, version }] of Object.entries(raycastContracts)) {
+  assert.equal(
+    packageJson[section]?.[name],
+    version,
+    `${packageJsonPath} ${section} must directly own the exact ${name} contract declared by @raycast/api`,
+  );
+  assert.equal(
+    rootLockfilePackage?.[section]?.[name],
+    version,
+    `${packageLockPath} root must record the direct ${name} contract`,
+  );
+  assert.equal(
+    packageLock.packages?.[`node_modules/${name}`]?.version,
+    version,
+    `${packageLockPath} must resolve the root ${name} contract`,
+  );
+}
 assert.equal(
   projectDependencyNames.includes("csstype"),
   false,
@@ -318,9 +300,9 @@ const dependencyUpdateCommands = [
   'await execute("npm", ["ci"])',
   'await execute("npm", ["run", "migrate"])',
   "const initialOutdated = await readOutdated(execute)",
-  "await prepareMajorDependencyUpdates(repoRootUrl, initialOutdated, execute)",
+  "await prepareDependencyUpdates(repoRootUrl, initialOutdated, execute, { allowMajor })",
   "await applyCompatibleDependencyUpdates(execute)",
-  "await alignNodeTypesWithRaycastTypeContract(repoRootUrl)",
+  "await alignDependenciesWithRaycastContracts(repoRootUrl)",
   'await execute("npm", ["install", "--ignore-scripts"])',
   "const rangeDrift = getDirectDependencyRangeDrift(packageJson, packageLock)",
   "const directDependencyDowngrades = getDirectDependencyDowngrades(",
@@ -356,7 +338,7 @@ assert.equal(
 assert.equal(
   findAllIndices(dependencyUpdater, 'await execute("npm", ["install", "--ignore-scripts"])').length,
   1,
-  "dependency updates must re-resolve once when the @raycast/api type contract changes",
+  "dependency updates must re-resolve once when the @raycast/api contracts change",
 );
 assert.equal(
   dependencyUpdater.includes("npm-check-updates") ||
@@ -377,12 +359,12 @@ assert.equal(
   "dependency updates must stop instead of silently downgrading a resolved direct dependency",
 );
 assert.equal(
-  dependencyUpdater.includes("raycastTypeContractManagedDependencies") &&
-    dependencyUpdater.includes("formatRaycastTypeContractStatus") &&
+  dependencyUpdater.includes("raycastContractManagedDependencies") &&
+    dependencyUpdater.includes("formatRaycastContractStatus") &&
     dependencyUpdater.includes("No unresolved dependency update decisions remain.") &&
     !dependencyUpdater.includes("Managed by the @raycast/api runtime contract"),
   true,
-  "dependency updates must report the selected @types/node type contract separately from registry latest and unresolved decisions",
+  "dependency updates must report the selected Raycast contracts separately from registry latest and unresolved decisions",
 );
 assert.equal(
   dependencyUpdater.includes('const allowMajorArgument = "--allow-major"') &&
@@ -418,11 +400,13 @@ assert.equal(
   false,
   "npm major version updates must remain visible as individual maintainer decisions",
 );
-assert.equal(
-  dependabot.includes('dependency-name: "@types/node"'),
-  true,
-  "Dependabot must not update @types/node independently of the @raycast/api type contract",
-);
+for (const name of Object.keys(raycastContracts)) {
+  assert.equal(
+    dependabot.includes(`dependency-name: "${name}"`),
+    true,
+    `Dependabot must not update ${name} independently of the @raycast/api contract`,
+  );
+}
 
 const workflowPaths = (await readdir(".github/workflows"))
   .filter((fileName) => /\.ya?ml$/.test(fileName))
@@ -622,12 +606,6 @@ function packageNameFromLockfilePath(packagePath) {
   const packagePathSegments = packageLocation.split("/");
 
   return packageLocation.startsWith("@") ? packagePathSegments.slice(0, 2).join("/") : packagePathSegments[0];
-}
-
-function majorMinor(version) {
-  const match = typeof version === "string" && version.match(/^(\d+)\.(\d+)\.\d+$/);
-  assert.ok(match, `expected an exact semantic version; received ${version}`);
-  return `${match[1]}.${match[2]}`;
 }
 
 function findAllIndices(contents, value) {

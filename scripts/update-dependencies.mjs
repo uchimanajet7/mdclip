@@ -6,7 +6,12 @@ import { compareVersions, parseMinimumNodeVersion, parseMinimumNpmVersion } from
 
 const execFileAsync = promisify(execFile);
 const directDependencySections = ["dependencies", "devDependencies", "optionalDependencies"];
-const raycastTypeContractManagedDependencies = new Set(["@types/node"]);
+const raycastDependencySections = {
+  "@types/node": "devDependencies",
+  "@types/react": "devDependencies",
+  react: "dependencies",
+};
+const raycastContractManagedDependencies = new Set(Object.keys(raycastDependencySections));
 const allowMajorArgument = "--allow-major";
 const typeScriptCompatibilityPackageName = "@typescript/typescript6";
 const typeScriptNativeAliasName = "@typescript/native";
@@ -36,8 +41,8 @@ export async function updateDependencies({ repoRoot = process.cwd(), runCommand 
   const initialOutdated = await readOutdated(execute);
   printOutdatedReport("Dependency candidates before resolution:", initialOutdated);
 
+  const appliedMajorUpdates = await prepareDependencyUpdates(repoRootUrl, initialOutdated, execute, { allowMajor });
   if (allowMajor) {
-    const appliedMajorUpdates = await prepareMajorDependencyUpdates(repoRootUrl, initialOutdated, execute);
     if (appliedMajorUpdates.length > 0) {
       console.log(`Explicitly allowed major-version updates: ${appliedMajorUpdates.join(", ")}`);
     } else {
@@ -47,7 +52,7 @@ export async function updateDependencies({ repoRoot = process.cwd(), runCommand 
 
   await applyCompatibleDependencyUpdates(execute);
 
-  if (await alignNodeTypesWithRaycastTypeContract(repoRootUrl)) {
+  if (await alignDependenciesWithRaycastContracts(repoRootUrl)) {
     await execute("npm", ["install", "--ignore-scripts"]);
   }
 
@@ -75,10 +80,10 @@ export async function updateDependencies({ repoRoot = process.cwd(), runCommand 
 
   const finalOutdated = await readOutdated(execute);
   const finalStatus = classifyOutdated(finalOutdated, {
-    contractManagedNames: raycastTypeContractManagedDependencies,
+    contractManagedNames: raycastContractManagedDependencies,
   });
   const remainingMajorUpdates = getMajorUpdateCandidates(finalOutdated, {
-    contractManagedNames: raycastTypeContractManagedDependencies,
+    contractManagedNames: raycastContractManagedDependencies,
   });
   printOutdatedReport("Dependency status after resolution:", finalOutdated);
 
@@ -110,7 +115,7 @@ export async function updateDependencies({ repoRoot = process.cwd(), runCommand 
 
   if (finalStatus.contractManaged.length > 0) {
     const resolvedRaycastApiVersion = packageLock.packages?.["node_modules/@raycast/api"]?.version;
-    for (const line of formatRaycastTypeContractStatus(finalStatus.contractManaged, resolvedRaycastApiVersion)) {
+    for (const line of formatRaycastContractStatus(finalStatus.contractManaged, resolvedRaycastApiVersion)) {
       console.log(line);
     }
   }
@@ -218,91 +223,108 @@ export function applyMajorDependencyDeclarations(
       if (!raycastApiPackage) {
         throw new Error("A major @raycast/api update requires its registry package metadata");
       }
-      const requiredNodeTypesVersion = getRaycastNodeTypesContract(raycastApiPackage);
-      const declaredNodeTypesVersion = updatedPackageJson.devDependencies?.["@types/node"];
-      if (!/^\d+\.\d+\.\d+$/.test(declaredNodeTypesVersion ?? "")) {
-        throw new Error("package.json devDependencies must contain an exact @types/node version");
-      }
-      if (compareVersions(requiredNodeTypesVersion, declaredNodeTypesVersion) < 0) {
-        throw new Error(
-          `@raycast/api ${candidate.latest} requires @types/node ${requiredNodeTypesVersion}, which would downgrade the root type contract from ${declaredNodeTypesVersion}`,
-        );
-      }
-      updatedPackageJson.devDependencies["@types/node"] = requiredNodeTypesVersion;
+      applyRaycastDependencyContracts(updatedPackageJson, raycastApiPackage);
     }
   }
 
   return { packageJson: updatedPackageJson, appliedUpdates };
 }
 
-async function prepareMajorDependencyUpdates(repoRootUrl, outdated, runCommand) {
-  const candidates = getMajorUpdateCandidates(outdated, {
-    contractManagedNames: raycastTypeContractManagedDependencies,
-  });
-  if (candidates.length === 0) {
+async function prepareDependencyUpdates(repoRootUrl, outdated, runCommand, { allowMajor }) {
+  const candidates = allowMajor
+    ? getMajorUpdateCandidates(outdated, { contractManagedNames: raycastContractManagedDependencies })
+    : [];
+  const raycastCandidate = candidates.find(({ name }) => name === "@raycast/api");
+  const raycastOutdated = outdated["@raycast/api"];
+  const raycastTargetVersion =
+    raycastCandidate?.latest ??
+    (raycastOutdated && raycastOutdated.current !== raycastOutdated.wanted ? raycastOutdated.wanted : null);
+  if (candidates.length === 0 && !raycastTargetVersion) {
     return [];
   }
 
   const packageJsonPath = new URL("package.json", repoRootUrl);
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
-  const raycastCandidate = candidates.find(({ name }) => name === "@raycast/api");
   const typeScriptCandidate = candidates.find(({ name, latest }) => name === "typescript" && versionMajor(latest) >= 7);
   const [raycastApiPackage, typeScriptCompatibilityPackage] = await Promise.all([
-    raycastCandidate ? readRegistryPackageMetadata(runCommand, raycastCandidate.name, raycastCandidate.latest) : null,
+    raycastTargetVersion ? readRegistryPackageMetadata(runCommand, "@raycast/api", raycastTargetVersion) : null,
     typeScriptCandidate ? readRegistryPackageMetadata(runCommand, typeScriptCompatibilityPackageName, "latest") : null,
   ]);
   const result = applyMajorDependencyDeclarations(packageJson, candidates, {
     raycastApiPackage,
     typeScriptCompatibilityVersion: typeScriptCompatibilityPackage?.version,
   });
+  if (raycastApiPackage && !raycastCandidate) {
+    applyRaycastDependencyContracts(result.packageJson, raycastApiPackage);
+  }
 
   await writeFile(packageJsonPath, `${JSON.stringify(result.packageJson, null, 2)}\n`);
   return result.appliedUpdates;
 }
 
-export async function alignNodeTypesWithRaycastTypeContract(repoRootUrl) {
+export async function alignDependenciesWithRaycastContracts(repoRootUrl) {
   const packageJsonPath = new URL("package.json", repoRootUrl);
   const raycastApiPackagePath = new URL("node_modules/@raycast/api/package.json", repoRootUrl);
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
   const raycastApiPackage = JSON.parse(await readFile(raycastApiPackagePath, "utf8"));
-  const requiredNodeTypesVersion = getRaycastNodeTypesContract(raycastApiPackage);
-  const declaredNodeTypesVersion = packageJson.devDependencies?.["@types/node"];
+  const changedNames = applyRaycastDependencyContracts(packageJson, raycastApiPackage);
 
-  if (!/^\d+\.\d+\.\d+$/.test(declaredNodeTypesVersion ?? "")) {
-    throw new Error("package.json devDependencies must contain an exact @types/node version");
-  }
-
-  if (compareVersions(requiredNodeTypesVersion, declaredNodeTypesVersion) < 0) {
-    throw new Error(
-      `@raycast/api requires @types/node ${requiredNodeTypesVersion}, which would downgrade the root type contract from ${declaredNodeTypesVersion}`,
-    );
-  }
-
-  if (declaredNodeTypesVersion === requiredNodeTypesVersion) {
-    console.log(`@types/node matches the @raycast/api type contract (${requiredNodeTypesVersion}).`);
+  if (changedNames.length === 0) {
+    console.log("Direct dependencies match the @raycast/api contracts.");
     return false;
   }
 
-  packageJson.devDependencies["@types/node"] = requiredNodeTypesVersion;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
-  console.log(`Aligned @types/node with the @raycast/api type contract (${requiredNodeTypesVersion}).`);
+  console.log(`Aligned ${changedNames.join(", ")} with the @raycast/api contracts.`);
   return true;
 }
 
-export function getRaycastNodeTypesContract(raycastApiPackage) {
-  const contracts = [
-    raycastApiPackage.dependencies?.["@types/node"],
-    raycastApiPackage.peerDependencies?.["@types/node"],
-  ].filter(Boolean);
-  const uniqueContracts = [...new Set(contracts)];
+function applyRaycastDependencyContracts(packageJson, raycastApiPackage) {
+  const contracts = getRaycastDependencyContracts(raycastApiPackage);
+  const changedNames = [];
 
-  if (uniqueContracts.length !== 1 || !/^\d+\.\d+\.\d+$/.test(uniqueContracts[0])) {
-    throw new Error(
-      `@raycast/api must declare one exact @types/node type contract; received ${uniqueContracts.join(", ") || "none"}`,
-    );
+  for (const [name, { section, version }] of Object.entries(contracts)) {
+    const declaredRange = packageJson[section]?.[name];
+    const declaredVersion = getDeclaredLowerBound(declaredRange);
+    if (!declaredVersion || findDirectDependencySection(packageJson, name) !== section) {
+      throw new Error(`package.json ${section} must directly declare ${name}`);
+    }
+    if (compareVersions(version, declaredVersion) < 0) {
+      throw new Error(
+        `@raycast/api requires ${name} ${version}, which would downgrade the root contract from ${declaredVersion}`,
+      );
+    }
+    if (declaredRange !== version) {
+      changedNames.push(name);
+    }
   }
 
-  return uniqueContracts[0];
+  for (const name of changedNames) {
+    const { section, version } = contracts[name];
+    packageJson[section][name] = version;
+  }
+  return changedNames;
+}
+
+export function getRaycastDependencyContracts(raycastApiPackage) {
+  return Object.fromEntries(
+    Object.entries(raycastDependencySections).map(([name, section]) => {
+      const versions = [raycastApiPackage.dependencies?.[name], raycastApiPackage.peerDependencies?.[name]].filter(
+        (version) => version !== undefined,
+      );
+      const uniqueVersions = [...new Set(versions)];
+      if (
+        uniqueVersions.length !== 1 ||
+        typeof uniqueVersions[0] !== "string" ||
+        !/^\d+\.\d+\.\d+$/.test(uniqueVersions[0])
+      ) {
+        throw new Error(
+          `@raycast/api must declare one exact ${name} contract; received ${uniqueVersions.join(", ") || "none"}`,
+        );
+      }
+      return [name, { section, version: uniqueVersions[0] }];
+    }),
+  );
 }
 
 export function classifyOutdated(outdated, { contractManagedNames = new Set() } = {}) {
@@ -330,9 +352,9 @@ export function classifyOutdated(outdated, { contractManagedNames = new Set() } 
   return { allowedUpdatesPending, contractManaged, maintainerDecisionRequired };
 }
 
-export function formatRaycastTypeContractStatus(contractManaged, resolvedRaycastApiVersion) {
+export function formatRaycastContractStatus(contractManaged, resolvedRaycastApiVersion) {
   if (!/^\d+\.\d+\.\d+$/.test(resolvedRaycastApiVersion ?? "")) {
-    throw new Error("package-lock.json must resolve one exact @raycast/api version for type contract reporting");
+    throw new Error("package-lock.json must resolve one exact @raycast/api version for contract reporting");
   }
 
   return contractManaged.flatMap(({ name, selectedVersion, latestVersion }) => [
